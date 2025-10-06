@@ -1,0 +1,167 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Send, Camera } from 'lucide-react';
+import { commentAPI } from '../utils/api';
+
+const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply }) => {
+  const [text, setText] = useState('');
+  // track IME composition state so Enter isn't treated as send while composing (important for Vietnamese)
+  const [isComposing, setIsComposing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [isAuthed, setIsAuthed] = useState(false);
+  // files: array of { id, file }
+  const [files, setFiles] = useState([]);
+  // previews: array of { id, src }
+  const [previews, setPreviews] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    setIsAuthed(!!token);
+  }, []);
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setError(null);
+    if (!isAuthed) {
+      navigate('/login');
+      return;
+    }
+    const content = text.trim();
+  // allow submit when there's text OR at least one file
+  if (!content && files.length === 0) return;
+    try {
+      setSubmitting(true);
+  const payload = { postId: postId, content };
+  if (parentCommentId) payload.parentCommentId = parentCommentId;
+  if (files && files.length > 0) payload.files = files;
+  const res = await commentAPI.create(payload);
+      if (res && res.success) {
+        setText('');
+        if (typeof onCreated === 'function') onCreated(res.data);
+        if (typeof onCancelReply === 'function') onCancelReply();
+      } else {
+        setError(res && res.message ? res.message : 'Không thể tạo bình luận');
+      }
+    } catch (err) {
+      console.error('Create comment error:', err);
+      setError(err.message || 'Lỗi khi gửi bình luận');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!isAuthed) {
+    return (
+      <div className="mt-2 flex items-center gap-2">
+        <div className="text-sm text-gray-600">Vui lòng đăng nhập để bình luận</div>
+        <button
+          className="px-3 py-1 bg-indigo-600 text-white rounded"
+          onClick={() => navigate('/login')}
+        >
+          Đăng nhập
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-2">
+      <div className="relative flex items-center">
+        {/* input area with extra bottom padding to fit previews */}
+        <input
+          aria-label="Viết bình luận"
+          className={`w-full p-3 pr-12 border rounded-full bg-gray-50 focus:outline-none ${previews.length > 0 ? 'pl-20' : ''}`}
+          placeholder="Bình luận dưới tên bạn..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          disabled={submitting}
+          onKeyDown={(e) => {
+            // Ignore Enter while IME composition is in progress
+            if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+          onCompositionStart={() => setIsComposing(true)}
+          onCompositionEnd={() => setIsComposing(false)}
+        />
+
+        {/* inline previews inside input (left side) */}
+        {previews.length > 0 && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex gap-1 z-10">
+            {previews.map(({ id, src }) => (
+              <div key={id} className="relative w-8 h-8">
+                <img src={src} alt="preview" className="w-8 h-8 object-cover rounded" />
+                <button
+                  type="button"
+                  className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 text-xs"
+                  onClick={() => {
+                    setFiles(prev => prev.filter(f => f.id !== id));
+                    setPreviews(prev => prev.filter(p => p.id !== id));
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* camera button (hidden input is below) placed left of send */}
+        <button
+          type="button"
+          aria-label="Thêm ảnh"
+          onClick={() => document.getElementById('comment-file-input')?.click()}
+          className="absolute right-10 top-1/2 -translate-y-1/2 p-2 rounded-full text-gray-600 hover:text-gray-800"
+          title="Thêm ảnh"
+        >
+          <Camera className="w-4 h-4" />
+        </button>
+
+        <button
+          type="button"
+          aria-label="Gửi bình luận"
+          onClick={handleSubmit}
+          disabled={submitting || (text.trim() === '' && files.length === 0)}
+          className={`absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-full ${text.trim() === '' && files.length === 0 ? 'bg-gray-300' : 'bg-indigo-600 text-white'}`}
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
+      {/* hidden file input (triggered by camera button above) */}
+      <input
+        id="comment-file-input"
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const selected = Array.from(e.target.files || []);
+          const max = 4;
+          const remaining = Math.max(0, max - files.length);
+          const toTake = selected.slice(0, remaining);
+          if (toTake.length === 0) return;
+
+          const withIds = toTake.map(f => ({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,8), file: f }));
+          setFiles(prev => [...prev, ...withIds]);
+
+          // generate previews
+          withIds.forEach(({ id, file }) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              setPreviews(prev => [...prev, { id, src: ev.target.result }]);
+            };
+            reader.readAsDataURL(file);
+          });
+          e.target.value = '';
+        }}
+      />
+
+      {/* previews are rendered inline above inside the input row */}
+      {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
+    </form>
+  );
+};
+
+export default CommentForm;

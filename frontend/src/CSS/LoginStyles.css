@@ -1,0 +1,339 @@
+/* Modern Sports Login - Clean & Smooth Animations */
+
+/* ===== BACKGROUND ===== */
+.login-container {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated gradient overlay */
+.login-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, 
+    rgba(79, 70, 229, 0.4) 0%, 
+    rgba(219, 39, 119, 0.3) 50%, 
+    rgba(234, 88, 12, 0.2) 100%
+  );
+  animation: gradientShift 8s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+@keyframes gradientShift {
+  0% {
+    opacity: 0.6;
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    opacity: 0.8;
+    filter: hue-rotate(20deg);
+  }
+}
+
+/* ===== LOGIN FORM ===== */
+.login-form {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  animation: fadeSlideIn 0.6s ease-out;
+  position: relative;
+  z-index: 10;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== INPUT FIELDS ===== */
+.login-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.login-input:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.login-input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(251, 191, 36, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.2),
+    0 0 0 4px rgba(251, 191, 36, 0.1);
+}
+
+/* ===== BUTTON ===== */
+.login-btn {
+  background: linear-gradient(135deg, 
+    #6366f1 0%, 
+    #ec4899 50%, 
+    #f59e0b 100%
+  );
+  background-size: 200% 200%;
+  box-shadow: 
+    0 8px 20px rgba(99, 102, 241, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.login-btn:hover {
+  background-position: 100% 0;
+  box-shadow: 
+    0 12px 30px rgba(99, 102, 241, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  transform: translateY(-2px);
+}
+
+.login-btn:hover::before {
+  transform: translateX(100%);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 4px 15px rgba(99, 102, 241, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+/* ===== TEXT GLOW ===== */
+.text-glow {
+  text-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+  animation: subtleGlow 3s ease-in-out infinite;
+}
+
+@keyframes subtleGlow {
+  0%, 100% {
+    text-shadow: 
+      0 0 20px rgba(255, 255, 255, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  50% {
+    text-shadow: 
+      0 0 30px rgba(255, 255, 255, 0.5),
+      0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ===== FLOATING ORBS ===== */
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: smoothFloat 8s ease-in-out infinite;
+  z-index: 2;
+}
+
+.floating-orb:nth-child(1) {
+  width: 80px;
+  height: 80px;
+  top: 15%;
+  left: 10%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+  animation-delay: 0s;
+  filter: blur(2px);
+}
+
+.floating-orb:nth-child(2) {
+  width: 60px;
+  height: 60px;
+  top: 50%;
+  right: 15%;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.35) 0%, transparent 70%);
+  animation-delay: -2.5s;
+  filter: blur(2px);
+}
+
+.floating-orb:nth-child(3) {
+  width: 100px;
+  height: 100px;
+  bottom: 15%;
+  left: 20%;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, transparent 70%);
+  animation-delay: -5s;
+  filter: blur(3px);
+}
+
+.floating-orb:nth-child(4) {
+  width: 50px;
+  height: 50px;
+  top: 30%;
+  right: 35%;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.35) 0%, transparent 70%);
+  animation-delay: -1.5s;
+  filter: blur(2px);
+}
+
+@keyframes smoothFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(15px, -20px) scale(1.05);
+  }
+  50% {
+    transform: translate(-10px, -30px) scale(0.95);
+  }
+  75% {
+    transform: translate(20px, -15px) scale(1.02);
+  }
+}
+
+/* ===== SPORTS DECORATIONS ===== */
+.sports-decoration {
+  position: relative;
+}
+
+.sports-scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+/* Field lines */
+.field-line {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.field-line-1 {
+  top: 35%;
+}
+
+.field-line-2 {
+  top: 65%;
+}
+
+/* Penalty kicker */
+.penalty-kicker {
+  position: absolute;
+  bottom: 25%;
+  left: 8%;
+  font-size: 2.5rem;
+  opacity: 0.25;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  animation: gentleKick 4s ease-in-out infinite;
+}
+
+@keyframes gentleKick {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(40px) rotate(180deg);
+  }
+}
+
+/* Flying balls */
+.flying-ball {
+  position: absolute;
+  font-size: 1.8rem;
+  opacity: 0.2;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  animation: smoothFly 8s ease-in-out infinite;
+}
+
+.ball-2 {
+  top: 20%;
+  left: 15%;
+  animation-delay: -2s;
+}
+
+.ball-3 {
+  top: 55%;
+  right: 12%;
+  animation-delay: -4s;
+}
+
+@keyframes smoothFly {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.2;
+  }
+  90% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translate(150px, -150px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .floating-orb {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .penalty-kicker {
+    font-size: 2rem;
+  }
+  
+  .flying-ball {
+    font-size: 1.5rem;
+  }
+  
+  .login-form {
+    backdrop-filter: blur(15px);
+  }
+}
+
+/* ===== SMOOTH TRANSITIONS ===== */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.login-input,
+.login-btn,
+.login-form {
+  will-change: transform;
+}
