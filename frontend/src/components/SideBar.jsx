@@ -2,8 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 import MenuItems from "./MenuItems";
-import { CirclePlus, LogOut, User as UserIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import {  LogOut, User as UserIcon } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
 
@@ -19,13 +18,6 @@ const SideBar = ({ sidebarOpen, setSidebarOpen }) => {
         <img onClick={() => navigate('/')} src={assets.logo} className='w-26 ml-7 my-2 cursor-pointer' alt="Logo" />
         <hr className='border-gray-300 mb-8' />
         <MenuItems setSidebarOpen={setSidebarOpen} />
-        <Link
-          to='/create-post'
-          className='flex items-center justify-center gap-2 py-2.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-800 active:scale-95 transition text-white cursor-pointer mt-6 mx-6'
-        >
-          <CirclePlus className='w-5 h-5' />
-          Create Post
-        </Link>
       </div>
 
       <div className='w-full border-t border-gray-200 p-4 px-7 flex items-center justify-between'>

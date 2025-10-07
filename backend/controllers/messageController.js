@@ -158,16 +158,43 @@ const MessageController = {
 
   async deleteMessage(req, res) {
     try {
-      res.json({
-        success: true,
-        message: 'Message deleted successfully'
-      });
+      const { messageId } = req.params;
+      const requesterId = req.user.AccountID;
+      if (!messageId) return res.status(400).json({ success: false, message: 'messageId là bắt buộc' });
+
+      const result = await MessageDAL.deleteById(messageId, requesterId);
+      if (!result.deleted) {
+        if (result.reason === 'not_found') return res.status(404).json({ success: false, message: 'Không tìm thấy tin nhắn' });
+        if (result.reason === 'forbidden') return res.status(403).json({ success: false, message: 'Bạn không có quyền xóa tin nhắn này' });
+        return res.status(400).json({ success: false, message: 'Không thể xóa tin nhắn' });
+      }
+
+      return res.json({ success: true, message: 'Xóa tin nhắn thành công' });
     } catch (error) {
-      console.error('Delete message error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Lỗi server khi xóa tin nhắn'
-      });
+      console.error('Delete message error:', error && error.stack ? error.stack : error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi xóa tin nhắn' });
+    }
+  },
+
+  async updateMessage(req, res) {
+    try {
+      const { messageId } = req.params;
+      const requesterId = req.user.AccountID;
+      const { content } = req.body;
+
+      if (!messageId) return res.status(400).json({ success: false, message: 'messageId là bắt buộc' });
+
+      const result = await MessageDAL.updateById(messageId, requesterId, { Content: content });
+      if (!result.updated) {
+        if (result.reason === 'not_found') return res.status(404).json({ success: false, message: 'Không tìm thấy tin nhắn' });
+        if (result.reason === 'forbidden') return res.status(403).json({ success: false, message: 'Bạn không có quyền sửa tin nhắn này' });
+        return res.status(400).json({ success: false, message: 'Không thể sửa tin nhắn' });
+      }
+
+      return res.json({ success: true, message: 'Cập nhật tin nhắn thành công', data: result.message.toFrontendFormat() });
+    } catch (error) {
+      console.error('Update message error:', error && error.stack ? error.stack : error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật tin nhắn' });
     }
   }
 };

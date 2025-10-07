@@ -306,6 +306,34 @@ class UserController {
 
             const result = await FollowDAL.followUser(currentUserId, parseInt(userId));
 
+            // Nếu follow thành công thì gửi thông báo cho user được follow
+            if (result && result.success !== false) {
+                try {
+                    const notifications = require('../lib/notifications');
+                    const UserDAL = require('../DAL/userDAL');
+                    const fromUser = await UserDAL.getUserById(currentUserId);
+                    if (fromUser) {
+                        const notify = {
+                            type: 'follow',
+                            fromUser: {
+                                id: fromUser.AccountID,
+                                fullName: fromUser.FullName,
+                                username: fromUser.Username,
+                                avatar: fromUser.AvatarUrl
+                            },
+                            message: `${fromUser.FullName || fromUser.Username} đã theo dõi bạn!`,
+                            link: `/profile/${fromUser.AccountID}`,
+                            createdAt: new Date(),
+                            read: false
+                        };
+                        if (!notifications[parseInt(userId)]) notifications[parseInt(userId)] = [];
+                        notifications[parseInt(userId)].unshift(notify);
+                    }
+                } catch (notifyErr) {
+                    console.error('❌ follow notification error:', notifyErr);
+                }
+            }
+
             res.json(result);
         } catch (error) {
             console.error('❌ followUser Error:', error);

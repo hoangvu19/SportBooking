@@ -158,6 +158,7 @@ app.use('/api/reactions', require('./routes/reactionRoutes'));
 app.use('/api/shares', require('./routes/shareRoutes'));
 app.use('/api/roles', require('./routes/roleRoutes'));
 app.use('/api/facilities', require('./routes/facilityRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/areas', require('./routes/areaRoutes'));
 app.use('/api/sport-types', require('./routes/sportTypeRoutes'));
 app.use('/api/sport-fields', require('./routes/sportFieldRoutes'));

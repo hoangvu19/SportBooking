@@ -240,6 +240,37 @@ async function reactToPost(req, res) {
       ReactionType: normalizedReaction
     });
 
+    // Gửi thông báo nếu là like mới
+    if (result?.action === 'created') {
+      try {
+        const PostDAL = require('../DAL/PostDAL');
+        const notifications = require('../lib/notifications');
+        const post = await PostDAL.getById(idCheck.value);
+        if (post && post.AccountID && post.AccountID !== accountId) {
+          const UserDAL = require('../DAL/userDAL');
+          const fromUser = await UserDAL.getUserById(accountId);
+          if (fromUser) {
+            const notify = {
+              type: 'like',
+              postId: idCheck.value,
+              fromUser: {
+                id: fromUser.AccountID,
+                fullName: fromUser.FullName,
+                username: fromUser.Username,
+                avatar: fromUser.AvatarUrl
+              },
+              message: `${fromUser.FullName || fromUser.Username} đã thích bài viết của bạn!`,
+              link: `/post/${idCheck.value}`,
+              createdAt: new Date(),
+              read: false
+            };
+            if (!notifications[post.AccountID]) notifications[post.AccountID] = [];
+            notifications[post.AccountID].unshift(notify);
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+
     const messageByAction = {
       created: 'React thành công',
       updated: 'Cập nhật reaction thành công',
@@ -319,6 +350,36 @@ async function addComment(req, res) {
       const insertedImages = await CommentDAL.addImages(comment.CommentID, images);
       comment.Images = insertedImages;
     }
+
+    // Gửi thông báo cho chủ post khi có comment mới
+    try {
+      const PostDAL = require('../DAL/PostDAL');
+      const notifications = require('../lib/notifications');
+      const post = await PostDAL.getById(postCheck.value);
+      if (post && post.AccountID && post.AccountID !== accountId) {
+        const UserDAL = require('../DAL/userDAL');
+        const fromUser = await UserDAL.getUserById(accountId);
+        if (fromUser) {
+          const notify = {
+            type: 'comment',
+            postId: postCheck.value,
+            commentId: comment.CommentID,
+            fromUser: {
+              id: fromUser.AccountID,
+              fullName: fromUser.FullName,
+              username: fromUser.Username,
+              avatar: fromUser.AvatarUrl
+            },
+            message: `${fromUser.FullName || fromUser.Username} đã bình luận bài viết của bạn!`,
+            link: `/post/${postCheck.value}`,
+            createdAt: new Date(),
+            read: false
+          };
+          if (!notifications[post.AccountID]) notifications[post.AccountID] = [];
+          notifications[post.AccountID].unshift(notify);
+        }
+      }
+    } catch (e) { /* ignore */ }
 
     const baseUrl = buildBaseUrl(req);
 

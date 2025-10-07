@@ -1,4 +1,4 @@
-import logo from './logo.svg'
+import logo from './wws_logo.png';
 import sample_cover from './sample_cover.jpg'
 import sample_profile from './sample_profile.jpg'
 import bgImage from './image.png'

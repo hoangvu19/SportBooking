@@ -64,6 +64,79 @@ class MessageDAL {
   }
 
   /**
+   * Delete a message by id if requester is the sender
+   */
+  static async deleteById(messageId, requesterId) {
+    try {
+      const pool = await poolPromise;
+      // First verify the message exists and the requester is the sender
+      const row = await pool.request()
+        .input('MessageID', sql.Int, parseInt(messageId))
+        .query('SELECT MessageID, SenderID FROM [Message] WHERE MessageID = @MessageID');
+
+      if (!row.recordset || row.recordset.length === 0) return { deleted: false, reason: 'not_found' };
+      const msg = row.recordset[0];
+      if (Number(msg.SenderID) !== Number(requesterId)) return { deleted: false, reason: 'forbidden' };
+
+      // Delete message images first (if table exists)
+      try {
+        await pool.request()
+          .input('MessageID', sql.Int, parseInt(messageId))
+          .query('DELETE FROM [MessageImage] WHERE MessageID = @MessageID');
+      } catch (imgDelErr) {
+        // non-fatal
+        console.warn('Could not delete MessageImage rows (table might be missing):', imgDelErr && imgDelErr.message ? imgDelErr.message : imgDelErr);
+      }
+
+      // Delete the message row
+      await pool.request()
+        .input('MessageID', sql.Int, parseInt(messageId))
+        .query('DELETE FROM [Message] WHERE MessageID = @MessageID');
+
+      return { deleted: true };
+    } catch (error) {
+      console.error('MessageDAL.deleteById error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update message content by id if requester is the sender
+   * Only updates textual content; images editing is not supported here.
+   */
+  static async updateById(messageId, requesterId, data) {
+    try {
+      const pool = await poolPromise;
+
+      // Verify exists and permission
+      const row = await pool.request()
+        .input('MessageID', sql.Int, parseInt(messageId))
+        .query('SELECT MessageID, SenderID FROM [Message] WHERE MessageID = @MessageID');
+
+      if (!row.recordset || row.recordset.length === 0) return { updated: false, reason: 'not_found' };
+      const msg = row.recordset[0];
+      if (Number(msg.SenderID) !== Number(requesterId)) return { updated: false, reason: 'forbidden' };
+
+      // Only update Content for now
+      await pool.request()
+        .input('MessageID', sql.Int, parseInt(messageId))
+        .input('Content', sql.NVarChar(sql.MAX), data.Content || '')
+        .query(`
+          UPDATE [Message]
+          SET Content = @Content
+          WHERE MessageID = @MessageID
+        `);
+
+      // return updated message
+      const updated = await MessageDAL.getById(parseInt(messageId));
+      return { updated: true, message: updated };
+    } catch (error) {
+      console.error('MessageDAL.updateById error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get message by ID with user info
    */
   static async getById(messageId) {

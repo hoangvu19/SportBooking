@@ -46,4 +46,7 @@ router.get('/unread-count', MessageController.getConversations);
 // Delete message
 router.delete('/:messageId', MessageController.deleteMessage);
 
+// Update message
+router.put('/:messageId', MessageController.updateMessage);
+
 module.exports = router;

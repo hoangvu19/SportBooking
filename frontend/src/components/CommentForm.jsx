@@ -29,16 +29,32 @@ const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply 
       return;
     }
     const content = text.trim();
-  // allow submit when there's text OR at least one file
-  if (!content && files.length === 0) return;
+    
+    // Kiểm tra nội dung bình luận
+    const hasValidContent = content.length > 0 && /[a-zA-Z0-9\u00C0-\u1EF9]+/.test(content); // Regex kiểm tra có ít nhất 1 ký tự chữ/số (bao gồm Unicode cho tiếng Việt)
+    
+    // Chỉ cho phép gửi khi có nội dung hợp lệ hoặc có file đính kèm
+    if (!hasValidContent && files.length === 0) {
+      if (content.length > 0) {
+        setError('Bình luận phải có nội dung chữ hoặc số, không chỉ là dấu câu hoặc khoảng trắng.');
+      }
+      return;
+    }
+
     try {
       setSubmitting(true);
-  const payload = { postId: postId, content };
-  if (parentCommentId) payload.parentCommentId = parentCommentId;
-  if (files && files.length > 0) payload.files = files;
-  const res = await commentAPI.create(payload);
+      const payload = { 
+        postId: postId, 
+        content,
+        parentCommentId,
+        files: files.length > 0 ? files : undefined 
+      };
+      
+      const res = await commentAPI.create(payload);
       if (res && res.success) {
         setText('');
+        setFiles([]);
+        setPreviews([]);
         if (typeof onCreated === 'function') onCreated(res.data);
         if (typeof onCancelReply === 'function') onCancelReply();
       } else {
@@ -68,12 +84,22 @@ const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply 
 
   return (
     <form onSubmit={handleSubmit} className="mt-2">
-      <div className="relative flex items-center">
-        {/* input area with extra bottom padding to fit previews */}
+      <div className="relative flex items-center group">
+        {/* Input with improved styling */}
         <input
           aria-label="Viết bình luận"
-          className={`w-full p-3 pr-12 border rounded-full bg-gray-50 focus:outline-none ${previews.length > 0 ? 'pl-20' : ''}`}
-          placeholder="Bình luận dưới tên bạn..."
+          className={`
+            w-full px-4 py-2.5 pr-24
+            border border-gray-200 rounded-full
+            bg-gray-50 
+            placeholder-gray-400
+            focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100
+            transition-all duration-200
+            ${submitting ? 'opacity-50' : ''}
+            ${previews.length > 0 ? 'pl-20' : ''}
+            ${error ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : ''}
+          `}
+          placeholder="Viết bình luận..."
           value={text}
           onChange={(e) => setText(e.target.value)}
           disabled={submitting}
@@ -101,6 +127,8 @@ const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply 
                     setFiles(prev => prev.filter(f => f.id !== id));
                     setPreviews(prev => prev.filter(p => p.id !== id));
                   }}
+                  disabled={submitting}
+                  style={submitting ? { opacity: 0.5, pointerEvents: 'none' } : {}}
                 >
                   ✕
                 </button>

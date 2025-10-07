@@ -43,6 +43,10 @@ const Profile = () => {
             }
 
             // Transform user data to frontend format
+            // Normalize various backend shapes for follow flag (boolean or numeric)
+            const rawIsFollowing = userResponse.data?.isFollowing ?? userResponse.data?.is_following ?? userResponse.data?.IsFollowing;
+            const isFollowingFlag = rawIsFollowing === true || rawIsFollowing === 1 || rawIsFollowing === '1' || rawIsFollowing === 'true';
+
             const userData = {
                 _id: userResponse.data.AccountID || userResponse.data._id,
                 username: userResponse.data.username,
@@ -53,11 +57,13 @@ const Profile = () => {
                 cover_photo: '',
                 location: userResponse.data.address || '',
                 website: '',
-                followers_count: userResponse.data.followersCount || 0,
-                following_count: userResponse.data.followingCount || 0,
-                is_following: userResponse.data.isFollowing || false,
+                followers_count: Number(userResponse.data.followersCount ?? userResponse.data.followers_count ?? 0) || 0,
+                following_count: Number(userResponse.data.followingCount ?? userResponse.data.following_count ?? 0) || 0,
+                is_following: Boolean(isFollowingFlag),
             };
 
+            console.log('📦 profile API raw response:', userResponse);
+            console.log('🔁 normalized userData:', userData);
             setUser(userData);
 
             // Fetch user posts
@@ -76,11 +82,15 @@ const Profile = () => {
     };
 
     useEffect(() => {
+        // Re-fetch profile when targetUserId or currentUser changes.
+        // This handles the case where the auth context (currentUser) becomes
+        // available after the page mounted — without this, the profile
+        // would be fetched unauthenticated and `isFollowing` would be false.
         if (targetUserId) {
             fetchUser();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [targetUserId]);
+    }, [targetUserId, currentUser?.AccountID]);
 
     // Helper to normalize backend post objects into frontend PostCard shape
     const transformPosts = (postsArray = [], userDataLocal = user) => {
@@ -152,12 +162,8 @@ const Profile = () => {
                 : await userAPI.follow(targetUserId);
             
             if (response.success) {
-                // Update local state
-                setUser(prev => ({
-                    ...prev,
-                    is_following: !prev.is_following,
-                    followers_count: prev.followers_count + (prev.is_following ? -1 : 1)
-                }));
+                // Refresh profile from server to get authoritative counts/state
+                await fetchUser();
             } else {
                 console.error('Follow toggle failed:', response.message);
             }
@@ -258,7 +264,7 @@ const Profile = () => {
                     {activeTab === "likes" && (
                         <div className="mt-6 flex flex-col items-center gap-6">
                             <div className="w-full max-w-3xl text-right text-sm text-gray-500 mb-2">
-                                {posts.length === 0 ? 'Bạn chưa thích bài viết nào' : `Có ${posts.length} bài viết đã thích`}
+                                {posts.length === 0 ? '' : `Có ${posts.length} bài viết đã thích`}
                             </div>
                             {posts.length === 0 ? (
                                 <div className='text-center text-gray-500 py-8'>

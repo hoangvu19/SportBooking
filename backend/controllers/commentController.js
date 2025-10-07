@@ -89,8 +89,66 @@ const CommentController = {
       }
 
       const created = await CommentDAL.createWithImages(payload, files);
+      // Gửi thông báo cho chủ post hoặc chủ comment nếu là reply
+      try {
+        const PostDAL = require('../DAL/PostDAL');
+        const notifications = require('../lib/notifications');
+        if (payload.ParentCommentID) {
+          // Là reply, gửi cho chủ comment cha
+          const parentComment = await CommentDAL.getById(payload.ParentCommentID);
+          if (parentComment && parentComment.AccountID && parentComment.AccountID !== accountId) {
+            const UserDAL = require('../DAL/userDAL');
+            const fromUser = await UserDAL.getUserById(accountId);
+            if (fromUser) {
+              const notify = {
+                type: 'reply',
+                postId: payload.PostID,
+                commentId: created.CommentID,
+                parentCommentId: payload.ParentCommentID,
+                fromUser: {
+                  id: fromUser.AccountID,
+                  fullName: fromUser.FullName,
+                  username: fromUser.Username,
+                  avatar: fromUser.AvatarUrl
+                },
+                message: `${fromUser.FullName || fromUser.Username} đã trả lời bình luận của bạn!`,
+                link: `/post/${payload.PostID}?comment=${payload.ParentCommentID}`,
+                createdAt: new Date(),
+                read: false
+              };
+              if (!notifications[parentComment.AccountID]) notifications[parentComment.AccountID] = [];
+              notifications[parentComment.AccountID].unshift(notify);
+            }
+          }
+        } else {
+          // Là comment mới, gửi cho chủ post
+          const post = await PostDAL.getById(payload.PostID);
+          if (post && post.AccountID && post.AccountID !== accountId) {
+            const UserDAL = require('../DAL/userDAL');
+            const fromUser = await UserDAL.getUserById(accountId);
+            if (fromUser) {
+              const notify = {
+                type: 'comment',
+                postId: payload.PostID,
+                commentId: created.CommentID,
+                fromUser: {
+                  id: fromUser.AccountID,
+                  fullName: fromUser.FullName,
+                  username: fromUser.Username,
+                  avatar: fromUser.AvatarUrl
+                },
+                message: `${fromUser.FullName || fromUser.Username} đã bình luận bài viết của bạn!`,
+                link: `/post/${payload.PostID}`,
+                createdAt: new Date(),
+                read: false
+              };
+              if (!notifications[post.AccountID]) notifications[post.AccountID] = [];
+              notifications[post.AccountID].unshift(notify);
+            }
+          }
+        }
+      } catch (e) { /* ignore */ }
       const baseUrl = buildBaseUrl(req);
-
       return sendCreated(res, formatCommentForResponse(created, baseUrl), 'Tạo comment thành công');
     } catch (error) {
       return sendError(res, 'Lỗi server khi tạo comment', 500, { error });

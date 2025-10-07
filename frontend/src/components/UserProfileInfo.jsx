@@ -4,7 +4,10 @@ import React from 'react'
 
 
 const UserProfileInfo = ({ user, setShowEdit, posts, isOwnProfile, onFollowToggle, followLoading }) => {
- 
+  // Debug: show user prop when component renders
+  React.useEffect(() => {
+    console.log('UserProfileInfo user prop:', user);
+  }, [user]);
 
   return (
     <div className="relative py-4 px-6 md:px-8 bg-white rounded-2xl shadow">
@@ -49,24 +52,31 @@ const UserProfileInfo = ({ user, setShowEdit, posts, isOwnProfile, onFollowToggl
                 <button
                   onClick={onFollowToggle}
                   disabled={followLoading}
+                  aria-pressed={user.is_following}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                     user.is_following
-                      ? 'border border-gray-300 hover:bg-red-50 hover:border-red-300 hover:text-red-600'
+                      ? 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                       : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                   } ${followLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {user.is_following ? (
                     <>
                       <UserMinus className="w-4 h-4" />
-                      {followLoading ? 'Đang xử lý...' : 'Unfollow'}
+                      {followLoading ? 'Đang xử lý...' : 'Đang theo dõi'}
                     </>
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4" />
-                      {followLoading ? 'Đang xử lý...' : 'Follow'}
+                      {followLoading ? 'Đang xử lý...' : 'Theo dõi'}
                     </>
                   )}
                 </button>
+              )}
+              {/* Debug badge: show is_following when ?profile_debug=1 is present */}
+              {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('profile_debug') === '1' && (
+                <div className="ml-4 text-xs text-gray-500 mt-2">
+                  Debug is_following: <span className="font-medium">{String(user.is_following)}</span>
+                </div>
               )}
             </div>
 

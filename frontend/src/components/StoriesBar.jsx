@@ -10,6 +10,7 @@ const StoriesBar =() => {
     const [stories, setStories] = useState([])
     const [showModal, setShowModal] = useState(false)
     const [viewStory, setViewStory] = useState(null)
+    const [currentIndex, setCurrentIndex] = useState(0)
     const [loading, setLoading] = useState(true)
 
     const fetchStories = async () => {
@@ -59,7 +60,14 @@ const StoriesBar =() => {
                 {/* Story Cards */}
                 {
                     stories.map((story, index) => (
-                        <div onClick={() => setViewStory(story)} key={index} className={`relative rounded-lg shadow min-w-30 max-w-30 max-h-40 cursor-pointer hover:shadow-lg transition-all duration-200 bg-gradient-to-b from-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-800 active:scale-95`}>
+                        <div 
+                            onClick={() => {
+                                setViewStory(story);
+                                setCurrentIndex(index);
+                            }} 
+                            key={story._id} 
+                            className={`relative rounded-lg shadow min-w-30 max-w-30 max-h-40 cursor-pointer hover:shadow-lg transition-all duration-200 bg-gradient-to-b from-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-800 active:scale-95`}
+                        >
                             <img src={story.user.profile_picture} alt="" className='absolute size-8 top-3 left-3 z-10 rounded-full ring ring-gray-100 shadow' />
                             <p className='absolute top-18 left-3 text-white/60 text-sm truncate max-w-24'>{story.content}</p>
                             <p className='text-white absolute bottom-1 right-2 z-10 text-xs'>{moment(story.createdAt).fromNow()}</p>
@@ -87,10 +95,24 @@ const StoriesBar =() => {
             </div>
             {
                 showModal && <StoryModel setShowModal={setShowModal} fetchStories={fetchStories} />
-
             }
             {
-                viewStory && <StoryViewer viewStory={viewStory} setViewStory={setViewStory}  />
+                viewStory && (
+                    <StoryViewer 
+                        viewStory={viewStory} 
+                        setViewStory={setViewStory}
+                        stories={stories}
+                        currentIndex={currentIndex}
+                        setCurrentIndex={setCurrentIndex}
+                        onStoryDeleted={async (deletedStoryId) => {
+                            // Remove the deleted story from local state
+                            setStories(prevStories => prevStories.filter(story => story._id !== deletedStoryId));
+                            
+                            // Fetch fresh stories to ensure sync
+                            await fetchStories();
+                        }}
+                    />
+                )
             }
         </div>
     )

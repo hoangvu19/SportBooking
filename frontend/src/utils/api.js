@@ -1,9 +1,29 @@
+// ==================== NOTIFICATION APIs ====================
+export const notificationAPI = {
+    /**
+     * Get notifications for current user
+     */
+    getAll: async () => {
+        return apiCall('/notifications');
+    },
+    /**
+     * Mark all notifications as read
+     */
+    markAllRead: async () => {
+        return apiCall('/notifications/read-all', { method: 'POST' });
+    },
+};
 /**
  * Centralized API Handler
  * Handles all API calls với error handling và loading states
  */
 
 const API_BASE_URL = 'http://localhost:5000/api';
+
+// Simple in-memory cache for GET requests to avoid repeated identical calls
+const GET_CACHE_TTL = 5000; // ms
+const getCache = new Map(); // key -> { ts, data }
+const inflightRequests = new Map(); // key -> Promise
 
 /**
  * Get auth token from localStorage
@@ -41,8 +61,29 @@ const apiCall = async (endpoint, options = {}) => {
     };
 
     try {
-        console.log(`🌐 API Call: ${options.method || 'GET'} ${endpoint}`);
-        const response = await fetch(url, config);
+        const method = (config.method || 'GET').toUpperCase();
+
+        // For GET requests, check cache first
+        const cacheKey = `${method}::${endpoint}`;
+        if (method === 'GET') {
+            const cached = getCache.get(cacheKey);
+            if (cached && (Date.now() - cached.ts) < GET_CACHE_TTL) {
+                console.debug('🌐 API Cache hit:', endpoint);
+                return cached.data;
+            }
+
+            // If identical request is in-flight, return the same promise
+            if (inflightRequests.has(cacheKey)) {
+                console.debug('🌐 Reusing in-flight request for', endpoint);
+                return await inflightRequests.get(cacheKey);
+            }
+        }
+
+        console.log(`🌐 API Call: ${method} ${endpoint}`);
+        const fetchPromise = fetch(url, config);
+        if (method === 'GET') inflightRequests.set(cacheKey, fetchPromise);
+        const response = await fetchPromise;
+        if (method === 'GET') inflightRequests.delete(cacheKey);
         // Attempt to parse JSON (safe-guard: if no JSON, set to null)
         let data = null;
         try {
@@ -64,6 +105,9 @@ const apiCall = async (endpoint, options = {}) => {
         }
 
         console.log(`✅ API Success: ${endpoint}`, data);
+        if (method === 'GET') {
+            try { getCache.set(cacheKey, { ts: Date.now(), data }); } catch { /* ignore cache errors */ }
+        }
         return data;
     } catch (error) {
         console.error(`❌ API Error: ${endpoint}`, error);
@@ -290,6 +334,20 @@ export const messageAPI = {
             body: JSON.stringify(payload),
         });
         console.log('📥 messageAPI.send response:', res);
+
+        // Broadcast a global event so other parts of the UI (e.g., Messages list)
+        // can update pending/unread state immediately when a message is sent.
+        try {
+            const fromUserRaw = (() => {
+                try { const token = getAuthToken(); return token ? JSON.parse(atob(token.split('.')[1])) : null; } catch { return null; }
+            })();
+            const fromUserId = res && res.data && (res.data.sender?._id || res.data.SenderID || res.data.senderId) ? (res.data.sender?._id || res.data.SenderID || res.data.senderId) : (fromUserRaw && (fromUserRaw.userId || fromUserRaw.AccountID || fromUserRaw._id));
+            const detail = { toUserId, fromUserId, message: payload.content };
+            window.dispatchEvent(new CustomEvent('message:sent', { detail }));
+        } catch (err) {
+            console.debug('Could not dispatch global message:sent event', err);
+        }
+
         return res;
     },
 
@@ -309,6 +367,30 @@ export const messageAPI = {
         const res = await apiCall('/messages/conversations');
         console.log('📥 messageAPI.getConversations response:', res);
         return res;
+    }
+    ,
+    /**
+     * Mark all messages from a sender as read (conversation-level)
+     */
+    markConversationRead: async (userId) => {
+        // send senderId in body for backward-compatible server handling
+        return apiCall(`/messages/conversation/${userId}/read-all`, {
+            method: 'PUT',
+            body: JSON.stringify({ senderId: userId })
+        });
+    }
+    ,
+    delete: async (messageId) => {
+        return apiCall(`/messages/${messageId}`, {
+            method: 'DELETE'
+        });
+    }
+    ,
+    update: async (messageId, data) => {
+        return apiCall(`/messages/${messageId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
     }
 };
 

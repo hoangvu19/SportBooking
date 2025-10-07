@@ -135,11 +135,10 @@ const PostCard = ({post}) => {
                 const res = await commentAPI.getByPostId(post._id);
                 console.log('Comment preview API response for post', post._id, res);
                 if (!mounted) return;
-                if (res && res.success && Array.isArray(res.data)) {
-                    if (res.data.length > 0) setCommentPreview(res.data[0]);
-                    // Sync count from backend in case post.comments_count is stale
-                    setCommentsCount(res.data.length);
-                }
+                // Sửa: lấy đúng mảng comments từ res.data.comments nếu có
+                const commentsArr = (res && res.data && Array.isArray(res.data.comments)) ? res.data.comments : (Array.isArray(res.data) ? res.data : []);
+                if (commentsArr.length > 0) setCommentPreview(commentsArr[0]);
+                setCommentsCount(commentsArr.length);
             } catch {
                 // ignore
             }
@@ -179,19 +178,19 @@ const PostCard = ({post}) => {
             <div onClick={() => navigate(`/profile/${post.user._id}`)} className="inline-flex items-center gap-3 cursor-pointer">
         {/* User profile picture */}
         <img
-            src={post.user.profile_picture}
+            src={post.user?.profile_picture || "/default-avatar.png"}
             alt=""
             className="w-10 h-10 rounded-full shadow"
-        />
+            />
         {/* User name and username */}
             <div>
                 <div className="flex items-center space-x-1">
-                <span>{post.user.full_name}</span>
+                <span>{post.user?.full_name || "Người dùng"}</span>
                 {/* Badge/Checkmark icon */}
                 <BadgeCheck className="w-4 h-4 text-blue-500" />
                 </div>
                 <div className="text-gray-500 text-sm">
-                @{post.user.username} • {moment(post.createdAt).fromNow()}
+                @{post.user?.username || "Ẩn danh"} • {post.createdAt ? moment(post.createdAt).fromNow() : ""}
                 </div>
             </div>
         </div>

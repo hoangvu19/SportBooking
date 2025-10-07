@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import Login from "./pages/login";    
 import Feed from "./pages/Feed";
@@ -8,6 +8,7 @@ import Connections from "./pages/Connection";
 import Discover from "./pages/Discover";
 import Profile from "./pages/Profile";
 import CreatePost from "./pages/CreatePost";
+const PostDetail = React.lazy(() => import("./pages/PostDetail.jsx"));
 import { useAuth } from "./hooks/useAuth.jsx";
 import Layout from "./pages/Layout";
 import {Toaster} from 'react-hot-toast';
@@ -41,6 +42,11 @@ const App = () => {
             <Route path="profile" element={<Profile />} />
             <Route path="profile/:profileId" element={<Profile />} />
             <Route path="create-post" element={<CreatePost />} />
+            <Route path="post/:postId" element={
+              <Suspense fallback={<Loading />}>
+                <PostDetail />
+              </Suspense>
+            } />
             {/* Các route cho phần đặt sân bóng */}
             <Route path="san-list" element={<SanList />} />
             <Route path="san/:sanId" element={<SanDetail />} />
