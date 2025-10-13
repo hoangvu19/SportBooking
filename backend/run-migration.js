@@ -20,28 +20,35 @@ async function runMigration() {
         
         const pool = await sql.connect(config);
         
-        // Đọc file SQL
-        const sqlFile = path.join(__dirname, 'migrations', 'create-follow-notification.sql');
-        const sqlScript = fs.readFileSync(sqlFile, 'utf8');
-        
-        // Tách SQL thành các batch (phân tách bởi GO)
-        const batches = sqlScript
-            .split(/\nGO\s*\n/gi)
-            .map(b => b.trim())
-            .filter(b => b.length > 0);
-        
-        console.log(`📝 Found ${batches.length} SQL batches`);
-        
-        // Chạy từng batch
-        for (let i = 0; i < batches.length; i++) {
-            console.log(`\n⚙️ Executing batch ${i + 1}...`);
-            const result = await pool.request().query(batches[i]);
-            
-            // In ra messages nếu có
-            if (result.recordset && result.recordset.length > 0) {
-                result.recordset.forEach(row => {
-                    console.log(Object.values(row).join(' '));
-                });
+        // Read all SQL files in migrations directory and run them in alphabetical order
+        const migrationsDir = path.join(__dirname, 'migrations');
+        const files = fs.readdirSync(migrationsDir)
+            .filter(f => f.toLowerCase().endsWith('.sql'))
+            .sort();
+
+        console.log(`📝 Found ${files.length} migration files`);
+
+        for (let i = 0; i < files.length; i++) {
+            const filePath = path.join(migrationsDir, files[i]);
+            console.log(`\n⚙️ Executing migration ${files[i]}...`);
+            const sqlScript = fs.readFileSync(filePath, 'utf8');
+
+            // Split by GO batches (if present)
+            const batches = sqlScript
+                .split(/\nGO\s*\n/gi)
+                .map(b => b.trim())
+                .filter(b => b.length > 0);
+
+            for (let j = 0; j < batches.length; j++) {
+                try {
+                    const result = await pool.request().query(batches[j]);
+                    if (result.recordset && result.recordset.length > 0) {
+                        result.recordset.forEach(row => console.log(Object.values(row).join(' ')));
+                    }
+                } catch (e) {
+                    console.error(`Error executing batch ${j + 1} of ${files[i]}:`, e.message);
+                    throw e;
+                }
             }
         }
         

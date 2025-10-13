@@ -164,6 +164,8 @@ app.use('/api/sport-types', require('./routes/sportTypeRoutes'));
 app.use('/api/sport-fields', require('./routes/sportFieldRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
+// Livestream feature
+app.use('/api/livestreams', require('./routes/livestreamRoutes'));
 
 // 404 handler
 app.use((req, res) => {

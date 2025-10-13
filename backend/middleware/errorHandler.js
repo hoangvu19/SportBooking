@@ -1,10 +1,3 @@
-/**
- * Error Handler Middleware - Xử lý lỗi tập trung cho toàn bộ ứng dụng
- */
-
-/**
- * Global error handler
- */
 const errorHandler = (err, req, res, next) => {
   console.error('Error occurred:', {
     error: err.message,
@@ -12,19 +5,18 @@ const errorHandler = (err, req, res, next) => {
     url: req.url,
     method: req.method,
     timestamp: new Date().toISOString(),
-    // mssql/tedious specific info
     statement: err.statement || err.sql || (err.originalError && err.originalError.statement) || null,
     parameters: err.parameters || (err.prepared && err.prepared.parameters) || null,
     originalError: err.originalError ? (err.originalError.message || err.originalError) : null
   });
 
-  // Default error response
+
   let error = {
     success: false,
     message: 'Đã có lỗi xảy ra'
   };
 
-  // Handle specific error types
+
   if (err.name === 'ValidationError') {
     error.message = 'Dữ liệu không hợp lệ';
     error.details = err.message;

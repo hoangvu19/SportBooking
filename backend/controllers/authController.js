@@ -116,11 +116,6 @@ const login = async (req, res) => {
   }
 };
 
-// NOTE: Các hàm bên dưới (getCurrentUser, updateProfile, changePassword, searchUsers)
-// hiện tại vẫn đang sử dụng mockUsers (từ code gốc của bạn) thay vì AccountModel đã được sửa.
-// Nếu muốn sử dụng database, cần thay thế logic mockUsers bằng AccountModel.findById
-// và dùng bcrypt.hash/compare cho changePassword.
-
 const getCurrentUser = async (req, res) => {
   try {
     const user = await AccountDAL.getById(req.user.AccountID); 
@@ -235,7 +230,6 @@ const searchUsers = async (req, res) => {
   }
 };
 
-// Simple forgot password implementation (for demo)
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;

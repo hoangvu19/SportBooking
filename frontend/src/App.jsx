@@ -16,6 +16,7 @@ import Loading from "./components/Loading";
 import SanList from "./pages/SanList";
 import SanDetail from "./pages/SanDetail";
 import Booking from "./pages/Booking.jsx";
+import Livestreams from "./pages/Livestreams";
 
 const App = () => {
   const { user, isLoading } = useAuth();
@@ -42,6 +43,7 @@ const App = () => {
             <Route path="profile" element={<Profile />} />
             <Route path="profile/:profileId" element={<Profile />} />
             <Route path="create-post" element={<CreatePost />} />
+            <Route path="livestreams" element={<Livestreams />} />
             <Route path="post/:postId" element={
               <Suspense fallback={<Loading />}>
                 <PostDetail />

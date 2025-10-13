@@ -1,6 +1,3 @@
-/**
- * Comment Controller - Xử lý logic cho comments
- */
 const CommentDAL = require('../DAL/CommentDAL');
 const {
   sendSuccess,
@@ -23,9 +20,6 @@ const {
 } = require('../utils/controllerHelpers');
 
 const CommentController = {
-  /**
-   * Get comments by post ID
-   */
   async getCommentsByPost(req, res) {
     try {
       const { postId } = req.params;
