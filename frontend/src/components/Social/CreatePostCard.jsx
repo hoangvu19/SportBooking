@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Image, Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { postAPI, imageToBase64 } from "../../utils/api";
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import DEFAULT_AVATAR from "../../utils/defaults";
 

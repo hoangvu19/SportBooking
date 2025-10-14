@@ -4,7 +4,7 @@ import { BadgeCheck, Heart, MessageCircle, Share2, MoreHorizontal } from 'lucide
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
 import { reactionAPI, commentAPI, shareAPI, postAPI } from "../../utils/api";
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import PostModal from './PostModal';
 import ShareModal from './ShareModal';
 

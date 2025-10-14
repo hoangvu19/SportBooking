@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { ImageIcon, SendHorizonal } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { messageAPI, userAPI, imageToBase64 } from "../../utils/api";
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import Loading from "../../components/Shared/Loading";
 import DEFAULT_AVATAR from "../../utils/defaults";
 

@@ -4,7 +4,7 @@ import DEFAULT_AVATAR from "../../utils/defaults";
 import { assets } from "../../assets/assets";
 import MenuItems from "./MenuItems";
 import {  LogOut, User as UserIcon } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 
 
 const SideBar = ({ sidebarOpen, setSidebarOpen }) => {

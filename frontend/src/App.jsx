@@ -9,7 +9,7 @@ import Discover from "./pages/Social/Discover";
 import Profile from "./pages/Social/Profile";
 import CreatePost from "./pages/Social/CreatePost";
 const PostDetail = React.lazy(() => import("./pages/Social/PostDetail.jsx"));
-import { useAuth } from "./hooks/useAuth.jsx";
+import useAuth from "./hooks/useAuth";
 import Layout from "./pages/Shared/Layout";
 import {Toaster} from 'react-hot-toast';
 import Loading from "./components/Shared/Loading";

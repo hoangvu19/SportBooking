@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import livestreamApi from "../../utils/livestreamApi";
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import { useSearchParams } from 'react-router-dom';
 import './livestreams.css';
 import DEFAULT_AVATAR from '../../utils/defaults';

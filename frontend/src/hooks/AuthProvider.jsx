@@ -1,16 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { USE_MOCK_DATA } from '../config/apiConfig';
-import { mockLogin as mockLoginFn, mockUser } from '../utils/mockData';
+import { API_BASE_URL } from '../config/apiConfig';
+import AuthContext from './authContext';
 
-const AuthContext = createContext();
-
-export const AuthProvider = ({ children }) => {
+const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
-    // Check if user is logged in on app start
     useEffect(() => {
         const checkAuth = async () => {
             try {
@@ -20,11 +17,6 @@ export const AuthProvider = ({ children }) => {
                 if (token && userData && userData !== 'undefined') {
                     const user = JSON.parse(userData);
                     setUser(user);
-                } else if (USE_MOCK_DATA) {
-                    // Auto-login with mock user in production without backend
-                    setUser(mockUser);
-                    localStorage.setItem('authToken', 'mock-token');
-                    localStorage.setItem('userData', JSON.stringify(mockUser));
                 }
             } catch (error) {
                 console.error('Auth check failed:', error);
@@ -40,20 +32,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (identifier, password) => {
         try {
-            // Use mock data if in production without backend
-            if (USE_MOCK_DATA) {
-                const result = await mockLoginFn(identifier, password);
-                if (result.success) {
-                    localStorage.setItem('authToken', result.data.token);
-                    localStorage.setItem('userData', JSON.stringify(result.data.user));
-                    setUser(result.data.user);
-                    navigate('/feed');
-                    return { success: true, user: result.data.user };
-                }
-                return result;
-            }
-
-            const response = await fetch('http://localhost:5000/api/auth/login', {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -64,12 +43,10 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                // Save token and user data - backend trả về data.data.token và data.data.user
                 localStorage.setItem('authToken', data.data.token);
                 localStorage.setItem('userData', JSON.stringify(data.data.user));
                 setUser(data.data.user);
                 
-                // Navigate to feed after successful login
                 navigate('/feed');
                 return { success: true, user: data.data.user };
             } else {
@@ -90,7 +67,7 @@ export const AuthProvider = ({ children }) => {
 
     const signup = async (userData) => {
         try {
-            const response = await fetch('http://localhost:5000/api/auth/register', {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -113,7 +90,7 @@ export const AuthProvider = ({ children }) => {
 
     const forgotPassword = async (email) => {
         try {
-            const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
+            const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -150,11 +127,4 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
-
+export default AuthProvider;

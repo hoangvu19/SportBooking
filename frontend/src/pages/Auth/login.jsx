@@ -1,7 +1,7 @@
 import React, { useState } from "react"; 
 import { assets } from "../../assets/assets";
 import { Eye, EyeOff, Mail, Lock, User, ChevronDown } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import "../../CSS/LoginStyles.css";
 
 const Login = () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import { Pencil, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { userAPI, imageToBase64 } from "../../utils/api";

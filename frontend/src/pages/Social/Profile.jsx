@@ -7,7 +7,7 @@ import moment from "moment";
 import PostCard from "../../components/Social/PostCard";
 import ProfileModal from "../../components/Social/ProfileModal";
 import { userAPI, postAPI } from "../../utils/api";
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import DEFAULT_AVATAR from "../../utils/defaults";
 
 const Profile = () => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { commentAPI } from "../../utils/api";
 import CommentForm from './CommentForm';
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import DEFAULT_AVATAR from "../../utils/defaults";
 import { MoreHorizontal, Image as ImageIcon } from 'lucide-react';
 

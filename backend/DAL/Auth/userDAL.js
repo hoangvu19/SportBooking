@@ -1,6 +1,6 @@
 const sql = require('mssql');
 const { poolPromise } = require('../../config/db');
-const Account = require('../../models/Auth/account');
+const Account = require('../../models/Auth/Account');
 
 class UserDAL {
     /**

@@ -1,7 +1,7 @@
 import React from "react";
 import Sidebar from "../../components/Shared/SideBar";
 import { Outlet } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import Loading from "../../components/Shared/Loading";
 import { Menu, X } from "lucide-react";
 import NotificationBell from "../../components/Shared/NotificationBell";

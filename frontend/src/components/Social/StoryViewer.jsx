@@ -1,7 +1,7 @@
 import { BadgeCheck, Eye, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { storyAPI } from "../../utils/api";
-import { useAuth } from "../../hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import { toast } from 'react-hot-toast';
 
 const STORY_DURATION = 5000; // 5 seconds for image/text stories

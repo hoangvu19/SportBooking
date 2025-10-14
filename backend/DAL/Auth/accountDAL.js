@@ -1,7 +1,3 @@
-/**
- * Account Data Access Layer (DAL)
- * Handles all database operations for Account entity
- */
 const { poolPromise } = require("../../config/db");
 const sql = require('mssql');
 const Account = require("../../models/Auth/Account");
