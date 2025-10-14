@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { USE_MOCK_DATA } from '../config/apiConfig';
+import { mockLogin as mockLoginFn, mockUser } from '../utils/mockData';
 
 const AuthContext = createContext();
 
@@ -18,6 +20,11 @@ export const AuthProvider = ({ children }) => {
                 if (token && userData && userData !== 'undefined') {
                     const user = JSON.parse(userData);
                     setUser(user);
+                } else if (USE_MOCK_DATA) {
+                    // Auto-login with mock user in production without backend
+                    setUser(mockUser);
+                    localStorage.setItem('authToken', 'mock-token');
+                    localStorage.setItem('userData', JSON.stringify(mockUser));
                 }
             } catch (error) {
                 console.error('Auth check failed:', error);
@@ -33,6 +40,19 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (identifier, password) => {
         try {
+            // Use mock data if in production without backend
+            if (USE_MOCK_DATA) {
+                const result = await mockLoginFn(identifier, password);
+                if (result.success) {
+                    localStorage.setItem('authToken', result.data.token);
+                    localStorage.setItem('userData', JSON.stringify(result.data.user));
+                    setUser(result.data.user);
+                    navigate('/feed');
+                    return { success: true, user: result.data.user };
+                }
+                return result;
+            }
+
             const response = await fetch('http://localhost:5000/api/auth/login', {
                 method: 'POST',
                 headers: {
