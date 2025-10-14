@@ -18,7 +18,7 @@ export const notificationAPI = {
  * Handles all API calls với error handling và loading states
  */
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/apiConfig';
 
 // Simple in-memory cache for GET requests to avoid repeated identical calls
 const GET_CACHE_TTL = 5000; // ms

@@ -3,7 +3,10 @@
  * Handles livestream-related operations
  */
 
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/apiConfig';
+
+// Livestream API base URL (add /livestream to the base URL)
+const LIVESTREAM_API_BASE_URL = `${API_BASE_URL}/livestream`;
 
 /**
  * Get auth token from localStorage
@@ -16,7 +19,7 @@ const getAuthToken = () => {
  * Generic API call handler for livestreams
  */
 const apiCall = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${LIVESTREAM_API_BASE_URL}${endpoint}`;
   const token = getAuthToken();
 
   const headers = {
