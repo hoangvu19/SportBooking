@@ -18,7 +18,12 @@ export const notificationAPI = {
  * Handles all API calls với error handling và loading states
  */
 
-import { API_BASE_URL } from '../config/apiConfig';
+import { API_BASE_URL, USE_MOCK_DATA } from '../config/apiConfig';
+import { 
+    mockGetFeed, 
+    mockGetStories, 
+    mockGetConversations 
+} from './mockData';
 
 // Simple in-memory cache for GET requests to avoid repeated identical calls
 const GET_CACHE_TTL = 5000; // ms
@@ -33,9 +38,36 @@ const getAuthToken = () => {
 };
 
 /**
+ * Get mock data based on endpoint
+ */
+const getMockData = async (endpoint) => {
+    // Match endpoints to mock data
+    if (endpoint.includes('/posts/feed')) return await mockGetFeed();
+    if (endpoint.includes('/stories')) return await mockGetStories();
+    if (endpoint.includes('/messages/conversations')) return await mockGetConversations();
+    if (endpoint.includes('/users/following')) return { success: true, data: [] };
+    if (endpoint.includes('/users/followers')) return { success: true, data: [] };
+    if (endpoint.includes('/users/suggestions')) return { success: true, data: [] };
+    if (endpoint.includes('/sport-fields')) return { success: true, data: [] };
+    if (endpoint.includes('/bookings')) return { success: true, data: [] };
+    if (endpoint.includes('/auth/me')) return { success: true, data: JSON.parse(localStorage.getItem('userData') || '{}') };
+    
+    // Default empty response
+    return { success: true, data: null };
+};
+
+/**
  * Generic API call handler
  */
 const apiCall = async (endpoint, options = {}) => {
+    // If using mock data (production without backend), return mock
+    if (USE_MOCK_DATA) {
+        console.log(`🎭 Mock API Call: ${options.method || 'GET'} ${endpoint}`);
+        const mockData = await getMockData(endpoint);
+        console.log(`✅ Mock Response:`, mockData);
+        return mockData;
+    }
+
     const url = `${API_BASE_URL}${endpoint}`;
     const token = getAuthToken();
 
