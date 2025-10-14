@@ -4,7 +4,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const areaController = require('../controllers/areaController');
+const areaController = require('../controllers/Sport/areaController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 // Public routes

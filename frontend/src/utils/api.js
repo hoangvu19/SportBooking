@@ -606,6 +606,90 @@ export const storyAPI = {
     },
 };
 
+// ==================== FACILITY APIs ====================
+export const facilityAPI = {
+    /**
+     * Get all facilities (using sport-fields endpoint)
+     */
+    getAll: async () => {
+        return apiCall('/sport-fields');
+    },
+
+    /**
+     * Get facility by ID (using sport-fields endpoint)
+     */
+    getById: async (facilityId) => {
+        return apiCall(`/sport-fields/${facilityId}`);
+    },
+
+    /**
+     * Get facility availability
+     */
+    getAvailability: async (facilityId) => {
+        return apiCall(`/sport-fields/${facilityId}/availability`);
+    },
+
+    /**
+     * Search facilities
+     */
+    search: async (query) => {
+        return apiCall(`/sport-fields/search?query=${encodeURIComponent(query)}`);
+    },
+
+    /**
+     * Get fields by facility
+     */
+    getByFacilityId: async (facilityId) => {
+        return apiCall(`/sport-fields/facility/${facilityId}`);
+    },
+};
+
+// ==================== BOOKING APIs ====================
+export const bookingAPI = {
+    /**
+     * Get all bookings for current user
+     */
+    getMyBookings: async () => {
+        return apiCall('/bookings/my-bookings');
+    },
+
+    /**
+     * Get booking by ID
+     */
+    getById: async (bookingId) => {
+        return apiCall(`/bookings/${bookingId}`);
+    },
+
+    /**
+     * Create new booking
+     */
+    create: async (bookingData) => {
+        return apiCall('/bookings', {
+            method: 'POST',
+            body: JSON.stringify(bookingData),
+        });
+    },
+
+    /**
+     * Cancel booking
+     */
+    cancel: async (bookingId) => {
+        return apiCall(`/bookings/${bookingId}/cancel`, {
+            method: 'PUT',
+        });
+    },
+
+    /**
+     * Update booking status (admin only)
+     */
+    updateStatus: async (bookingId, status) => {
+        return apiCall(`/bookings/${bookingId}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status }),
+        });
+    },
+};
+
 export default {
     authAPI,
     postAPI,
@@ -614,6 +698,8 @@ export default {
     messageAPI,
     userAPI,
     storyAPI,
+    facilityAPI,
+    bookingAPI,
     imageToBase64,
     formatErrorMessage,
     shareAPI,

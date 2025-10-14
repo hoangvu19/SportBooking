@@ -4,7 +4,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const sportTypeController = require('../controllers/sportTypeController');
+const sportTypeController = require('../controllers/Sport/sportTypeController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 // Public routes

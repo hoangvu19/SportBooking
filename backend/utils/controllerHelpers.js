@@ -1,4 +1,4 @@
-const Post = require('../models/Post');
+const Post = require('../models/Social/Post');
 const { toAbsoluteUrl } = require('./requestUtils');
 
 const VALID_REACTIONS = ['Like', 'Love', 'Haha', 'Wow', 'Sad', 'Angry'];

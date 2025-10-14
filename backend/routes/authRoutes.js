@@ -11,7 +11,7 @@ const {
   changePassword, 
   searchUsers,
   forgotPassword
-} = require('../controllers/authController');
+} = require('../controllers/Auth/authController');
 
 // Simple auth middleware
 const authenticateToken = (req, res, next) => {

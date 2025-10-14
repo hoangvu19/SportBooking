@@ -1,22 +1,24 @@
 import React, { Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
-import Login from "./pages/login";    
-import Feed from "./pages/Feed";
-import Messages from "./pages/Messages";
-import ChatBox from "./pages/ChatBox";  
-import Connections from "./pages/Connection"; 
-import Discover from "./pages/Discover";
-import Profile from "./pages/Profile";
-import CreatePost from "./pages/CreatePost";
-const PostDetail = React.lazy(() => import("./pages/PostDetail.jsx"));
+import Login from "./pages/Auth/login";    
+import Feed from "./pages/Social/Feed";
+import Messages from "./pages/Social/Messages";
+import ChatBox from "./pages/Social/ChatBox";  
+import Connections from "./pages/Social/Connection"; 
+import Discover from "./pages/Social/Discover";
+import Profile from "./pages/Social/Profile";
+import CreatePost from "./pages/Social/CreatePost";
+const PostDetail = React.lazy(() => import("./pages/Social/PostDetail.jsx"));
 import { useAuth } from "./hooks/useAuth.jsx";
-import Layout from "./pages/Layout";
+import Layout from "./pages/Shared/Layout";
 import {Toaster} from 'react-hot-toast';
-import Loading from "./components/Loading";
-import SanList from "./pages/SanList";
-import SanDetail from "./pages/SanDetail";
-import Booking from "./pages/Booking.jsx";
-import Livestreams from "./pages/Livestreams";
+import Loading from "./components/Shared/Loading";
+import SanList from "./pages/Sport/SanList";
+import SanDetail from "./pages/Sport/SanDetail";
+import Booking from "./pages/Sport/Booking.jsx";
+import MyBookings from "./pages/Sport/MyBookings.jsx";
+import Livestreams from "./pages/Livestream/Livestreams";
+import LiveRooms from "./pages/Livestream/LiveRooms";
 
 const App = () => {
   const { user, isLoading } = useAuth();
@@ -50,9 +52,13 @@ const App = () => {
               </Suspense>
             } />
             {/* Các route cho phần đặt sân bóng */}
+            <Route path="sanlist" element={<SanList />} />
             <Route path="san-list" element={<SanList />} />
             <Route path="san/:sanId" element={<SanDetail />} />
             <Route path="booking" element={<Booking />} />
+            <Route path="my-bookings" element={<MyBookings />} />
+            {/* Các route cho livestream */}
+            <Route path="live-rooms" element={<LiveRooms />} />
           </Route>
         )}
       </Routes>

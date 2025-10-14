@@ -7,7 +7,7 @@ const {
   updateFacility,
   deleteFacility,
   getFacilityAvailability
-} = require('../controllers/facilityController');
+} = require('../controllers/Sport/facilityController');
 const { authenticateToken } = require('../middleware/auth');
 
 // Get all facilities

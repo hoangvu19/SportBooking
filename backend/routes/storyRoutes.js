@@ -8,7 +8,7 @@ const {
   viewStory,
   getStoryViewers,
   getStoryViewCount
-} = require('../controllers/storyController');
+} = require('../controllers/Social/storyController');
 const { authenticateToken } = require('../middleware/auth');
 const { uploadStoryMedia } = require('../middleware/upload');
 

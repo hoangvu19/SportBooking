@@ -4,7 +4,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const facilityController = require('../controllers/facilityControllerNew');
+const facilityController = require('../controllers/Sport/facilityControllerNew');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 // Public routes

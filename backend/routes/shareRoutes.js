@@ -3,8 +3,8 @@
  */
 const express = require('express');
 const router = express.Router();
-const ShareController = require('../controllers/shareController');
-const PostController = require('../controllers/postController');
+const ShareController = require('../controllers/Social/shareController');
+const PostController = require('../controllers/Social/postController');
 const { authenticateToken } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');
 

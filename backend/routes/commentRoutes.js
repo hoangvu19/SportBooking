@@ -3,7 +3,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const CommentController = require('../controllers/commentController');
+const CommentController = require('../controllers/Social/commentController');
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const multer = require('multer');
 const os = require('os');

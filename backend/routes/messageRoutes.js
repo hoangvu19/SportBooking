@@ -3,7 +3,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const MessageController = require('../controllers/messageController');
+const MessageController = require('../controllers/Social/messageController');
 const { authenticateToken } = require('../middleware/auth');
 
 // All routes require authentication

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Sport Fields API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .field-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #loading {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Sport Fields API</h1>
+    
+    <button onclick="testAPI()">Test API</button>
+    <button onclick="testDirectBackend()">Test Direct Backend (5000)</button>
+    
+    <div id="loading">Loading...</div>
+    <div id="status"></div>
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            
+            statusDiv.innerHTML = '';
+            resultsDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+            
+            try {
+                console.log('Fetching from: /api/sport-fields');
+                const response = await fetch('/api/sport-fields');
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                loadingDiv.style.display = 'none';
+                
+                if (data.success && data.data) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            <h3>✅ API Working!</h3>
+                            <p>Found ${data.data.length} sport fields</p>
+                            <p>Proxy is working correctly!</p>
+                        </div>
+                    `;
+                    
+                    resultsDiv.innerHTML = '<h3>Sport Fields:</h3>';
+                    data.data.forEach(field => {
+                        resultsDiv.innerHTML += `
+                            <div class="field-card">
+                                <h4>${field.TenSan || field.FieldName}</h4>
+                                <p><strong>ID:</strong> ${field.SanID || field.FieldID}</p>
+                                <p><strong>Môn thể thao:</strong> ${field.MonTheThao || field.SportName}</p>
+                                <p><strong>Khu vực:</strong> ${field.KhuVuc || field.AreaName}</p>
+                                <p><strong>Giá thuê:</strong> ${(field.GiaThue || field.RentalPrice)?.toLocaleString('vi-VN')}đ</p>
+                                <p><strong>Trạng thái:</strong> ${field.TrangThai || field.Status}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            <h3>❌ API Error</h3>
+                            <p>${data.message || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        <h3>❌ Connection Failed</h3>
+                        <p>${error.message}</p>
+                        <p>Check if:</p>
+                        <ul>
+                            <li>Backend server is running (port 5000)</li>
+                            <li>Vite proxy is configured correctly</li>
+                            <li>Browser console for more details</li>
+                        </ul>
+                    </div>
+                `;
+                console.error('Fetch error:', error);
+            }
+        }
+        
+        async function testDirectBackend() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            
+            statusDiv.innerHTML = '';
+            resultsDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+            
+            try {
+                console.log('Fetching from: http://localhost:5000/api/sport-fields');
+                const response = await fetch('http://localhost:5000/api/sport-fields');
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                loadingDiv.style.display = 'none';
+                
+                if (data.success && data.data) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            <h3>✅ Direct Backend Connection Working!</h3>
+                            <p>Found ${data.data.length} sport fields</p>
+                            <p>Backend API is responding correctly</p>
+                        </div>
+                    `;
+                    
+                    resultsDiv.innerHTML = '<h3>Sport Fields (first 5):</h3>';
+                    data.data.slice(0, 5).forEach(field => {
+                        resultsDiv.innerHTML += `
+                            <div class="field-card">
+                                <h4>${field.TenSan || field.FieldName}</h4>
+                                <p><strong>ID:</strong> ${field.SanID || field.FieldID}</p>
+                                <p><strong>Môn thể thao:</strong> ${field.MonTheThao || field.SportName}</p>
+                                <p><strong>Khu vực:</strong> ${field.KhuVuc || field.AreaName}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            <h3>❌ Backend Error</h3>
+                            <p>${data.message || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        <h3>❌ CORS Error or Connection Failed</h3>
+                        <p>${error.message}</p>
+                        <p>This is expected if CORS is not enabled on backend</p>
+                        <p>The proxy should handle this in production</p>
+                    </div>
+                `;
+                console.error('Fetch error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const ReactionController = require('../controllers/reactionController');
+const ReactionController = require('../controllers/Social/reactionController');
 const { authenticateToken } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');
 

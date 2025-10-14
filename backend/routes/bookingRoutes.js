@@ -4,7 +4,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const bookingController = require('../controllers/bookingController');
+const bookingController = require('../controllers/Sport/bookingController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 // Protected routes (require authentication)

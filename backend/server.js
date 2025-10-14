@@ -6,8 +6,11 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const http = require('http');
+const { Server: IOServer } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
 
 // Serve uploaded files statically
 const path = require('path');
@@ -184,11 +187,30 @@ app.use((error, req, res, next) => {
   });
 });
 
-const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log('🚀 Social Media Backend Server running on http://localhost:' + port);
-  console.log('✅ All routes loaded - Database integration only');
-  console.log('📝 Ready for database operations');
+// Setup Socket.IO for WebRTC signaling
+const io = new IOServer(server, {
+  cors: {
+    origin: (origin, callback) => {
+      if (!origin || origin.startsWith('http://localhost:')) callback(null, true);
+      else callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST']
+  }
 });
 
-module.exports = app;
+try {
+  const signaling = require('./lib/signaling');
+  signaling.init(io);
+  console.log('✅ Signaling initialized');
+} catch (e) {
+  console.warn('⚠️ Signaling module not available:', e.message);
+}
+
+const port = process.env.PORT || 5000;
+server.listen(port, () => {
+  console.log('🚀 Social Media Backend Server running on http://localhost:' + port);
+  console.log('✅ All routes loaded - Database integration only');
+  console.log('📝 Ready for database operations and real-time signaling');
+});
+
+module.exports = server;

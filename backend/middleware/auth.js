@@ -2,9 +2,9 @@
  * Authentication Middleware - Xử lý xác thực JWT và phân quyền
  */
 const jwt = require('jsonwebtoken');
-const AccountDAL = require('../DAL/accountDAL');
-const Account = require('../models/Account');
-const AccountRoleModel = require('../models/AccountRole');
+const AccountDAL = require('../DAL/Auth/accountDAL');
+const Account = require('../models/Auth/account');
+const AccountRoleModel = require('../models/Auth/AccountRole');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey';
 

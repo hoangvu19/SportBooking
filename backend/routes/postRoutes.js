@@ -7,7 +7,7 @@ const {
   getUserPosts,
   updatePost,
   deletePost
-} = require('../controllers/postController');
+} = require('../controllers/Social/postController');
 const { authenticateToken } = require('../middleware/auth');
 
 // Create new post
