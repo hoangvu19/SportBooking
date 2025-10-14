@@ -1,10 +1,10 @@
 // API Configuration for different environments
 const config = {
   development: {
-    API_BASE_URL: 'http://localhost:5000'
+    API_BASE_URL: 'http://localhost:5000/api'
   },
   production: {
-    API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://your-backend-url.railway.app'
+    API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://your-backend-url.railway.app/api'
   }
 };
 
