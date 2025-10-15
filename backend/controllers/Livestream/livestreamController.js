@@ -72,7 +72,8 @@ async function endLivestream(req, res) {
 
     // Notify connected signaling namespace that this livestream ended (so viewers can react)
     try {
-      const emitter = require('../lib/signalingEmitter');
+      // signalingEmitter is in backend/lib, from this controller the correct relative path is '../../lib/signalingEmitter'
+      const emitter = require('../../lib/signalingEmitter');
       if (emitter && typeof emitter.emitToRoom === 'function') {
         emitter.emitToRoom(String(id), { type: 'livestream-ended', LivestreamID: id, EndedAt: updated && updated.EndedAt ? updated.EndedAt : new Date() });
       }

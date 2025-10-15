@@ -5,8 +5,8 @@
 
 import { API_BASE_URL } from '../config/apiConfig';
 
-// Livestream API base URL (add /livestream to the base URL)
-const LIVESTREAM_API_BASE_URL = `${API_BASE_URL}/livestream`;
+// Livestream API base URL — use API_BASE_URL directly; endpoints in this file include the '/livestreams' segment
+const LIVESTREAM_API_BASE_URL = API_BASE_URL;
 
 /**
  * Get auth token from localStorage
