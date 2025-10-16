@@ -150,24 +150,35 @@ app.get('/', async (req, res) => {
   });
 });
 
-// API Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/users', require('./routes/userRoutes')); // NEW: User routes
-app.use('/api/posts', require('./routes/postRoutes'));
-app.use('/api/stories', require('./routes/storyRoutes')); // NEW: Story routes
-app.use('/api/comments', require('./routes/commentRoutes'));
-app.use('/api/messages', require('./routes/messageRoutes'));
-app.use('/api/reactions', require('./routes/reactionRoutes'));
-app.use('/api/shares', require('./routes/shareRoutes'));
-app.use('/api/roles', require('./routes/roleRoutes'));
-app.use('/api/facilities', require('./routes/facilityRoutes'));
-app.use('/api/notifications', require('./routes/notificationRoutes'));
-app.use('/api/areas', require('./routes/areaRoutes'));
-app.use('/api/sport-types', require('./routes/sportTypeRoutes'));
-app.use('/api/sport-fields', require('./routes/sportFieldRoutes'));
-app.use('/api/bookings', require('./routes/bookingRoutes'));
-app.use('/api/feedback', require('./routes/feedbackRoutes'));
-// Livestream feature
+// API Routes - grouped by feature
+app.use('/api/auth', require('./routes/auth/authRoutes'));
+
+// Social area
+app.use('/api/posts', require('./routes/social/postRoutes'));
+app.use('/api/comments', require('./routes/social/commentRoutes'));
+app.use('/api/messages', require('./routes/social/messageRoutes'));
+app.use('/api/reactions', require('./routes/social/reactionRoutes'));
+app.use('/api/shares', require('./routes/social/shareRoutes'));
+app.use('/api/stories', require('./routes/social/storyRoutes'));
+app.use('/api/notifications', require('./routes/social/notificationRoutes'));
+
+// Follow routes are mounted under /api/users to keep frontend compatibility
+app.use('/api/users', require('./routes/social/followRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+
+// Sport / facility area
+app.use('/api/areas', require('./routes/sport/areaRoutes'));
+// Use the enhanced facility routes as the single source of truth
+app.use('/api/facilities', require('./routes/sport/facilityRoutesNew'));
+app.use('/api/sport-fields', require('./routes/sport/sportFieldRoutes'));
+app.use('/api/sport-types', require('./routes/sport/sportTypeRoutes'));
+app.use('/api/bookings', require('./routes/sport/bookingRoutes'));
+app.use('/api/feedback', require('./routes/sport/feedbackRoutes'));
+
+// Roles
+app.use('/api/roles', require('./routes/auth/roleRoutes'));
+
+// Share livestreams
 app.use('/api/livestreams', require('./routes/livestreamRoutes'));
 
 // 404 handler
