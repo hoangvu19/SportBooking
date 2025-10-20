@@ -14,6 +14,7 @@ const server = http.createServer(app);
 
 // Serve uploaded files statically
 const path = require('path');
+const fs = require('fs');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ========== PERFORMANCE & SECURITY SETUP ==========
@@ -164,7 +165,7 @@ app.use('/api/notifications', require('./routes/social/notificationRoutes'));
 
 // Follow routes are mounted under /api/users to keep frontend compatibility
 app.use('/api/users', require('./routes/social/followRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/users', require('./routes/auth/userRoutes'));
 
 // Sport / facility area
 app.use('/api/areas', require('./routes/sport/areaRoutes'));
@@ -179,7 +180,32 @@ app.use('/api/feedback', require('./routes/sport/feedbackRoutes'));
 app.use('/api/roles', require('./routes/auth/roleRoutes'));
 
 // Share livestreams
-app.use('/api/livestreams', require('./routes/livestreamRoutes'));
+app.use('/api/livestreams', require('./routes/livestream/livestreamRoutes'));
+
+// Debug upload listing route removed to avoid accidental exposure of uploaded files.
+// If you need a local debug listing, recreate a temporary route under a secure flag.
+console.log('ℹ️ Debug upload routes removed from server build');
+
+// Dev-only helper: check whether a file under /uploads exists and return JSON.
+// This avoids the frontend having to issue HEAD requests that surface 404 network errors in the browser.
+app.get('/api/internal/file-exists', (req, res) => {
+  try {
+    // query param 'path' should be path under uploads without leading '/uploads/' prefix, e.g. 'comments/abc.jpg'
+    const p = String(req.query.path || '').trim();
+    if (!p) return res.status(200).json({ success: true, exists: false });
+    if (p.includes('..')) return res.status(400).json({ success: false, message: 'Invalid path' });
+
+    const safeRelative = p.replace(/^\/+/, '');
+    const full = path.join(__dirname, 'uploads', safeRelative);
+    fs.access(full, fs.constants.R_OK, (err) => {
+      if (err) return res.status(200).json({ success: true, exists: false });
+      return res.status(200).json({ success: true, exists: true });
+    });
+  } catch (e) {
+    console.error('file-exists error', e && e.message);
+    return res.status(500).json({ success: false, message: 'Internal error' });
+  }
+});
 
 // 404 handler
 app.use((req, res) => {

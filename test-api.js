@@ -1,9 +1,3 @@
-#!/usr/bin/env node
-/**
- * Test API Endpoints
- * Kiểm tra tất cả các API endpoints hoạt động đúng
- */
-
 const API_BASE = 'http://localhost:5000/api';
 
 async function testAPI(endpoint, method = 'GET', body = null) {

@@ -57,7 +57,6 @@ class Story {
       createdAt: this.CreatedDate,
       expiresAt: this.ExpiresAt,
       viewCount: this.ViewCount,
-      // Backend-specific fields
       StoryID: this.StoryID,
       AccountID: this.AccountID,
       Status: this.Status

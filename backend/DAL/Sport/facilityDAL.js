@@ -16,9 +16,10 @@ class FacilityDAL {
         .input('AreaID', sql.Int, areaId)
         .input('OwnerID', sql.Int, ownerId)
         .query(`
-          INSERT INTO Facility (FacilityName, AreaID, OwnerID, CreatedAt)
+          -- Do not reference CreatedAt explicitly (schema may not include it)
+          INSERT INTO Facility (FacilityName, AreaID, OwnerID)
           OUTPUT INSERTED.*
-          VALUES (@FacilityName, @AreaID, @OwnerID, GETDATE())
+          VALUES (@FacilityName, @AreaID, @OwnerID)
         `);
 
       await transaction.commit();
@@ -101,21 +102,61 @@ class FacilityDAL {
   static async getAllFacilities(page = 1, limit = 20) {
     const pool = await poolPromise;
     const offset = (page - 1) * limit;
+    const query = `
+      SELECT f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID, a.AreaName, acc.Username as OwnerUsername
+      FROM Facility f
+      JOIN Area a ON f.AreaID = a.AreaID
+      JOIN Account acc ON f.OwnerID = acc.AccountID
+      ORDER BY f.FacilityID DESC
+      OFFSET @Offset ROWS
+      FETCH NEXT @Limit ROWS ONLY
+    `;
 
-    const result = await pool.request()
-      .input('Limit', sql.Int, limit)
-      .input('Offset', sql.Int, offset)
-      .query(`
-        SELECT f.*, a.AreaName, acc.Username as OwnerUsername
-        FROM Facility f
-        JOIN Area a ON f.AreaID = a.AreaID
-        JOIN Account acc ON f.OwnerID = acc.AccountID
-        ORDER BY f.CreatedAt DESC
-        OFFSET @Offset ROWS
-        FETCH NEXT @Limit ROWS ONLY
-      `);
+    // Run the main paginated query and the count query separately with granular logging
+    const request = pool.request().input('Limit', sql.Int, limit).input('Offset', sql.Int, offset);
 
-    const countResult = await pool.request().query('SELECT COUNT(*) as TotalCount FROM Facility');
+    let result;
+    try {
+      result = await request.query(query);
+    } catch (err) {
+      console.error('FacilityDAL.getAllFacilities - Failed main query');
+      console.error('SQL:', query);
+      console.error('Inputs: Limit=', limit, 'Offset=', offset);
+      console.error('Error:', err && err.message ? err.message : err);
+
+      // If the database schema is missing columns (CreatedAt), try a safer fallback
+      if (err && err.message && err.message.includes('CreatedAt')) {
+        try {
+          console.warn('FacilityDAL.getAllFacilities - Falling back to simplified query due to missing CreatedAt');
+          const fallbackQuery = `
+            SELECT FacilityID, FacilityName, AreaID, OwnerID
+            FROM Facility
+            ORDER BY FacilityID DESC
+            OFFSET @Offset ROWS
+            FETCH NEXT @Limit ROWS ONLY
+          `;
+
+          const fallbackReq = pool.request().input('Limit', sql.Int, limit).input('Offset', sql.Int, offset);
+          result = await fallbackReq.query(fallbackQuery);
+        } catch (fallbackErr) {
+          console.error('FacilityDAL.getAllFacilities - Fallback query failed:', fallbackErr && fallbackErr.message ? fallbackErr.message : fallbackErr);
+          throw err; // throw original
+        }
+      } else {
+        throw err;
+      }
+    }
+
+    let totalCount = 0;
+    try {
+      const countResult = await pool.request().query('SELECT COUNT(*) as TotalCount FROM Facility');
+      totalCount = countResult.recordset[0].TotalCount;
+    } catch (err) {
+      console.error('FacilityDAL.getAllFacilities - Failed count query');
+      console.error("SQL: SELECT COUNT(*) as TotalCount FROM Facility");
+      console.error('Error:', err && err.message ? err.message : err);
+      throw err;
+    }
 
     return {
       success: true,
@@ -123,7 +164,7 @@ class FacilityDAL {
       pagination: {
         page,
         limit,
-        total: countResult.recordset[0].TotalCount
+        total: totalCount
       }
     };
   }
@@ -192,20 +233,8 @@ class FacilityDAL {
 
     return { success: true, rowsAffected: result.rowsAffected[0] };
   }
-}
 
-module.exports = FacilityDAL;
-/**
- * Facility Data Access Layer
- * Provides data access methods for facility operations
- */
-const { poolPromise } = require('../../config/db');
-const sql = require('mssql');
-
-class FacilityDAL {
-  /**
-   * Search facilities with advanced filters
-   */
+  // Advanced search with aggregation and filters
   static async searchFacilities(searchParams) {
     try {
       const pool = await poolPromise;
@@ -222,7 +251,8 @@ class FacilityDAL {
       const offset = (page - 1) * limit;
       
       let query = `
-        SELECT DISTINCT f.*, a.AreaName,
+        SELECT DISTINCT f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID,
+               a.AreaName,
                acc.Username as OwnerUsername, acc.FullName as OwnerFullName,
                AVG(CAST(fb.Rating as FLOAT)) as AverageRating,
                COUNT(fb.FeedbackID) as ReviewCount
@@ -274,7 +304,7 @@ class FacilityDAL {
       }
       
       query += `
-        GROUP BY f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID, f.CreatedAt, 
+        GROUP BY f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID,
                  a.AreaName, acc.Username, acc.FullName
       `;
       
@@ -302,9 +332,6 @@ class FacilityDAL {
     }
   }
 
-  /**
-   * Get facility statistics
-   */
   static async getFacilityStatistics(facilityId) {
     try {
       const pool = await poolPromise;
@@ -334,15 +361,13 @@ class FacilityDAL {
     }
   }
 
-  /**
-   * Get nearby facilities
-   */
   static async getNearbyFacilities(areaId, excludeFacilityId = null, limit = 5) {
     try {
       const pool = await poolPromise;
       
       let query = `
-        SELECT TOP (@Limit) f.*, a.AreaName,
+        SELECT TOP (@Limit) f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID,
+               a.AreaName,
                AVG(CAST(fb.Rating as FLOAT)) as AverageRating,
                COUNT(fb.FeedbackID) as ReviewCount
         FROM Facility f
@@ -361,7 +386,7 @@ class FacilityDAL {
       }
       
       query += `
-        GROUP BY f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID, f.CreatedAt, a.AreaName
+        GROUP BY f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID, a.AreaName
         ORDER BY AverageRating DESC, ReviewCount DESC
       `;
       
@@ -374,15 +399,13 @@ class FacilityDAL {
     }
   }
 
-  /**
-   * Get popular facilities (most bookings)
-   */
   static async getPopularFacilities(areaId = null, limit = 10) {
     try {
       const pool = await poolPromise;
       
       let query = `
-        SELECT TOP (@Limit) f.*, a.AreaName,
+        SELECT TOP (@Limit) f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID,
+               a.AreaName,
                COUNT(b.BookingID) as BookingCount,
                AVG(CAST(fb.Rating as FLOAT)) as AverageRating
         FROM Facility f
@@ -400,7 +423,7 @@ class FacilityDAL {
       }
       
       query += `
-        GROUP BY f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID, f.CreatedAt, a.AreaName
+        GROUP BY f.FacilityID, f.FacilityName, f.AreaID, f.OwnerID, a.AreaName
         ORDER BY BookingCount DESC, AverageRating DESC
       `;
       
@@ -413,9 +436,6 @@ class FacilityDAL {
     }
   }
 
-  /**
-   * Bulk update facility status
-   */
   static async bulkUpdateFacilityStatus(facilityIds, status) {
     try {
       const pool = await poolPromise;

@@ -41,8 +41,11 @@ class Message {
    */
   toFrontendFormat() {
     const isBase64Image = typeof this.Content === 'string' && this.Content.startsWith('data:image/');
-    // images array might be populated by DAL: each item { id, data, url }
-    const images = Array.isArray(this.Images) ? this.Images.map(i => i.data || mapImageUrl(i) || i.url).filter(Boolean) : (isBase64Image ? [this.Content] : []);
+    // images array populated by DAL: each item { id, data } - data contains base64
+    const images = Array.isArray(this.Images) ? this.Images.map(i => {
+      // Return ImageData (base64) directly
+      return i.data || i.url;
+    }).filter(Boolean) : (isBase64Image ? [this.Content] : []);
 
     return {
       _id: idToString(this.MessageID),

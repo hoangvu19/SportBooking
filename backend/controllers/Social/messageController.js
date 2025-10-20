@@ -2,7 +2,8 @@
  * Message Controller - Xử lý logic cho messages
  */
 const MessageDAL = require('../../DAL/Social/MessageDAL');
-// const Message = require('../models/MessageClass');
+const { buildBaseUrl } = require('../../utils/controllerHelpers');
+const { toAbsoluteUrl } = require('../../utils/requestUtils');
 
 const MessageController = {
   /**
@@ -10,8 +11,9 @@ const MessageController = {
    */
   async sendMessage(req, res) {
     try {
-  const { receiverId, content, images } = req.body; // images: optional array of base64 or URLs
+      const { receiverId, content, images } = req.body; // images: optional array of base64 or URLs
       const senderId = req.user.AccountID;
+      const files = req.files || []; // multer uploaded files
 
       // Validate
       if (!receiverId) {
@@ -21,43 +23,65 @@ const MessageController = {
         });
       }
 
-      // Accept either content text or at least one image
+      // Accept either content text or at least one image (file upload or base64/URL)
       const hasContent = content && typeof content === 'string' && content.trim() !== '';
       const hasImages = Array.isArray(images) && images.length > 0;
+      const hasFiles = files.length > 0;
 
-      if (!hasContent && !hasImages) {
+      if (!hasContent && !hasImages && !hasFiles) {
         return res.status(400).json({
           success: false,
           message: 'Content hoặc images là bắt buộc'
         });
       }
 
-      if (hasImages && images.length > 5) {
+      if ((hasImages ? images.length : 0) + files.length > 5) {
         return res.status(400).json({ success: false, message: 'Tối đa 5 hình ảnh cho mỗi tin nhắn' });
       }
 
-  console.log('=== SEND MESSAGE ===');
-  console.log('Sender:', senderId);
-  console.log('Receiver:', receiverId);
-  console.log('Content length:', content ? content.length : 0);
+      console.log('=== SEND MESSAGE ===');
+      console.log('Sender:', senderId);
+      console.log('Receiver:', receiverId);
+      console.log('Content length:', content ? content.length : 0);
+      console.log('Files uploaded:', files.length);
       if (hasImages) {
-        console.log('Images count:', images.length);
+        console.log('Images from body:', images.length);
         console.log('First image is dataURI?', typeof images[0] === 'string' && images[0].startsWith('data:'));
       }
 
-      const message = await MessageDAL.create({
-        SenderID: senderId,
-        ReceiverID: parseInt(receiverId),
-        Content: content || '',
-        Images: images || []
-      });
+      let message;
+      
+      // If files uploaded via multer, use createWithImages; otherwise use create with base64/URL
+      if (hasFiles) {
+        message = await MessageDAL.createWithImages({
+          SenderID: senderId,
+          ReceiverID: parseInt(receiverId),
+          Content: content || ''
+        }, files);
+      } else {
+        message = await MessageDAL.create({
+          SenderID: senderId,
+          ReceiverID: parseInt(receiverId),
+          Content: content || '',
+          Images: images || []
+        });
+      }
 
       console.log('✅ Message sent successfully');
+
+      // Normalize URLs to absolute so frontend displays images/avatars like posts
+      const baseUrl = buildBaseUrl(req);
+      const formatted = message.toFrontendFormat();
+      if (Array.isArray(formatted.image_urls)) {
+        formatted.image_urls = formatted.image_urls.map(u => toAbsoluteUrl(baseUrl, u));
+      }
+      if (formatted?.sender?.avatar) formatted.sender.avatar = toAbsoluteUrl(baseUrl, formatted.sender.avatar);
+      if (formatted?.receiver?.avatar) formatted.receiver.avatar = toAbsoluteUrl(baseUrl, formatted.receiver.avatar);
 
       res.status(201).json({
         success: true,
         message: 'Gửi tin nhắn thành công',
-        data: message.toFrontendFormat()
+        data: formatted
       });
     } catch (error) {
       console.error('❌ Send message error:', error && error.stack ? error.stack : error);
@@ -91,10 +115,16 @@ const MessageController = {
 
       console.log(`✅ Found ${messages.length} messages`);
 
-      res.json({
-        success: true,
-        data: messages.map(msg => msg.toFrontendFormat())
+      const baseUrl = buildBaseUrl(req);
+      const formatted = messages.map(msg => {
+        const f = msg.toFrontendFormat();
+        if (Array.isArray(f.image_urls)) f.image_urls = f.image_urls.map(u => toAbsoluteUrl(baseUrl, u));
+        if (f?.sender?.avatar) f.sender.avatar = toAbsoluteUrl(baseUrl, f.sender.avatar);
+        if (f?.receiver?.avatar) f.receiver.avatar = toAbsoluteUrl(baseUrl, f.receiver.avatar);
+        return f;
       });
+
+      res.json({ success: true, data: formatted });
     } catch (error) {
       console.error('❌ Get conversation error:', error && error.stack ? error.stack : error);
       const payload = { success: false, message: 'Lỗi server khi lấy cuộc trò chuyện' };
@@ -141,12 +171,18 @@ const MessageController = {
       const { senderId } = req.body;
       const receiverId = req.user.AccountID;
 
-      await MessageDAL.markAsRead(parseInt(senderId), receiverId);
+      if (typeof senderId === 'undefined' || senderId === null) {
+        return res.status(400).json({ success: false, message: 'senderId is required in request body' });
+      }
 
-      res.json({
-        success: true,
-        message: 'Đã đánh dấu tin nhắn là đã đọc'
-      });
+      const sId = parseInt(senderId, 10);
+      if (Number.isNaN(sId)) {
+        return res.status(400).json({ success: false, message: 'senderId must be a valid number' });
+      }
+
+      await MessageDAL.markAsRead(sId, receiverId);
+
+      res.json({ success: true, message: 'Đã đánh dấu tin nhắn là đã đọc' });
     } catch (error) {
       console.error('❌ Mark as read error:', error);
       res.status(500).json({
@@ -191,7 +227,14 @@ const MessageController = {
         return res.status(400).json({ success: false, message: 'Không thể sửa tin nhắn' });
       }
 
-      return res.json({ success: true, message: 'Cập nhật tin nhắn thành công', data: result.message.toFrontendFormat() });
+  // Normalize urls in updated message
+  const baseUrl = buildBaseUrl(req);
+  const f = result.message.toFrontendFormat();
+  if (Array.isArray(f.image_urls)) f.image_urls = f.image_urls.map(u => toAbsoluteUrl(baseUrl, u));
+  if (f?.sender?.avatar) f.sender.avatar = toAbsoluteUrl(baseUrl, f.sender.avatar);
+  if (f?.receiver?.avatar) f.receiver.avatar = toAbsoluteUrl(baseUrl, f.receiver.avatar);
+
+  return res.json({ success: true, message: 'Cập nhật tin nhắn thành công', data: f });
     } catch (error) {
       console.error('Update message error:', error && error.stack ? error.stack : error);
       res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật tin nhắn' });

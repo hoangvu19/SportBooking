@@ -2,6 +2,9 @@ import React, { useRef, useState, useEffect } from "react";
 import { ImageIcon, SendHorizonal } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { messageAPI, userAPI, imageToBase64 } from "../../utils/api";
+import { API_BASE_URL } from "../../config/apiConfig";
+import getBackendOrigin, { toAbsoluteUrl } from '../../utils/urlHelpers';
+import { useMemo, useCallback } from 'react';
 import useAuth from "../../hooks/useAuth";
 import Loading from "../../components/Shared/Loading";
 import DEFAULT_AVATAR from "../../utils/defaults";
@@ -23,6 +26,39 @@ const ChatBox = () => {
     const [highlightMessageId, setHighlightMessageId] = useState(null);
     const [pinnedMessageIds, setPinnedMessageIds] = useState([]);
     const pinnedMessage = (pinnedMessageIds && pinnedMessageIds.length) ? messages.find(m => String(m._id) === String(pinnedMessageIds[0])) : null;
+    // cache of validated image URLs to avoid firing <img> requests for missing files
+    const imageExistenceCache = useMemo(() => new Map(), []);
+    const [validatedMedia, setValidatedMedia] = useState({}); // { [messageId]: [validUrl, ...] }
+
+    const validateUrl = useCallback(async (url) => {
+        if (!url) return false;
+        if (imageExistenceCache.has(url)) return imageExistenceCache.get(url);
+        try {
+            const backend = getBackendOrigin();
+            const uploadsPrefix = (backend || '').replace(/\/$/, '') + '/uploads/';
+            if (typeof url === 'string' && url.startsWith(uploadsPrefix)) {
+                const rel = url.substring(uploadsPrefix.length);
+                try {
+                    const r = await fetch(`${backend}/api/internal/file-exists?path=${encodeURIComponent(rel)}`, { method: 'GET', cache: 'no-store' });
+                    const j = await r.json();
+                    const ok = j && j.success && !!j.exists;
+                    imageExistenceCache.set(url, ok);
+                    return ok;
+                } catch {
+                    imageExistenceCache.set(url, false);
+                    return false;
+                }
+            }
+
+            const resp = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+            const ok = resp && resp.ok;
+            imageExistenceCache.set(url, ok);
+            return ok;
+        } catch {
+            imageExistenceCache.set(url, false);
+            return false;
+        }
+    }, [imageExistenceCache]);
 
     useEffect(() => {
         if (userId && currentUser) {
@@ -30,6 +66,34 @@ const ChatBox = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId, currentUser]);
+
+    // when messages change, validate media URLs in background and cache results
+    useEffect(() => {
+        let mounted = true;
+        const run = async () => {
+            const backendBase = getBackendOrigin();
+            const next = {};
+            for (const m of messages) {
+                const id = m._id;
+                const raw = Array.isArray(m.media_urls) ? m.media_urls : [];
+                const promises = raw.map(async (u) => {
+                    // ensure absolute form (messages may already contain absolute URLs)
+                    const src = toAbsoluteUrl(backendBase, u, 'comments');
+                    const ok = await validateUrl(src);
+                    return ok ? src : null;
+                });
+                try {
+                    const results = await Promise.all(promises);
+                    next[id] = results.filter(Boolean);
+                } catch {
+                    next[id] = [];
+                }
+            }
+            if (mounted) setValidatedMedia(next);
+        };
+        if (messages && messages.length > 0) run();
+        return () => { mounted = false; };
+    }, [messages, validateUrl]);
 
     const loadConversation = async () => {
         try {
@@ -52,18 +116,23 @@ const ChatBox = () => {
             const messagesResponse = await messageAPI.getConversation(userId);
             if (messagesResponse.success) {
                 // Backend returns messages as objects from Message.toFrontendFormat()
-                setMessages(messagesResponse.data.map(m => ({
-                    _id: m._id || m.MessageID || m.messageId,
-                    from_user_id: Number(m.sender?._id ?? m.SenderID ?? m.senderId),
-                    to_user_id: Number(m.receiver?._id ?? m.ReceiverID ?? m.receiverId),
-                    text: m.content || m.text || '',
-                    // message_type: prefer backend-provided image_urls array
-                    message_type: (m.image_urls && m.image_urls.length > 0) ? 'image' : (m.message_type || m.messageType || 'text'),
-                    // media_url is the first image if present
-                    media_url: (m.image_urls && m.image_urls.length > 0) ? m.image_urls[0] : (m.image_url || m.mediaUrl || null),
-                    media_urls: m.image_urls || (m.image_url ? [m.image_url] : []),
-                    createdAt: m.sent_date || m.createdAt || m.SentDate || new Date().toISOString(),
-                })));
+                const backendBase = getBackendOrigin();
+                setMessages(messagesResponse.data.map(m => {
+                        const rawUrls = m.image_urls || (m.image_url ? [m.image_url] : []);
+                        const image_urls = Array.isArray(rawUrls) ? rawUrls.map(u => toAbsoluteUrl(backendBase, u, 'comments')).filter(Boolean) : [];
+                    return {
+                        _id: m._id || m.MessageID || m.messageId,
+                        from_user_id: Number(m.sender?._id ?? m.SenderID ?? m.senderId),
+                        to_user_id: Number(m.receiver?._id ?? m.ReceiverID ?? m.receiverId),
+                        text: m.content || m.text || '',
+                        // message_type: prefer backend-provided image_urls array
+                        message_type: (image_urls && image_urls.length > 0) ? 'image' : (m.message_type || m.messageType || 'text'),
+                        // media_url is the first image if present
+                        media_url: (image_urls && image_urls.length > 0) ? image_urls[0] : (m.image_url || m.mediaUrl || null),
+                        media_urls: image_urls,
+                        createdAt: m.sent_date || m.createdAt || m.SentDate || new Date().toISOString(),
+                    };
+                }));
                 try {
                     const key = `pinned_conv_${currentUserIdNum}_${userId}`;
                     const pinnedRaw = localStorage.getItem(key);
@@ -115,14 +184,17 @@ const ChatBox = () => {
             if (response.success) {
                 // Backend returns created message via data
                 const m = response.data;
+                const backendBase = getBackendOrigin();
+                const rawUrls = m.image_urls || (m.image_url ? [m.image_url] : []);
+                const image_urls = Array.isArray(rawUrls) ? rawUrls.map(u => toAbsoluteUrl(backendBase, u, 'comments')).filter(Boolean) : [];
                 const newMessage = {
                     _id: m._id || m.MessageID || (m.messageId && m.messageId.toString()),
                     from_user_id: Number(m.sender?._id ?? m.SenderID ?? currentUserIdNum),
                     to_user_id: parseInt(m.receiver?._id || m.ReceiverID || parseInt(userId)),
                     text: m.content || m.Content || text.trim(),
-                    message_type: (m.image_urls && m.image_urls.length > 0) ? 'image' : (m.message_type || 'text'),
-                    media_url: (m.image_urls && m.image_urls.length > 0) ? m.image_urls[0] : (m.image_url || m.mediaUrl || null),
-                    media_urls: m.image_urls || (m.image_url ? [m.image_url] : []),
+                    message_type: (image_urls && image_urls.length > 0) ? 'image' : (m.message_type || 'text'),
+                    media_url: (image_urls && image_urls.length > 0) ? image_urls[0] : (m.image_url || m.mediaUrl || null),
+                    media_urls: image_urls,
                     createdAt: m.sent_date || m.SentDate || new Date().toISOString(),
                 };
 
@@ -270,6 +342,11 @@ const ChatBox = () => {
                 .animate-pinned-highlight {
                     animation: pinnedHighlight 2s ease-in-out;
                 }
+                /* Hide any unwanted blue dots/indicators on image messages */
+                img[alt=""]::before,
+                img[alt=""]::after {
+                    display: none !important;
+                }
             `}</style>
             <div className="flex items-center gap-2 p-2 md:px-10 xl:pl-42 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-300">
                 <img src={otherUser.profile_picture || DEFAULT_AVATAR} onError={(e)=>{ e.target.onerror = null; e.target.src = DEFAULT_AVATAR }} alt="" className="size-8 rounded-full" />
@@ -374,13 +451,20 @@ const ChatBox = () => {
                                                                             </div>
                                                                         ) : (
                                                                             <>
-                                                                                {message.media_urls && message.media_urls.length > 0 && (
-                                                                                    <div className="flex flex-wrap gap-2 mb-1">
-                                                                                        {message.media_urls.map((u, idx) => (
-                                                                                            <img key={idx} src={u} className="w-32 h-32 object-cover rounded-md" alt="" />
-                                                                                        ))}
-                                                                                    </div>
-                                                                                )}
+                                                                                {(() => {
+                                                                                    const mediaToShow = (validatedMedia && validatedMedia[message._id] && validatedMedia[message._id].length > 0)
+                                                                                        ? validatedMedia[message._id]
+                                                                                        : (message.media_urls || []);
+                                                                                    if (!mediaToShow || mediaToShow.length === 0) return null;
+                                                                                    return (
+                                                                                        <div className="flex flex-wrap gap-2 mb-1">
+                                                                                            {mediaToShow.map((u, idx) => (
+                                                                                                // show full image, limit size for chat bubble
+                                                                                                <img key={idx} src={u} className="max-w-[40vw] max-h-[40vh] object-contain rounded-md" alt="" />
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    );
+                                                                                })()}
                                                                                 <div className={`${classes} ${(pinnedMessageIds && pinnedMessageIds.includes(String(message._id))) ? 'ring-2 ring-yellow-300 bg-yellow-600/10' : ''} ${String(highlightMessageId) === String(message._id) ? 'animate-pinned-highlight' : ''}`}>
                                                                                     <div className="flex items-center gap-2">
                                                                                         <div>{message.text}</div>
@@ -443,13 +527,19 @@ const ChatBox = () => {
                                                     return (
                                                         <div key={mi} data-message-id={message._id} ref={el => { if (el) messageRefs.current[String(message._id)] = el; }} className="mb-1 flex items-start">
                                                             <div className={`${classes} ${(pinnedMessageIds && pinnedMessageIds.includes(String(message._id))) ? 'ring-2 ring-yellow-300 bg-yellow-50' : ''} ${String(highlightMessageId) === String(message._id) ? 'animate-pinned-highlight' : ''}`}>
-                                                                {message.media_urls && message.media_urls.length > 0 && (
-                                                                    <div className="flex flex-wrap gap-2 mb-1">
-                                                                        {message.media_urls.map((u, idx) => (
-                                                                            <img key={idx} src={u} className="w-32 h-32 object-cover rounded-md" alt="" />
-                                                                        ))}
-                                                                    </div>
-                                                                )}
+                                                                {(() => {
+                                                                    const mediaToShow = (validatedMedia && validatedMedia[message._id] && validatedMedia[message._id].length > 0)
+                                                                        ? validatedMedia[message._id]
+                                                                        : (message.media_urls || []);
+                                                                    if (!mediaToShow || mediaToShow.length === 0) return null;
+                                                                    return (
+                                                                        <div className="flex flex-wrap gap-2 mb-1">
+                                                                            {mediaToShow.map((u, idx) => (
+                                                                                <img key={idx} src={u} className="max-w-[40vw] max-h-[40vh] object-contain rounded-md" alt="" />
+                                                                            ))}
+                                                                        </div>
+                                                                    );
+                                                                })()}
                                                                 <div>{message.text}</div>
                                                             </div>
                                                         </div>

@@ -4,6 +4,8 @@ import CommentForm from './CommentForm';
 import useAuth from "../../hooks/useAuth";
 import DEFAULT_AVATAR from "../../utils/defaults";
 import { MoreHorizontal, Image as ImageIcon } from 'lucide-react';
+import { API_BASE_URL } from "../../config/apiConfig";
+import getBackendOrigin, { toAbsoluteUrl } from '../../utils/urlHelpers';
 
 const CommentList = ({ postId, reloadTrigger, scrollToCommentId = null }) => {
   const [comments, setComments] = useState([]);
@@ -14,6 +16,44 @@ const CommentList = ({ postId, reloadTrigger, scrollToCommentId = null }) => {
   const [editingContent, setEditingContent] = useState('');
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [error, setError] = useState(null);
+  // cache of validated URLs to avoid repeated HEAD requests across renders
+  const [validatedImages, setValidatedImages] = useState({}); // { [commentId]: [validUrl, ...] }
+
+  // simple in-memory cache shared across component instances (module-level would persist across mounts)
+  const imageExistenceCache = useMemo(() => new Map(), []);
+
+  const validateUrl = useCallback(async (url) => {
+    if (!url) return false;
+    if (imageExistenceCache.has(url)) return imageExistenceCache.get(url);
+    try {
+      // If this is a local uploads URL, use the backend JSON endpoint which avoids browser-visible 404s
+      const backend = getBackendOrigin();
+      const uploadsPrefix = (backend || '').replace(/\/$/, '') + '/uploads/';
+      if (typeof url === 'string' && url.startsWith(uploadsPrefix)) {
+        // ask backend whether the file exists; send the path relative to uploads/
+        const rel = url.substring(uploadsPrefix.length);
+        try {
+          const r = await fetch(`${backend}/api/internal/file-exists?path=${encodeURIComponent(rel)}`, { method: 'GET', cache: 'no-store' });
+          const j = await r.json();
+          const ok = j && j.success && !!j.exists;
+          imageExistenceCache.set(url, ok);
+          return ok;
+        } catch {
+          imageExistenceCache.set(url, false);
+          return false;
+        }
+      }
+
+      // External URL: perform HEAD as a fallback
+      const resp = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+      const ok = resp && resp.ok;
+      imageExistenceCache.set(url, ok);
+      return ok;
+    } catch {
+      imageExistenceCache.set(url, false);
+      return false;
+    }
+  }, [imageExistenceCache]);
 
   const loadComments = useCallback(async () => {
     if (!postId) {
@@ -44,6 +84,33 @@ const CommentList = ({ postId, reloadTrigger, scrollToCommentId = null }) => {
   useEffect(() => {
     loadComments();
   }, [postId, reloadTrigger, loadComments]);
+
+  // when comments load/update, validate image URLs in background
+  useEffect(() => {
+    let mounted = true;
+    const validateAll = async () => {
+      const backendBase = getBackendOrigin();
+      const next = {};
+      for (const c of comments) {
+        const id = c.CommentID || c._id;
+        const rawImgs = (c.images || c.Images) || [];
+        const promises = rawImgs.map(async (imgUrl) => {
+          const src = toAbsoluteUrl(backendBase, imgUrl, 'comments');
+          const ok = await validateUrl(src);
+          return ok ? src : null;
+        });
+        try {
+          const results = await Promise.all(promises);
+          next[id] = results.filter(Boolean);
+        } catch {
+          next[id] = [];
+        }
+      }
+      if (mounted) setValidatedImages(next);
+    };
+    if (comments && comments.length > 0) validateAll();
+    return () => { mounted = false; };
+  }, [comments, validateUrl]);
 
   useEffect(() => {
     if (!scrollToCommentId) return;
@@ -128,21 +195,41 @@ const CommentList = ({ postId, reloadTrigger, scrollToCommentId = null }) => {
   }
 
   const timeAgo = (date) => {
-    const now = new Date();
-    const past = new Date(date);
-    const diffInSeconds = Math.floor((now - past) / 1000);
+    try {
+      const now = new Date();
+      const past = new Date(date);
+      if (isNaN(past.getTime())) return 'Vừa xong';
+      const diffInSeconds = Math.floor((now - past) / 1000);
 
-    if (diffInSeconds < 60) return 'Vừa xong';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
-    return past.toLocaleDateString('vi-VN');
+      if (diffInSeconds < 60) return 'Vừa xong';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
+      if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
+      return past.toLocaleDateString('vi-VN');
+    } catch {
+      return 'Vừa xong';
+    }
   };
 
   const renderComment = (c, depth = 0) => {
     const currentAccountId = currentUser?.AccountID || currentUser?._id || currentUser?.userId;
     const isOwner = String(currentAccountId) === String(c.user?._id || c.user?.AccountID || c.AccountID);
     const hasImages = (c.images && c.images.length > 0) || (c.Images && c.Images.length > 0);
+
+    const openImage = async (src) => {
+      try {
+        // Try a HEAD request to ensure the resource exists before opening
+        const resp = await fetch(src, { method: 'HEAD', cache: 'no-store' });
+        if (resp.ok) {
+          window.open(src, '_blank');
+        } else {
+          alert('Ảnh không tồn tại hoặc đã bị xóa');
+        }
+      } catch (err) {
+        console.error('Open image error', err);
+        alert('Không thể mở ảnh');
+      }
+    };
 
     return (
       <div
@@ -281,17 +368,43 @@ const CommentList = ({ postId, reloadTrigger, scrollToCommentId = null }) => {
 
             {hasImages && (
               <div className="mt-2 grid grid-cols-2 gap-2">
-                {(c.images || c.Images).map((imgUrl, idx) => {
-                  const src = imgUrl.startsWith('/')
-                    ? `${window.location.origin}${imgUrl}`
-                    : imgUrl;
-                  return (
+                {(() => {
+                  const backendBase = getBackendOrigin();
+                  const rawImgs = (c.images || c.Images) || [];
+                  
+                  // Separate base64 images from URL images
+                  const base64Images = rawImgs.filter(img => typeof img === 'string' && img.startsWith('data:image/'));
+                  const urlImages = rawImgs.filter(img => typeof img === 'string' && !img.startsWith('data:image/'));
+                  
+                  // For URL images, convert to absolute and validate
+                  const allSrcs = urlImages.map(imgUrl => toAbsoluteUrl(backendBase, imgUrl, 'comments')).filter(Boolean);
+
+                  // prefer async validated results if present for this comment
+                  const id = c.CommentID || c._id;
+                  const asyncValidated = validatedImages && validatedImages[id];
+
+                  // derive which srcs are known-valid from the sync cache
+                  const syncValid = allSrcs.filter(s => imageExistenceCache.has(s) ? imageExistenceCache.get(s) : false);
+
+                  const validatedUrls = (asyncValidated && asyncValidated.length > 0) ? asyncValidated : syncValid;
+                  
+                  // Combine base64 and validated URLs
+                  const toShow = [...base64Images, ...validatedUrls];
+
+                  if (!toShow || toShow.length === 0) {
+                    // nothing validated yet; render a lightweight placeholder instead of firing requests
+                    return (
+                      <div className="w-full p-6 rounded-lg bg-gray-50 text-center text-sm text-gray-400">Ảnh không khả dụng</div>
+                    );
+                  }
+
+                  return toShow.map((src, idx) => (
                     <div key={idx} className="relative group rounded-lg overflow-hidden shadow-sm">
                       <img
                         src={src}
                         alt={`comment-img-${idx}`}
-                        className="w-full h-48 object-cover transition-transform group-hover:scale-105 duration-300"
-                        onClick={() => window.open(src, '_blank')}
+                        className="w-full max-h-[60vh] object-contain transition-transform group-hover:scale-105 duration-300 cursor-pointer"
+                        onClick={() => openImage(src)}
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" fill="%23E2E8F0"%3E%3Crect width="300" height="200" fill="%23E2E8F0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%23718096"%3EImage not found%3C/text%3E%3C/svg%3E';
@@ -307,8 +420,8 @@ const CommentList = ({ postId, reloadTrigger, scrollToCommentId = null }) => {
                         </button>
                       </div>
                     </div>
-                  );
-                })}
+                  ));
+                })()}
               </div>
             )}
 

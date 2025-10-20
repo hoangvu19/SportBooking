@@ -2,8 +2,8 @@
  * Enhanced Facility Controller
  * Handles facility management operations with new models integration
  */
-const FacilityModel = require('../../models/Facility');
-const SportFieldModel = require('../../models/Sport/sportField');
+const FacilityModel = require('../../models/Sport/Facility');
+const SportFieldModel = require('../../models/Sport/SportField');
 const FacilityDAL = require('../../DAL/Sport/facilityDAL');
 
 /**
@@ -38,9 +38,7 @@ async function getAllFacilities(req, res) {
   }
 }
 
-/**
- * Search facilities with advanced filters
- */
+
 async function searchFacilities(req, res) {
   try {
     const { searchTerm, areaId, sportTypeId, minRating, priceRange, page = 1, limit = 20 } = req.query;

@@ -16,7 +16,7 @@ class UserDAL {
                 .query(`
                     SELECT 
                         AccountID, Username, FullName, Email,
-                       Bio, Gender, Address, Status, AvatarUrl, CreatedAt, UpdatedAt
+                       Bio, Gender, Address, Status, AvatarUrl, UpdatedAt
                     FROM Account
                     WHERE AccountID = @userId AND Status = 'Active'
                 `);
@@ -125,7 +125,7 @@ class UserDAL {
                 .query(`
                     SELECT TOP (@limit)
                         AccountID, Username, FullName, Email,
-                         Bio, Address, AvatarUrl, Gender, CreatedAt, Status
+                         Bio, Address, AvatarUrl, Gender, Status
                     FROM Account
                     WHERE Status = 'Active'
                         AND (
@@ -171,7 +171,7 @@ class UserDAL {
                 .query(`
                     SELECT TOP (@limit)
                         AccountID, Username, FullName, Email,
-                       Bio, Address, AvatarUrl, Gender, CreatedAt, Status
+                       Bio, Address, AvatarUrl, Gender, Status
                     FROM Account
                     WHERE Status = 'Active'
                         AND AccountID != @userId

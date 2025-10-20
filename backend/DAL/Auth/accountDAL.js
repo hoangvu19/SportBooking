@@ -9,8 +9,9 @@ class AccountDAL {
   static async getAll() {
     try {
       const pool = await poolPromise;
+      // Some database schemas may not have CreatedAt; order by AccountID as a safe default
       const result = await pool.request()
-        .query("SELECT * FROM Account WHERE Status != 'Deleted' ORDER BY CreatedAt DESC");
+        .query("SELECT * FROM Account WHERE Status != 'Deleted' ORDER BY AccountID DESC");
       
       return result.recordset.map(row => new Account(row));
     } catch (error) {

@@ -1,7 +1,7 @@
 /**
  * PostImage Model - Handles post images
  */
-const PostImageDAL = require('../../DAL/PostImageDAL');
+const PostImageDAL = require('../../DAL/Social/PostImageDAL');
 
 class PostImageModel {
 	static async createPostImage(postImageData) {
