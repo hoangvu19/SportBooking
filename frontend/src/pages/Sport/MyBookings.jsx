@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bookingAPI } from "../../utils/api";
+import CreateBookingPostButton from "../../components/Social/CreateBookingPostButton";
 
 const statusColors = {
   Pending: 'bg-yellow-100 text-yellow-800',
@@ -197,26 +198,48 @@ export default function MyBookings() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-4 border-t border-gray-200">
+              <div className="flex gap-2 pt-4 border-t border-gray-200 flex-wrap">
                 <button
                   onClick={() => navigate(`/sandetail?sanId=${booking.FieldID}`)}
-                  className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+                  className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
                 >
-                  Xem sân
+                  📋 Xem sân
                 </button>
+                
+                {/* CreateBookingPostButton - Đăng lên Feed */}
+                <CreateBookingPostButton 
+                  booking={{
+                    BookingID: booking.BookingID,
+                    BookingStatus: booking.Status,
+                    FacilityName: booking.FacilityName || 'Cơ sở thể thao',
+                    FieldName: booking.FieldName || booking.TenSan || `Sân #${booking.FieldID}`,
+                    SportName: booking.SportTypeName || 'Thể thao',
+                    StartTime: booking.StartTime,
+                    EndTime: booking.EndTime,
+                    TotalAmount: booking.TotalAmount,
+                    DepositPaid: booking.DepositPaid || false,
+                    PaymentStatus: booking.PaymentStatus || 'Unpaid',
+                  }}
+                  onSuccess={() => {
+                    // Optionally refresh bookings or show success message
+                    console.log('Post created successfully');
+                  }}
+                />
+                
                 {booking.Status === 'Pending' || booking.Status === 'Confirmed' ? (
                   <button
                     onClick={() => handleCancelBooking(booking.BookingID)}
-                    className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                    className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
                   >
-                    Hủy đặt sân
+                    🚫 Hủy đặt sân
                   </button>
                 ) : null}
+                
                 {booking.Status === 'Confirmed' && (
                   <button
-                    className="px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                    className="px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
                   >
-                    Thanh toán
+                    💳 Thanh toán
                   </button>
                 )}
               </div>

@@ -1,4 +1,5 @@
 const CommentDAL = require('../../DAL/Social/CommentDAL');
+const moderationService = require('../../lib/contentModeration');
 const {
   sendSuccess,
   sendCreated,
@@ -63,6 +64,21 @@ const CommentController = {
 
       if (!accountId) {
         return sendUnauthorized(res);
+      }
+
+      // AI Content Moderation for comments
+      if (!isBlank(content)) {
+        const moderationResult = await moderationService.moderateContent(content.trim());
+        
+        if (!moderationResult.isClean) {
+          await logModeration(null, null, content, moderationResult);
+          return sendValidationError(res, moderationResult.reason || 'Nội dung vi phạm quy định cộng đồng');
+        }
+        
+        // Log if needs review (but still allow)
+        if (moderationResult.needsReview) {
+          await logModeration(null, null, content, moderationResult);
+        }
       }
 
       if (!isBlank(parentCommentId)) {
@@ -229,5 +245,32 @@ const CommentController = {
     }
   }
 };
+
+/**
+ * Helper: Log moderation result
+ */
+async function logModeration(postId, commentId, content, moderationResult) {
+  try {
+    const { poolPromise, sql } = require('../../config/db');
+    const pool = await poolPromise;
+    
+    await pool.request()
+      .input('PostID', sql.Int, postId)
+      .input('CommentID', sql.Int, commentId)
+      .input('Content', sql.NVarChar, content)
+      .input('IsClean', sql.Bit, moderationResult.isClean)
+      .input('Confidence', sql.Decimal(3, 2), moderationResult.confidence)
+      .input('Reason', sql.NVarChar, moderationResult.reason)
+      .input('NeedsReview', sql.Bit, moderationResult.needsReview)
+      .input('Flags', sql.NVarChar, JSON.stringify(moderationResult.flags))
+      .query(`
+        INSERT INTO ContentModerationLog 
+        (PostID, CommentID, Content, IsClean, Confidence, Reason, NeedsReview, Flags)
+        VALUES (@PostID, @CommentID, @Content, @IsClean, @Confidence, @Reason, @NeedsReview, @Flags)
+      `);
+  } catch (error) {
+    console.error('Error logging moderation:', error);
+  }
+}
 
 module.exports = CommentController;

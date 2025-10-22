@@ -42,6 +42,8 @@ const PostModal = ({ post, visible, onClose, onCommentCreated }) => {
     }
   };
 
+  const resolvedPostId = post._id || post.PostID || post.postId || post.PostId || post.PostId;
+
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
@@ -156,7 +158,7 @@ const PostModal = ({ post, visible, onClose, onCommentCreated }) => {
               className="flex-1 overflow-y-auto px-4 py-3"
             >
               <CommentList 
-                postId={post._id} 
+                postId={resolvedPostId} 
                 reloadTrigger={commentsReloadTrigger} 
                 scrollToCommentId={lastCreatedCommentId} 
               />
@@ -166,7 +168,7 @@ const PostModal = ({ post, visible, onClose, onCommentCreated }) => {
             <div className="border-t bg-white shrink-0">
               <div className="px-4 py-3">
                 <CommentForm
-                  postId={post._id}
+                  postId={resolvedPostId}
                   onCreated={(data) => {
                     const createdId = data && (data._id || data.CommentID);
                     setLastCreatedCommentId(createdId);

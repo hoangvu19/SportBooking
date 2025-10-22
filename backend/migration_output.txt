@@ -1,0 +1,4 @@
+Table Rating created successfully
+Table FieldComment created successfully
+Database schema update completed successfully
+Account table not found in this database; foreign keys were not added. You may add them manually after creating Account.

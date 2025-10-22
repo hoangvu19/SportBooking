@@ -119,14 +119,48 @@ class PostDAL {
         SharesCount: sharesCount
       });
 
+      // If this post references a BookingID, attach booking details so frontend can render BookingStatusCard
+      try {
+        if ((postData.BookingID || postData.Booking_BookingID) && !post.Booking) {
+          const bid = postData.Booking_BookingID || postData.BookingID;
+          const bookingRes = await pool.request()
+            .input('BookingID', sql.Int, bid)
+            .query(`
+              SELECT b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit AS DepositPaid, b.Status,
+                     sf.FieldName, f.FacilityName, st.SportName
+              FROM Booking b
+              JOIN SportField sf ON b.FieldID = sf.FieldID
+              LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
+              LEFT JOIN SportType st ON sf.SportTypeID = st.SportTypeID
+              WHERE b.BookingID = @BookingID
+            `);
+          if (bookingRes && bookingRes.recordset && bookingRes.recordset[0]) {
+            const bk = bookingRes.recordset[0];
+            post.Booking = {
+              BookingID: bk.BookingID,
+              BookingStatus: bk.Status || 'Pending',
+              FacilityName: bk.FacilityName,
+              FieldName: bk.FieldName,
+              SportName: bk.SportName,
+              StartTime: bk.StartTime,
+              EndTime: bk.EndTime,
+              TotalAmount: bk.TotalAmount,
+              DepositPaid: bk.DepositPaid
+            };
+          }
+        }
+      } catch (e) {
+        console.debug('PostDAL.getById: could not attach booking details', e && e.message ? e.message : e);
+      }
+
       // Preserve the raw SharedFromPostID for callers (useful to resolve root original)
       post.SharedFromPostID = postData.SharedFromPostID || null;
 
       // Optionally include the original post when this post is a share
-      // Guard against deep recursion by using _depth (max 1)
-      if (includeShared && post.IsShare && postData.SharedFromPostID && _depth < 1) {
+      // Increased recursion limit to 5 to support deeper re-share chains (A->B->C->D->E)
+      if (includeShared && post.IsShare && postData.SharedFromPostID && _depth < 5) {
         try {
-          const original = await PostDAL.getById(postData.SharedFromPostID, false, _depth + 1);
+          const original = await PostDAL.getById(postData.SharedFromPostID, true, _depth + 1);
           post.SharedPost = original ? original.toFrontendFormat() : null;
         } catch (e) {
           console.error(`PostDAL.getById: error loading SharedFromPostID=${postData.SharedFromPostID}:`, e && e.message ? e.message : e);
@@ -199,10 +233,11 @@ class PostDAL {
         .input('IsShare', sql.Bit, 0)
         .input('SharedFromPostID', sql.Int, null)
         .input('SharedNote', sql.NVarChar, postData.SharedNote || null)
+        .input('BookingID', sql.Int, postData.BookingID || null)
         .query(`
-          INSERT INTO Post (AccountID, Content, CreatedDate, Status, IsShare, SharedFromPostID, SharedNote)
+          INSERT INTO Post (AccountID, Content, CreatedDate, Status, IsShare, SharedFromPostID, SharedNote, BookingID)
           OUTPUT INSERTED.*
-          VALUES (@AccountID, @Content, GETDATE(), 'Visible', @IsShare, @SharedFromPostID, @SharedNote)
+          VALUES (@AccountID, @Content, GETDATE(), 'Visible', @IsShare, @SharedFromPostID, @SharedNote, @BookingID)
         `);
       
       const newPost = postResult.recordset[0];
@@ -432,21 +467,45 @@ class PostDAL {
       const pool = await poolPromise;
       const offset = (page - 1) * limit;
 
+      // Fetch limit + 1 to check if there are more records
       const result = await pool.request()
         .input('Offset', sql.Int, offset)
-        .input('Limit', sql.Int, limit)
+        .input('Limit', sql.Int, limit + 1)
         .query(`
-          SELECT p.PostID, p.AccountID, p.Content, p.CreatedDate, p.Status, p.IsShare, p.SharedFromPostID, p.SharedNote,
-                 a.Username, a.FullName, a.AvatarUrl
+          SELECT p.PostID, p.AccountID, p.Content, p.CreatedDate, p.Status, p.IsShare, p.SharedFromPostID, p.SharedNote, p.BookingID,
+                 a.Username, a.FullName, a.AvatarUrl,
+                 -- Booking info (always get latest status from Booking table)
+                 b.BookingID AS Booking_BookingID, 
+                 b.Status AS BookingStatus, 
+                 b.StartTime, 
+                 b.EndTime, 
+                 b.TotalAmount,
+                 b.Deposit AS DepositPaid,
+                 -- Field info
+                 sf.FieldName,
+                 -- Facility info
+                 f.FacilityName,
+                 -- Sport type
+                 st.SportName
           FROM Post p
           JOIN Account a ON p.AccountID = a.AccountID
+          LEFT JOIN Booking b ON p.BookingID = b.BookingID
+          LEFT JOIN SportField sf ON b.FieldID = sf.FieldID
+          LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
+          LEFT JOIN SportType st ON sf.SportTypeID = st.SportTypeID
           WHERE p.Status = 'Visible' AND a.Status = 'Active'
           ORDER BY p.CreatedDate DESC
           OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
         `);
       
+      // Check if there are more records
+      const hasMore = result.recordset.length > limit;
+      
+      // Only return limit records (remove the extra one)
+      const recordsToProcess = hasMore ? result.recordset.slice(0, limit) : result.recordset;
+      
       // Get images and reactions for each post
-      const posts = await Promise.all(result.recordset.map(async (postData) => {
+      const posts = await Promise.all(recordsToProcess.map(async (postData) => {
         const images = await PostDAL.getPostImages(postData.PostID);
         const likesResult = await pool.request()
           .input('PostID', sql.Int, postData.PostID)
@@ -458,6 +517,22 @@ class PostDAL {
         
         const likesCount = likesResult.recordset[0].LikesCount || 0;
         
+        // Build booking data if BookingID exists
+        let booking = null;
+        if (postData.BookingID || postData.Booking_BookingID) {
+          booking = {
+            BookingID: postData.Booking_BookingID || postData.BookingID,
+            BookingStatus: postData.BookingStatus || 'Pending',
+            FacilityName: postData.FacilityName || 'Cơ sở thể thao',
+            FieldName: postData.FieldName || 'Sân',
+            SportName: postData.SportName || 'Thể thao',
+            StartTime: postData.StartTime,
+            EndTime: postData.EndTime,
+            TotalAmount: postData.TotalAmount || 0,
+            DepositPaid: postData.DepositPaid || 0
+          };
+        }
+        
         // if this post is a share, load original post to include as SharedPost
         let sharedPost = null;
         if (postData.IsShare) {
@@ -466,7 +541,8 @@ class PostDAL {
               // Defensive: log missing SharedFromPostID but continue
               console.warn(`PostDAL.getFeedPosts: PostID=${postData.PostID} marked as IsShare but SharedFromPostID is falsy`);
             } else {
-              const original = await PostDAL.getById(postData.SharedFromPostID);
+              // Pass includeShared=true to recursively load the full shared_post chain with booking data
+              const original = await PostDAL.getById(postData.SharedFromPostID, true);
               sharedPost = original ? original.toFrontendFormat() : null;
             }
           } catch (e) {
@@ -484,11 +560,14 @@ class PostDAL {
           SharesCount: postData.SharesCount || 0,
           SharedPost: sharedPost,
           IsShare: !!postData.IsShare,
-          SharedNote: postData.SharedNote || null
+          SharedNote: postData.SharedNote || null,
+          // attach booking data
+          Booking: booking
         });
       }));
       
-      return posts;
+      // Return posts with hasMore flag
+      return { posts, hasMore };
     } catch (error) {
       console.error('PostDAL.getFeedPosts error:', error);
       throw error;

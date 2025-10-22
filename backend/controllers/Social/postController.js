@@ -4,6 +4,7 @@
 const PostDAL = require('../../DAL/Social/PostDAL');
 const CommentDAL = require('../../DAL/Social/CommentDAL');
 const ReactionDAL = require('../../DAL/Social/ReactionDAL');
+const moderationService = require('../../lib/contentModeration');
 const {
   sendSuccess,
   sendCreated,
@@ -31,7 +32,7 @@ const {
  */
 async function createPost(req, res) {
   try {
-    const { content, imageUrls } = req.body || {};
+    const { content, imageUrls, bookingId } = req.body || {};
 
     if (isBlank(content)) {
       return sendValidationError(res, 'Nội dung post không được để trống');
@@ -42,17 +43,57 @@ async function createPost(req, res) {
       return sendUnauthorized(res, 'Không xác định được người dùng để tạo bài viết');
     }
 
+    // Validate booking if provided
+    if (bookingId) {
+      const BookingDAL = require('../../DAL/Sport/bookingDAL');
+      const booking = await BookingDAL.getById(bookingId);
+      
+      if (!booking) {
+        return sendValidationError(res, 'Booking không tồn tại');
+      }
+      
+      if (booking.CustomerID !== accountId) {
+        return sendUnauthorized(res, 'Không có quyền tạo post cho booking này');
+      }
+    }
+
+    // AI Content Moderation
+    const moderationResult = await moderationService.moderatePost(content.trim(), imageUrls || []);
+    
+    if (!moderationResult.isClean) {
+      // Từ chối bài đăng
+      await logModeration(null, null, content, moderationResult);
+      return sendValidationError(res, moderationResult.reason || 'Nội dung vi phạm quy định cộng đồng');
+    }
+
     const post = await PostDAL.create({
       AccountID: accountId,
       Content: content.trim(),
-      ImageUrls: Array.isArray(imageUrls) ? imageUrls : []
+      ImageUrls: Array.isArray(imageUrls) ? imageUrls : [],
+      BookingID: bookingId || null
     });
+
+    // Log moderation nếu cần review
+    if (moderationResult.needsReview) {
+      await logModeration(post.PostID, null, content, moderationResult);
+      // Có thể đặt post status = 'PendingReview' nếu muốn
+    }
 
     const baseUrl = buildBaseUrl(req);
 
     return sendCreated(res, formatPostForResponse(post, baseUrl), 'Tạo post thành công');
   } catch (error) {
-    return sendError(res, 'Lỗi server khi tạo post', 500, { error });
+    console.error('❌ Error creating post:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      number: error.number,
+      stack: error.stack
+    });
+    return sendError(res, 'Lỗi server khi tạo post', 500, { 
+      error: error.message,
+      code: error.code 
+    });
   }
 }
 
@@ -64,12 +105,17 @@ async function getFeedPosts(req, res) {
     const { page, limit } = normalizePagination(req.query, { page: 1, limit: 10 });
     const baseUrl = buildBaseUrl(req);
 
-    const posts = await PostDAL.getFeedPosts(page, limit);
+    const result = await PostDAL.getFeedPosts(page, limit);
+    const { posts, hasMore } = result;
     const formattedPosts = posts.map((post) => formatPostForResponse(post, baseUrl));
 
     return sendSuccess(res, {
       posts: formattedPosts,
-      pagination: buildPaginationMeta(posts.length, limit, page)
+      pagination: {
+        page,
+        limit,
+        hasMore
+      }
     });
   } catch (error) {
     return sendError(res, 'Lỗi server khi lấy feed posts', 500, { error });
@@ -520,6 +566,34 @@ async function sharePost(req, res) {
       error,
       details: { code: error?.code || 'INTERNAL_ERROR' }
     });
+  }
+}
+
+/**
+ * Helper: Log moderation result
+ */
+async function logModeration(postId, commentId, content, moderationResult) {
+  try {
+    const { poolPromise, sql } = require('../../config/db');
+    const pool = await poolPromise;
+    
+    await pool.request()
+      .input('PostID', sql.Int, postId)
+      .input('CommentID', sql.Int, commentId)
+      .input('Content', sql.NVarChar, content)
+      .input('IsClean', sql.Bit, moderationResult.isClean)
+      .input('Confidence', sql.Decimal(3, 2), moderationResult.confidence)
+      .input('Reason', sql.NVarChar, moderationResult.reason)
+      .input('NeedsReview', sql.Bit, moderationResult.needsReview)
+      .input('Flags', sql.NVarChar, JSON.stringify(moderationResult.flags))
+      .query(`
+        INSERT INTO ContentModerationLog 
+        (PostID, CommentID, Content, IsClean, Confidence, Reason, NeedsReview, Flags)
+        VALUES (@PostID, @CommentID, @Content, @IsClean, @Confidence, @Reason, @NeedsReview, @Flags)
+      `);
+  } catch (error) {
+    console.error('Error logging moderation:', error);
+    // Don't throw error, just log
   }
 }
 

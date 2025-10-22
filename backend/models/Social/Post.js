@@ -23,7 +23,8 @@ class Post {
 		,
 		SharedPost = null,
 		IsShare = false,
-		SharedNote = null
+		SharedNote = null,
+		Booking = null
 	}) {
 		this.PostID = PostID;
 		this.AccountID = AccountID;
@@ -44,6 +45,7 @@ class Post {
 		this.SharedPost = SharedPost;
 		this.IsShare = !!IsShare;
 		this.SharedNote = SharedNote;
+		this.Booking = Booking;
 	}
 
 	/**
@@ -82,7 +84,8 @@ class Post {
 			sharesCount: this.SharesCount,
 			is_shared: this.IsShare,
 			shared_note: this.SharedNote,
-			shared_post: this.SharedPost
+			shared_post: this.SharedPost,
+			booking: this.Booking
 		};
 	}
 

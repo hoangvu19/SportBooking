@@ -32,6 +32,40 @@ const getAuthToken = () => {
     return localStorage.getItem('authToken');
 };
 
+// ==================== CLIENT-SIDE COOLDOWN / THROTTLING ====================
+// Prevent rapid duplicate requests from the same client (e.g., double-clicking like/share)
+const CLIENT_THROTTLE = {
+    like: 3000,   // 3s
+    share: 3000,  // 3s
+    comment: 5000 // 5s (for create comment)
+};
+
+// Map key -> timestamp(ms) of last call
+const lastCallAt = new Map();
+
+const callWithCooldown = async (key, cooldownMs, fn) => {
+    const now = Date.now();
+    const last = lastCallAt.get(key) || 0;
+    if (now - last < cooldownMs) {
+        console.debug('Client throttle active for', key);
+        // Return a normalized failure object that callers already expect from API (safe to handle)
+        return { success: false, message: 'Too many requests (client cooldown)' };
+    }
+    lastCallAt.set(key, now);
+    try {
+        const res = await fn();
+        return res;
+    } catch (err) {
+        // On error, allow immediate retry by clearing the timestamp
+        try {
+            lastCallAt.delete(key);
+        } catch (deleteErr) {
+            console.debug('Error clearing cooldown key', deleteErr);
+        }
+        throw err;
+    }
+};
+
 /**
  * Generic API call handler
  */
@@ -112,6 +146,34 @@ const apiCall = async (endpoint, options = {}) => {
         return data;
     } catch (error) {
         console.error(`❌ API Error: ${endpoint}`, error);
+
+        // Centralized handling for authentication expiry / unauthorized responses
+        try {
+            const respStatus = error && error.status ? error.status : (error.response && error.response.status ? error.response.status : null);
+            const respMessage = error && error.response && error.response.message ? String(error.response.message) : (error && error.message ? String(error.message) : '');
+
+            const looksLikeTokenError = /token/i.test(respMessage) || /hết hạn/i.test(respMessage) || /invalid token/i.test(respMessage);
+            if (respStatus === 401 || looksLikeTokenError) {
+                // Avoid firing multiple redirects in quick succession during a page load
+                if (!sessionStorage.getItem('authExpiredHandled')) {
+                    try {
+                        sessionStorage.setItem('authExpiredHandled', '1');
+                        // Clear auth state
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('userData');
+                        // Let other parts of the app react if they want
+                        window.dispatchEvent(new CustomEvent('auth:expired', { detail: { endpoint, message: respMessage } }));
+                        // Redirect to login (SPA)
+                        try { window.location.href = '/login'; } catch { /* best-effort */ }
+                    } catch (e) {
+                        console.debug('Error handling auth expiry', e);
+                    }
+                }
+            }
+        } catch (ee) {
+            console.debug('Error in auth-expiry detection', ee);
+        }
+
         throw error;
     }
 };
@@ -288,10 +350,12 @@ export const reactionAPI = {
             reactionType: 'Like',
         };
         console.log('📤 Request body:', requestBody);
-        
-        return apiCall('/reactions', {
-            method: 'POST',
-            body: JSON.stringify(requestBody),
+        // Prevent rapid duplicate likes from client
+        return callWithCooldown(`like:${postId}`, CLIENT_THROTTLE.like, async () => {
+            return apiCall('/reactions', {
+                method: 'POST',
+                body: JSON.stringify(requestBody),
+            });
         });
     },
 
@@ -476,9 +540,11 @@ export const shareAPI = {
      * Create a share
      */
     create: async (postId, note = '') => {
-        return apiCall('/shares', {
-            method: 'POST',
-            body: JSON.stringify({ postId, note }),
+        return callWithCooldown(`share:create:${postId}`, CLIENT_THROTTLE.share, async () => {
+            return apiCall('/shares', {
+                method: 'POST',
+                body: JSON.stringify({ postId, note }),
+            });
         });
     },
 
@@ -486,8 +552,10 @@ export const shareAPI = {
      * Delete a share
      */
     delete: async (postId) => {
-        return apiCall(`/shares/post/${postId}`, {
-            method: 'DELETE',
+        return callWithCooldown(`share:delete:${postId}`, CLIENT_THROTTLE.share, async () => {
+            return apiCall(`/shares/post/${postId}`, {
+                method: 'DELETE',
+            });
         });
     },
 
@@ -691,6 +759,145 @@ export const bookingAPI = {
     },
 };
 
+// ==========================================
+// Rating API (Star ratings - 1 per user per target)
+// ==========================================
+export const ratingAPI = {
+    /**
+     * Set or update user's rating
+     */
+    setRating: async (targetType, targetId, rating) => {
+        return apiCall('/ratings', {
+            method: 'POST',
+            body: JSON.stringify({ targetType, targetId, rating }),
+        });
+    },
+
+    /**
+     * Get user's own rating for a target
+     */
+    getMyRating: async (targetType, targetId) => {
+        return apiCall(`/ratings/my-rating/${targetType}/${targetId}`);
+    },
+
+    /**
+     * Get rating statistics for a target
+     */
+    getStats: async (targetType, targetId) => {
+        return apiCall(`/ratings/stats/${targetType}/${targetId}`);
+    },
+
+    /**
+     * Delete user's rating
+     */
+    deleteRating: async (targetType, targetId) => {
+        return apiCall(`/ratings/${targetType}/${targetId}`, {
+            method: 'DELETE',
+        });
+    },
+};
+
+// ==========================================
+// Field Comment API (Multiple comments allowed per user)
+// ==========================================
+export const fieldCommentAPI = {
+    /**
+     * Get comments for a target
+     */
+    getComments: async (targetType, targetId, page = 1, limit = 20) => {
+        return apiCall(`/field-comments/${targetType}/${targetId}?page=${page}&limit=${limit}`);
+    },
+
+    /**
+     * Create new comment
+     */
+    createComment: async (targetType, targetId, content) => {
+        return apiCall('/field-comments', {
+            method: 'POST',
+            body: JSON.stringify({ targetType, targetId, content }),
+        });
+    },
+
+    /**
+     * Update comment (only owner)
+     */
+    updateComment: async (commentId, content) => {
+        return apiCall(`/field-comments/${commentId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ content }),
+        });
+    },
+
+    /**
+     * Delete comment
+     */
+    deleteComment: async (commentId) => {
+        return apiCall(`/field-comments/${commentId}`, {
+            method: 'DELETE',
+        });
+    },
+
+    /**
+     * Get user's own comments
+     */
+    getMyComments: async (page = 1, limit = 20) => {
+        return apiCall(`/field-comments/my-comments?page=${page}&limit=${limit}`);
+    },
+};
+
+// Old feedback API (deprecated, keep for backward compatibility)
+export const feedbackAPI = {
+    /**
+     * Get feedbacks for a target (Field, Facility, etc.)
+     */
+    getByTarget: async (targetType, targetId, page = 1, limit = 10) => {
+        return apiCall(`/feedback/${targetType}/${targetId}?page=${page}&limit=${limit}`);
+    },
+
+    /**
+     * Get rating statistics for a target
+     */
+    getStats: async (targetType, targetId) => {
+        return apiCall(`/feedback/${targetType}/${targetId}/stats`);
+    },
+
+    /**
+     * Create new feedback
+     */
+    create: async (feedbackData) => {
+        return apiCall('/feedback', {
+            method: 'POST',
+            body: JSON.stringify(feedbackData),
+        });
+    },
+
+    /**
+     * Update feedback
+     */
+    update: async (feedbackId, feedbackData) => {
+        return apiCall(`/feedback/${feedbackId}`, {
+            method: 'PUT',
+            body: JSON.stringify(feedbackData),
+        });
+    },
+
+    /**
+     * Delete feedback
+     */
+    delete: async (feedbackId) => {
+        return apiCall(`/feedback/${feedbackId}`, {
+            method: 'DELETE',
+        });
+    },
+
+    /**
+     * Get my feedbacks
+     */
+    getMyFeedbacks: async () => {
+        return apiCall('/feedback/my-feedback');
+    },
+};
+
 export default {
     authAPI,
     postAPI,
@@ -701,6 +908,7 @@ export default {
     storyAPI,
     facilityAPI,
     bookingAPI,
+    feedbackAPI,
     imageToBase64,
     formatErrorMessage,
     shareAPI,

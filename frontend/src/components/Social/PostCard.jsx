@@ -7,6 +7,7 @@ import { reactionAPI, commentAPI, shareAPI, postAPI } from "../../utils/api";
 import useAuth from "../../hooks/useAuth";
 import PostModal from './PostModal';
 import ShareModal from './ShareModal';
+import BookingStatusCard from './BookingStatusCard';
 
 
 const PostCard = ({post}) => {
@@ -14,14 +15,19 @@ const PostCard = ({post}) => {
     const rawContent = post?.content || '';
     const postWithHashtags = rawContent.replace(/#(\w+)/g, '<span class="text-indigo-600 ">#$1</span>');
 
+    // Booking post detection: some booking posts come with Booking-specific fields
+    const isBookingPost = !!(post?.BookingID || post?.is_booking || post?.PostID && post.FieldName);
+
     // normalize likes: use number for count and boolean for whether current user liked
+    // canonical postId to support both booking-origin posts and normal posts
+    const postId = post?._id || post?.PostID || post?.PostId || post?.id;
     const [likes, setLikes] = useState(typeof post.likes_count === 'number' ? post.likes_count : (post.likes_count && post.likes_count.length) || 0);
     const [liked, setLiked] = useState(!!post.liked_by_current_user);
     const [isLiking, setIsLiking] = useState(false);
     const navigate = useNavigate();
     const { user: currentUser } = useAuth();
     const [modalOpen, setModalOpen] = useState(false);
-    const [shareModalOpen, setShareModalOpen] = useState(false);
+    // shareModal removed: share will be immediate
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(post.content || '');
     const [menuOpen, setMenuOpen] = useState(false);
@@ -30,6 +36,10 @@ const PostCard = ({post}) => {
     const [commentsCount, setCommentsCount] = useState(post.comments_count || 0);
     const [sharedByUser, setSharedByUser] = useState(false);
     const [sharesCount, setSharesCount] = useState(post.shares_count || 0);
+    // embedded shared post full data (used when a shared post references a booking but lacks full booking fields)
+    const [embeddedPost, setEmbeddedPost] = useState(null);
+    // sharing is handled by the ShareModal; no local isSharing flag needed
+    const [shareModalOpen, setShareModalOpen] = useState(false);
 
     const handleLike = async () => {
         if (isLiking) return; // Prevent double click
@@ -44,7 +54,7 @@ const PostCard = ({post}) => {
             setLikes(prev => newLiked ? (prev || 0) + 1 : Math.max(0, (prev || 0) - 1));
 
             // Call API
-            const response = await reactionAPI.toggleLike(post._id);
+            const response = await reactionAPI.toggleLike(postId);
 
             if (!response.success) {
                 // Revert on error
@@ -102,11 +112,11 @@ const PostCard = ({post}) => {
         let mounted = true;
         const loadReactionState = async () => {
             try {
-                if (!post._id) return;
-                const [countsRes, userRes] = await Promise.all([
-                    reactionAPI.getCounts(post._id),
-                    reactionAPI.getUserReaction(post._id)
-                ]);
+                        if (!postId) return;
+                        const [countsRes, userRes] = await Promise.all([
+                            reactionAPI.getCounts(postId),
+                            reactionAPI.getUserReaction(postId)
+                        ]);
 
                 if (!mounted) return;
 
@@ -126,15 +136,15 @@ const PostCard = ({post}) => {
         };
         loadReactionState();
         return () => { mounted = false; };
-    }, [post._id]);
+    }, [postId, post]);
 
     useEffect(() => {
         let mounted = true;
         const loadPreview = async () => {
             try {
-                if (!post._id) return;
-                const res = await commentAPI.getByPostId(post._id);
-                console.log('Comment preview API response for post', post._id, res);
+                if (!postId) return;
+                const res = await commentAPI.getByPostId(postId);
+                console.log('Comment preview API response for post', postId, res);
                 if (!mounted) return;
                 // Sửa: lấy đúng mảng comments từ res.data.comments nếu có
                 const commentsArr = (res && res.data && Array.isArray(res.data.comments)) ? res.data.comments : (Array.isArray(res.data) ? res.data : []);
@@ -146,7 +156,7 @@ const PostCard = ({post}) => {
         };
         loadPreview();
         return () => { mounted = false; };
-    }, [post._id, post.comments_count]);
+    }, [postId, post.comments_count]);
 
     // Determine if current user is owner to show edit/delete
     const currentAccountId = currentUser?.AccountID || currentUser?._id || currentUser?.userId;
@@ -157,21 +167,86 @@ const PostCard = ({post}) => {
         let mounted = true;
         const checkShared = async () => {
             try {
-                if (!post._id) return;
-                const res = await shareAPI.checkUserShared(post._id);
+                if (!postId) return;
+                // collect postId + any shared_post chain ids so reshares count toward total
+                const collectIds = (p) => {
+                    const ids = [];
+                    if (!p) return ids;
+                    const pushId = (x) => {
+                        const id = x?._id || x?.PostID || x?.PostId || x?.id;
+                        if (id) ids.push(id);
+                    };
+                    pushId(p);
+                    let cur = p.shared_post;
+                    while (cur) {
+                        pushId(cur);
+                        cur = cur.shared_post;
+                    }
+                    return Array.from(new Set(ids));
+                };
+
+                const ids = collectIds(post);
+                if (ids.length === 0) return;
+
+                // check if user shared any of these
+                const checks = await Promise.all(ids.map((id) => shareAPI.checkUserShared(id).catch(() => null)));
                 if (!mounted) return;
-                if (res && res.success) {
-                    setSharedByUser(!!res.data?.hasShared);
-                }
-                const cnt = await shareAPI.getCount(post._id);
-                if (cnt && cnt.success) setSharesCount(cnt.data?.count ?? 0);
+                const anyShared = checks.some((r) => r && r.success && !!r.data?.hasShared);
+                setSharedByUser(anyShared);
+
+                // fetch counts for all related ids and sum
+                const counts = await Promise.all(ids.map((id) => shareAPI.getCount(id).catch(() => null)));
+                if (!mounted) return;
+                const total = counts.reduce((s, r) => s + ((r && r.success && r.data && Number(r.data.count)) ? Number(r.data.count) : 0), 0);
+                setSharesCount(total);
             } catch {
                 // ignore
             }
         };
         checkShared();
         return () => { mounted = false; };
-    }, [post._id]);
+    }, [postId, post]);
+
+    // If the post is a share, attempt to render the embedded original.
+    // For re-shares (A <- B <- C) we try to find the booking-origin post by traversing
+    // the shared_post chain. Backend PostDAL.getById now attaches Booking data when BookingID present,
+    // so we should see booking fields in shared_post if they exist.
+    useEffect(() => {
+        const sp = post?.shared_post;
+        if (!sp) { setEmbeddedPost(null); return; }
+
+        // Check if shared_post already has booking data (from backend enhancement)
+        const hasBooking = (obj) => !!(
+            obj?.Booking ||
+            obj?.booking ||
+            obj?.FacilityName ||
+            obj?.FieldName ||
+            obj?.TotalAmount ||
+            (obj?.BookingID && (obj?.FacilityName || obj?.FieldName))
+        );
+
+        // Traverse chain to find any ancestor that already includes booking fields
+        let cur = sp;
+        let bookingAncestor = null;
+        while (cur) {
+            if (hasBooking(cur)) {
+                bookingAncestor = cur;
+                break;
+            }
+            cur = cur.shared_post;
+        }
+
+        if (bookingAncestor) {
+            console.debug('[PostCard] ✅ Found booking data in shared_post chain', { postId: postId });
+            setEmbeddedPost(bookingAncestor);
+            return;
+        }
+
+        // No booking data found in chain; use root shared_post as-is
+        // (Backend should have attached booking data if BookingID exists, but if not, render what we have)
+        console.debug('[PostCard] ⚠️ No booking data in chain, using shared_post as-is', { postId: postId });
+        setEmbeddedPost(sp);
+    }, [post.shared_post, postId]);
 
     return (
                 <div className="relative bg-white rounded-lg shadow-md p-4 space-y-2 w-full">
@@ -209,7 +284,7 @@ const PostCard = ({post}) => {
                             setMenuOpen(false);
                             if (!window.confirm('Bạn có chắc muốn xóa bài viết này?')) return;
                             try {
-                                const resp = await postAPI.delete(post._id);
+                                const resp = await postAPI.delete(postId);
                                 if (resp && resp.success) {
                                     window.location.reload();
                                 } else {
@@ -224,14 +299,14 @@ const PostCard = ({post}) => {
                 )}
             </div>
         )}
-        {/* Post content */}
+    {/* Post content */}
         {isEditing && (
             <div className="mt-2">
                 <textarea value={editContent} onChange={(e)=>setEditContent(e.target.value)} className="w-full border rounded p-2 min-h-[80px]" />
                 <div className="flex gap-2 mt-2">
                     <button onClick={async ()=>{
                         try {
-                            const resp = await postAPI.update(post._id, { content: editContent });
+                            const resp = await postAPI.update(postId, { content: editContent });
                             if (resp && resp.success) {
                                 window.location.reload();
                             } else {
@@ -246,37 +321,102 @@ const PostCard = ({post}) => {
                 </div>
             </div>
         )}
-        {/* If this is a shared post, show attribution and embedded original */}
+    {/* If this is a shared post, show attribution and embedded original */}
         {post.is_shared ? (
             <div className="text-sm text-gray-700">
                 <div className="text-xs text-gray-500 mb-2">{post.user.full_name} đã chia sẻ</div>
                 {post.shared_note && <div className="mb-2 text-gray-800 whitespace-pre-line">{post.shared_note}</div>}
                 {/* embedded original */}
                 {post.shared_post ? (
-                    <div className="border rounded-md p-3 bg-gray-50">
-                        <div className="flex items-center gap-2 mb-2">
-                            <img src={post.shared_post.user?.profile_picture} className="w-7 h-7 rounded-full" alt="" />
-                            <div className="text-sm">
-                                <div className="font-medium">{post.shared_post.user?.full_name}</div>
-                                <div className="text-xs text-gray-400">@{post.shared_post.user?.username}</div>
+                    // If the original (shared_post) contains booking data, delegate rendering to BookingStatusCard
+                    (() => {
+                        const sp = embeddedPost || post.shared_post;
+                        const spIsBooking = !!(sp?.booking || sp?.BookingID || sp?.is_booking || (sp?.PostID && sp?.FieldName));
+                        if (spIsBooking) {
+                            // Pass the shared_post into BookingStatusCard so it renders full booking details
+                            return (
+                                <div className="border rounded-md p-2 bg-gray-50">
+                                    <BookingStatusCard post={sp} />
+                                </div>
+                            );
+                        }
+
+                        // fallback: render a simple embedded post preview for non-booking shared posts
+                        return (
+                            <div className="border rounded-md p-3 bg-gray-50">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <img src={sp.user?.profile_picture || DEFAULT_AVATAR} className="w-7 h-7 rounded-full" alt="" onError={(e)=>{ e.target.onerror = null; e.target.src = DEFAULT_AVATAR }} />
+                                    <div className="text-sm">
+                                        <div className="font-medium">{sp.user?.full_name}</div>
+                                        <div className="text-xs text-gray-400">@{sp.user?.username}</div>
+                                    </div>
+                                </div>
+                                {sp.content && <div className="text-sm text-gray-800 whitespace-pre-line mb-2">{sp.content}</div>}
+                                {sp.image_urls && sp.image_urls.length > 0 && (
+                                    <img src={sp.image_urls[0]} className="w-full h-36 object-cover rounded" alt="" />
+                                )}
                             </div>
-                        </div>
-                        {post.shared_post.content && <div className="text-sm text-gray-800 whitespace-pre-line mb-2">{post.shared_post.content}</div>}
-                        {post.shared_post.image_urls && post.shared_post.image_urls.length > 0 && (
-                            <img src={post.shared_post.image_urls[0]} className="w-full h-36 object-cover rounded" alt="" />
-                        )}
-                    </div>
+                        );
+                    })()
                 ) : (
                     <div className="text-sm text-gray-500">Bài viết gốc không còn tồn tại</div>
                 )}
             </div>
-        ) : (
-            post.content && (
-              <div className="text-gray-800 text-sm whitespace-pre-line">
-                <p dangerouslySetInnerHTML={{ __html: postWithHashtags }} />
-              </div>
-            )
-        )}
+                ) : (
+                        // If booking post, render booking preview UI similar to BookingPostCard
+                        isBookingPost ? (
+                            <div className="booking-post-preview mt-2 border rounded p-3 bg-white">
+                                <div className="flex items-start gap-3">
+                                    <img
+                                        src={post.user?.profile_picture || post.user?.AvatarUrl || DEFAULT_AVATAR}
+                                        onError={(e)=>{ e.target.onerror = null; e.target.src = DEFAULT_AVATAR }}
+                                        alt=""
+                                        className="w-12 h-12 rounded-full"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <div className="font-medium">{post.user?.full_name || post.user?.fullName || post.OwnerFullName}</div>
+                                                <div className="text-xs text-gray-400">@{post.user?.username || post.OwnerUsername} • {post.createdAt ? moment(post.createdAt).fromNow() : ''}</div>
+                                            </div>
+                                        </div>
+
+                                        {post.content && <div className="mt-2 text-sm text-gray-800 whitespace-pre-line">{post.content}</div>}
+
+                                        {/* Booking details copied from BookingPostCard */}
+                                        <div className="mt-3 p-3 border rounded bg-gray-50">
+                                            <div className="text-sm text-gray-700 mb-2">
+                                                <strong>{post.FacilityName || post.facilityName}</strong> - {post.FieldName || post.fieldName}
+                                            </div>
+                                            <div className="text-sm text-gray-600 mb-2">{post.StartTime && post.EndTime ? `${new Date(post.StartTime).toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})} - ${new Date(post.EndTime).toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})}` : ''}</div>
+                                            <div className="text-sm text-gray-600">{post.RentalPrice ? `${Number(post.RentalPrice).toLocaleString('vi-VN')}đ` : ''}</div>
+
+                                            <div className="mt-3 flex items-center justify-between">
+                                                <div className="players-status flex items-center gap-3">
+                                                    <div className="text-sm">👥 {post.CurrentPlayers || post.currentPlayers || 0}/{post.MaxPlayers || post.maxPlayers || 0} người chơi</div>
+                                                </div>
+                                                <div>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); /* navigate to booking detail */ navigate(`/booking-post/${post.PostID || postId || post.PostId}`); }}
+                                                            className={`px-3 py-1 rounded border ${((post.MaxPlayers && post.CurrentPlayers) && (post.CurrentPlayers >= post.MaxPlayers)) ? 'opacity-60 cursor-not-allowed' : 'bg-green-600 text-white'}`}
+                                                            disabled={post.MaxPlayers && post.CurrentPlayers && (post.CurrentPlayers >= post.MaxPlayers)}
+                                                        >
+                                                            { (post.MaxPlayers && post.CurrentPlayers && (post.CurrentPlayers >= post.MaxPlayers)) ? 'Đã đủ người' : 'Tham gia'}
+                                                        </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            post.content && (
+                                <div className="text-gray-800 text-sm whitespace-pre-line">
+                                    <p dangerouslySetInnerHTML={{ __html: postWithHashtags }} />
+                                </div>
+                            )
+                        )
+                )}
 
         {/* Images */}
             <div className='grid grid-cols-2 gap-2'>
@@ -323,10 +463,51 @@ const PostCard = ({post}) => {
 
             {/* Share Button */}
             <div className='flex items-center gap-1'>
-                <button onClick={() => setShareModalOpen(true)} className="inline-flex items-center gap-1 focus:outline-none">
+                <button
+                    onClick={() => setShareModalOpen(true)}
+                    className="inline-flex items-center gap-1 focus:outline-none"
+                >
                     <Share2 className={`w-4 h-4 ${sharedByUser ? 'text-blue-600' : 'text-gray-600'}`} />
                     <span className={`${sharedByUser ? 'text-blue-600 font-medium' : ''}`}>{sharesCount || 0}</span>
                 </button>
+                <ShareModal
+                    visible={shareModalOpen}
+                    onClose={() => setShareModalOpen(false)}
+                    postId={postId}
+                    initiallyShared={sharedByUser}
+                    onShared={async (ev) => {
+                        try {
+                            // After share/unshare, refresh counts for post + any shared_post chain
+                            const collectIds = (p) => {
+                                const ids = [];
+                                if (!p) return ids;
+                                const pushId = (x) => {
+                                    const id = x?._id || x?.PostID || x?.PostId || x?.id;
+                                    if (id) ids.push(id);
+                                };
+                                pushId(p);
+                                let cur = p.shared_post;
+                                while (cur) {
+                                    pushId(cur);
+                                    cur = cur.shared_post;
+                                }
+                                return Array.from(new Set(ids));
+                            };
+                            const ids = collectIds(post);
+                            if (ids.length > 0) {
+                                const counts = await Promise.all(ids.map((id) => shareAPI.getCount(id).catch(() => null)));
+                                const total = counts.reduce((s, r) => s + ((r && r.success && r.data && Number(r.data.count)) ? Number(r.data.count) : 0), 0);
+                                setSharesCount(total);
+                            }
+                            if (ev?.action === 'shared') setSharedByUser(true);
+                            else if (ev?.action === 'unshared') setSharedByUser(false);
+                        } catch (err) {
+                            console.error('Error refreshing share chain count', err);
+                        } finally {
+                            setShareModalOpen(false);
+                        }
+                    }}
+                />
             </div>
             {/* Comments area: list + form */}
             {/* Small inline preview: show first comment preview if available; click to open modal */}
@@ -340,21 +521,7 @@ const PostCard = ({post}) => {
                 </div>
             )}
             <PostModal post={post} visible={modalOpen} onClose={() => setModalOpen(false)} onCommentCreated={() => setCommentsCount((n) => (n || 0) + 1)} />
-            <ShareModal
-                visible={shareModalOpen}
-                onClose={() => setShareModalOpen(false)}
-                postId={post._id}
-                initiallyShared={sharedByUser}
-                onShared={(info) => {
-                    if (info?.action === 'shared') {
-                        setSharedByUser(true);
-                        setSharesCount((s) => (s || 0) + 1);
-                    } else if (info?.action === 'unshared') {
-                        setSharedByUser(false);
-                        setSharesCount((s) => Math.max(0, (s || 0) - 1));
-                    }
-                }}
-            />
+            {/* ShareModal removed: share handled inline via shareAPI calls */}
             </div>
     </div>
   );

@@ -101,7 +101,8 @@ const CommentList = ({ postId, reloadTrigger, scrollToCommentId = null }) => {
         });
         try {
           const results = await Promise.all(promises);
-          next[id] = results.filter(Boolean);
+          // dedupe
+          next[id] = Array.from(new Set(results.filter(Boolean)));
         } catch {
           next[id] = [];
         }
@@ -388,8 +389,15 @@ const CommentList = ({ postId, reloadTrigger, scrollToCommentId = null }) => {
 
                   const validatedUrls = (asyncValidated && asyncValidated.length > 0) ? asyncValidated : syncValid;
                   
-                  // Combine base64 and validated URLs
-                  const toShow = [...base64Images, ...validatedUrls];
+                  // Prefer server-validated URLs (they are the persisted images).
+                  // If there are validated URLs, show those only. Otherwise fall back to any base64 previews + syncValid URLs.
+                  let toShow = [];
+                  if (validatedUrls && validatedUrls.length > 0) {
+                    // dedupe
+                    toShow = Array.from(new Set(validatedUrls));
+                  } else {
+                    toShow = Array.from(new Set([...base64Images, ...syncValid]));
+                  }
 
                   if (!toShow || toShow.length === 0) {
                     // nothing validated yet; render a lightweight placeholder instead of firing requests

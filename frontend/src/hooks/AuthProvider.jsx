@@ -30,6 +30,20 @@ const AuthProvider = ({ children }) => {
         checkAuth();
     }, []);
 
+    useEffect(() => {
+        const onAuthExpired = (e) => {
+            console.warn('Auth expired event received', e && e.detail);
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            setUser(null);
+            // navigate to login
+            try { navigate('/login'); } catch { /* ignore */ }
+        };
+
+        window.addEventListener('auth:expired', onAuthExpired);
+        return () => window.removeEventListener('auth:expired', onAuthExpired);
+    }, [navigate]);
+
     const login = async (identifier, password) => {
         try {
             const response = await fetch(`${API_BASE_URL}/auth/login`, {

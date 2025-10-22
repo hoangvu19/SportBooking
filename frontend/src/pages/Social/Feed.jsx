@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import StoriesBar from "../../components/Social/StoriesBar";
 import CreatePostCard from "../../components/Social/CreatePostCard";
 import PostCard from "../../components/Social/PostCard";
+import BookingStatusCard from "../../components/Social/BookingStatusCard";
 import RecentMessages from "../../components/Social/RecentMessages";
 import Loading from "../../components/Shared/Loading";
 import { postAPI } from "../../utils/api";
@@ -16,14 +17,22 @@ const Feed = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-    const fetchFeeds = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await postAPI.getFeed(page, 10);
-            
-            if (response.success) {
-                const postsArray = response.data.posts || response.data || [];
+  const fetchFeeds = async (pageNum, isLoadMore = false) => {
+    try {
+      if (isLoadMore) {
+        setLoading(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+      
+      console.log(`📥 Fetching page ${pageNum}, isLoadMore: ${isLoadMore}`);
+      const response = await postAPI.getFeed(pageNum, 10);
+      
+      if (response.success) {
+        const postsArray = response.data.posts || response.data || [];
+        console.log(`✅ Received ${postsArray.length} posts for page ${pageNum}`);
+        
         const transformedPosts = postsArray.map(post => ({
           _id: post.PostID || post._id || post.postId, 
           content: post.content || post.Content,
@@ -33,71 +42,62 @@ const Feed = () => {
             _id: post.user?._id || post.user?.AccountID || post.AccountID,
             username: post.user?.username || post.Username,
             full_name: post.user?.full_name || post.user?.FullName || post.FullName,
-          profile_picture: post.user?.profile_picture || post.user?.AvatarUrl || post.user?.ProfilePictureURL || post.user?.avatarUrl || DEFAULT_AVATAR,
+            profile_picture: post.user?.profile_picture || post.user?.AvatarUrl || post.user?.ProfilePictureURL || post.user?.avatarUrl || DEFAULT_AVATAR,
           },
           likes_count: post.likesCount || post.reactionsCount || (Array.isArray(post.likes_count) ? post.likes_count.length : 0),
           liked_by_current_user: post.likedByCurrentUser || false,
           comments_count: post.commentsCount || post.comments_count || 0,
-          // Share-specific fields (preserve whatever backend returned)
           is_shared: post.is_shared ?? post.IsShare ?? false,
           shared_note: post.shared_note || post.SharedNote || null,
           shared_post: post.shared_post || post.SharedPost || null,
           shares_count: post.sharesCount ?? post.shares_count ?? post.SharesCount ?? 0,
+          booking: post.booking || post.Booking || null,
         }));
-                
-                setFeeds(transformedPosts);
-                setHasMore(response.data.pagination?.hasMore || false);
-            } else {
-                setError(response.message || 'Không thể tải bài viết');
-            }
-        } catch (err) {
-            console.error('Error fetching feeds:', err);
-            setError('Không thể kết nối đến server');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await postAPI.getFeed(page, 10);
-        if (response.success) {
-          const postsArray = response.data.posts || response.data || [];
-          const transformedPosts = postsArray.map(post => ({
-            _id: post.PostID || post._id || post.postId, 
-            content: post.content || post.Content,
-            createdAt: post.createdAt || post.CreatedDate,
-            image_urls: post.image_urls || post.imageUrls || [],
-            user: {
-              _id: post.user?._id || post.user?.AccountID || post.AccountID,
-              username: post.user?.username || post.Username,
-              full_name: post.user?.full_name || post.user?.FullName || post.FullName,
-            profile_picture: post.user?.profile_picture || post.user?.AvatarUrl || post.user?.ProfilePictureURL || post.user?.avatarUrl || DEFAULT_AVATAR,
-            },
-            likes_count: post.likesCount || post.reactionsCount || (Array.isArray(post.likes_count) ? post.likes_count.length : 0),
-            liked_by_current_user: post.likedByCurrentUser || false,
-            comments_count: post.commentsCount || post.comments_count || 0,
-            is_shared: post.is_shared ?? post.IsShare ?? false,
-            shared_note: post.shared_note || post.SharedNote || null,
-            shared_post: post.shared_post || post.SharedPost || null,
-            shares_count: post.sharesCount ?? post.shares_count ?? post.SharesCount ?? 0,
-          }));
-          setFeeds(transformedPosts);
-          setHasMore(response.data.pagination?.hasMore || false);
+        
+        if (isLoadMore) {
+          // Append new posts to existing ones
+          setFeeds(prev => {
+            console.log(`📝 Appending ${transformedPosts.length} posts to ${prev.length} existing posts`);
+            return [...prev, ...transformedPosts];
+          });
         } else {
-          setError(response.message || 'Không thể tải bài viết');
+          // Replace feeds for initial load
+          setFeeds(transformedPosts);
         }
-      } catch (err) {
-        console.error('Error fetching feeds:', err);
-        setError('Không thể kết nối đến server');
-      } finally {
-        setLoading(false);
+        
+        const hasMorePosts = response.data.pagination?.hasMore || false;
+        console.log(`📊 hasMore: ${hasMorePosts}`);
+        setHasMore(hasMorePosts);
+      } else {
+        setError(response.message || 'Không thể tải bài viết');
       }
-    })();
-  }, [page]);
+    } catch (err) {
+      console.error('❌ Error fetching feeds:', err);
+      setError('Không thể kết nối đến server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    console.log('🚀 Initial load');
+    fetchFeeds(1, false);
+  }, []);
+
+  // Refresh feed (for new posts)
+  const refreshFeed = () => {
+    console.log('🔄 Refreshing feed...');
+    setPage(1);
+    fetchFeeds(1, false);
+  };
+
+  // Handle load more button
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchFeeds(nextPage, true);
+  };
 
 
     return !loading ? (
@@ -106,7 +106,7 @@ const Feed = () => {
         <div className='col-span-2'>
           <StoriesBar />
           {/* Create post card under stories (like in your screenshot) */}
-          <CreatePostCard onPosted={() => fetchFeeds()} />
+          <CreatePostCard onPosted={refreshFeed} />
           
           {error && (
             <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4'>
@@ -121,19 +121,29 @@ const Feed = () => {
               </div>
             ) : (
               feeds.map((post) => (
-                <PostCard key={post._id} post={post} />
+                post.booking ? (
+                  <BookingStatusCard key={post._id} post={post} />
+                ) : (
+                  <PostCard key={post._id} post={post} />
+                )
               ))
             )}
           </div>
           
-          {hasMore && (
+          {hasMore && !loading && (
             <div className='text-center py-4'>
               <button 
-                onClick={() => setPage(p => p + 1)}
+                onClick={handleLoadMore}
                 className='px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700'
               >
                 Xem thêm
               </button>
+            </div>
+          )}
+          
+          {!hasMore && feeds.length > 0 && (
+            <div className='text-center py-4 text-gray-500'>
+              <p>🎉 Bạn đã xem hết tất cả bài viết</p>
             </div>
           )}
         </div>

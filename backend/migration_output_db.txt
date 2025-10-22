@@ -1,0 +1,4 @@
+Table Rating created successfully
+Table FieldComment created successfully
+Database schema update completed successfully
+Conditional foreign keys added (Account table found)

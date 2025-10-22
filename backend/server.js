@@ -34,9 +34,12 @@ app.use(compression({
 }));
 
 // Rate limiting
+// NOTE: Increased generalLimiter for local/dev usage because some dev environments may issue many
+// rapid requests (hot reloads, automated tests). If deploying to production, consider lowering
+// this value or using a smarter per-route limiter.
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000,
+  max: 5000, // raised from 1000 -> 5000 to reduce false positives in development/testing
   message: {
     success: false,
     message: 'Quá nhiều requests từ IP này, vui lòng thử lại sau 15 phút'
@@ -162,6 +165,10 @@ app.use('/api/reactions', require('./routes/social/reactionRoutes'));
 app.use('/api/shares', require('./routes/social/shareRoutes'));
 app.use('/api/stories', require('./routes/social/storyRoutes'));
 app.use('/api/notifications', require('./routes/social/notificationRoutes'));
+app.use('/api/booking-posts', require('./routes/social/bookingPostRoutes')); // NEW: Booking posts
+
+// Debug endpoints for local development (non-sensitive)
+app.use('/api/debug', require('./routes/debug/debugRoutes'));
 
 // Follow routes are mounted under /api/users to keep frontend compatibility
 app.use('/api/users', require('./routes/social/followRoutes'));
@@ -174,7 +181,9 @@ app.use('/api/facilities', require('./routes/sport/facilityRoutesNew'));
 app.use('/api/sport-fields', require('./routes/sport/sportFieldRoutes'));
 app.use('/api/sport-types', require('./routes/sport/sportTypeRoutes'));
 app.use('/api/bookings', require('./routes/sport/bookingRoutes'));
-app.use('/api/feedback', require('./routes/sport/feedbackRoutes'));
+app.use('/api/feedback', require('./routes/sport/feedbackRoutes')); // Old feedback (deprecated)
+app.use('/api/ratings', require('./routes/sport/ratingRoutes')); // New: Star ratings only
+app.use('/api/field-comments', require('./routes/sport/fieldCommentRoutes')); // New: Comments only
 
 // Roles
 app.use('/api/roles', require('./routes/auth/roleRoutes'));
@@ -248,6 +257,14 @@ server.listen(port, () => {
   console.log('🚀 Social Media Backend Server running on http://localhost:' + port);
   console.log('✅ All routes loaded - Database integration only');
   console.log('📝 Ready for database operations and real-time signaling');
+  
+  // Start scheduled jobs
+  try {
+    const ScheduledJobs = require('./lib/scheduledJobs');
+    ScheduledJobs.start();
+  } catch (error) {
+    console.warn('⚠️ Scheduled jobs not started:', error.message);
+  }
 });
 
 module.exports = server;

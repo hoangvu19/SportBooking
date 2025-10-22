@@ -1,0 +1,495 @@
+/* BookingPostDetail.css */
+
+.booking-post-detail-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  min-height: 100vh;
+  background: #f5f6fa;
+}
+
+/* Loading & Error States */
+.booking-post-detail-page.loading,
+.booking-post-detail-page.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-icon {
+  font-size: 60px;
+  margin-bottom: 16px;
+}
+
+/* Back Button */
+.back-button {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-button:hover {
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateX(-4px);
+}
+
+/* Post Detail Card */
+.post-detail-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+/* Owner Section */
+.owner-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.owner-avatar-large {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e0e0e0;
+}
+
+.owner-info {
+  flex: 1;
+}
+
+.owner-info h3 {
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.post-time {
+  font-size: 14px;
+  color: #95a5a6;
+  margin: 0;
+}
+
+.sport-badge-large {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Post Content */
+.post-content {
+  margin-bottom: 32px;
+}
+
+.post-content p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: #34495e;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Booking Info Detailed */
+.booking-info-detailed {
+  background: #f8f9fa;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.booking-info-detailed h4 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-item .label {
+  font-size: 13px;
+  color: #7f8c8d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item .value {
+  font-size: 16px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.info-item .value.price {
+  color: #27ae60;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Players Status Detailed */
+.players-status-detailed {
+  margin-bottom: 32px;
+}
+
+.players-status-detailed h4 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.players-progress-section {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.progress-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.progress-status {
+  font-size: 14px;
+  font-weight: 600;
+  color: #27ae60;
+  padding: 6px 12px;
+  background: #d4edda;
+  border-radius: 12px;
+}
+
+.progress-status.full {
+  color: #e74c3c;
+  background: #fee;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #ecf0f1;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+  border-radius: 6px;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-text {
+  text-align: center;
+  padding: 16px;
+  background: #e8f5e9;
+  border-radius: 8px;
+  color: #2e7d32;
+  font-weight: 600;
+  margin: 0;
+}
+
+.btn {
+  padding: 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  color: white;
+}
+
+.btn-accept:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(39, 174, 96, 0.4);
+}
+
+.btn-reject {
+  background: white;
+  color: #e74c3c;
+  border: 2px solid #e74c3c;
+}
+
+.btn-reject:hover:not(:disabled) {
+  background: #e74c3c;
+  color: white;
+}
+
+.status-message {
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.status-message.accepted {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-message.rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Players List Section */
+.players-list-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+}
+
+.players-list-section > h3 {
+  margin: 0 0 24px 0;
+  font-size: 24px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+/* Players Group */
+.players-group {
+  margin-bottom: 32px;
+}
+
+.players-group:last-child {
+  margin-bottom: 0;
+}
+
+.group-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.group-title.accepted {
+  background: #d4edda;
+  color: #155724;
+}
+
+.group-title.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* Players Grid */
+.players-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px solid;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.player-card.accepted {
+  border-color: #d4edda;
+  background: #f8fff9;
+}
+
+.player-card.pending {
+  border-color: #fff3cd;
+  background: #fffef8;
+}
+
+.player-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.player-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e0e0e0;
+}
+
+.player-info {
+  flex: 1;
+}
+
+.player-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.player-time {
+  font-size: 13px;
+  color: #7f8c8d;
+}
+
+.owner-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Empty Players */
+.empty-players {
+  text-align: center;
+  padding: 60px 24px;
+}
+
+.empty-players .empty-icon {
+  font-size: 60px;
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+
+.empty-players p {
+  color: #7f8c8d;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .booking-post-detail-page {
+    padding: 16px;
+  }
+
+  .post-detail-card,
+  .players-list-section {
+    padding: 20px;
+  }
+
+  .owner-avatar-large {
+    width: 56px;
+    height: 56px;
+  }
+
+  .owner-info h3 {
+    font-size: 18px;
+  }
+
+  .sport-badge-large {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .btn {
+    padding: 14px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .owner-section {
+    flex-wrap: wrap;
+  }
+
+  .sport-badge-large {
+    width: 100%;
+    text-align: center;
+  }
+
+  .player-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .owner-badge {
+    position: static;
+    margin-top: 8px;
+  }
+}
