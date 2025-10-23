@@ -5,8 +5,10 @@ import { PenBox } from 'lucide-react';
 import UserProfileInfo from "../../components/Social/UserProfileInfo";
 import moment from "moment";
 import PostCard from "../../components/Social/PostCard";
+import BookingStatusCard from "../../components/Social/BookingStatusCard";
 import ProfileModal from "../../components/Social/ProfileModal";
 import { userAPI, postAPI } from "../../utils/api";
+import bookingPostAPI from "../../utils/bookingPostAPI";
 import useAuth from "../../hooks/useAuth";
 import DEFAULT_AVATAR from "../../utils/defaults";
 
@@ -108,27 +110,28 @@ const Profile = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [targetUserId, currentUser?.AccountID]);
 
-    // Helper to normalize backend post objects into frontend PostCard shape
+    // Mirror Feed.jsx mapping so profile posts use the exact same shape as feed posts
     const transformPosts = (postsArray = [], userDataLocal = user) => {
         return postsArray.map(post => ({
-            _id: post.PostID?.toString() || post._id || post.postId?.toString(),
+            _id: post.PostID || post._id || post.postId,
+            PostID: post.PostID || post._id || post.postId,
             content: post.content || post.Content || '',
             createdAt: post.createdAt || post.CreatedDate || post.createdDate || new Date().toISOString(),
             image_urls: post.image_urls || post.imageUrls || post.Images || [],
-                user: post.user ? {
-                _id: post.user._id || post.user?.AccountID || userDataLocal?._id,
-                username: post.user.username || post.user?.Username || userDataLocal?.username,
-                full_name: post.user.full_name || post.user?.FullName || userDataLocal?.full_name,
-                profile_picture: post.user.profile_picture || post.user?.AvatarUrl || post.user?.ProfilePictureURL || post.user?.avatarUrl || DEFAULT_AVATAR,
-            } : (userDataLocal || {}),
-            likes_count: Array.isArray(post.likes_count) ? post.likes_count.length : (post.likesCount || post.reactionsCount || 0),
+            user: {
+                _id: post.user?._id || post.user?.AccountID || post.AccountID || userDataLocal?._id,
+                username: post.user?.username || post.Username || userDataLocal?.username,
+                full_name: post.user?.full_name || post.user?.FullName || post.FullName || userDataLocal?.full_name,
+                profile_picture: post.user?.profile_picture || post.user?.AvatarUrl || post.user?.ProfilePictureURL || post.user?.avatarUrl || DEFAULT_AVATAR,
+            },
+            likes_count: post.likesCount || post.reactionsCount || (Array.isArray(post.likes_count) ? post.likes_count.length : 0),
             liked_by_current_user: post.likedByCurrentUser || post.liked_by_current_user || false,
             comments_count: post.commentsCount || post.comments_count || 0,
-            // Share-specific fields (preserve whatever backend returned)
             is_shared: post.is_shared ?? post.IsShare ?? false,
             shared_note: post.shared_note || post.SharedNote || null,
             shared_post: post.shared_post || post.SharedPost || null,
             shares_count: post.sharesCount ?? post.shares_count ?? post.SharesCount ?? 0,
+            booking: post.booking || post.Booking || null,
         }));
     };
 
@@ -168,6 +171,49 @@ const Profile = () => {
         loadTab();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, targetUserId]);
+
+    // Enrich posts that reference a BookingID but don't have nested `booking` data
+    useEffect(() => {
+        let mounted = true;
+        const enrichBookingPosts = async () => {
+            try {
+                // find posts that have BookingID but missing booking object
+                const needs = posts
+                    .map((p, idx) => ({ p, idx }))
+                    .filter(item => item.p && (item.p.BookingID || item.p.BookingID === 0) && (!item.p.booking || !item.p.booking.BookingID));
+
+                if (needs.length === 0) return;
+
+                const results = await Promise.all(needs.map(n =>
+                    bookingPostAPI.getById(n.p.PostID || n.p.PostId || n.p._id).catch(() => null)
+                ));
+
+                if (!mounted) return;
+
+                // apply updates
+                setPosts(prev => {
+                    const next = Array.isArray(prev) ? [...prev] : prev;
+                    needs.forEach((need, i) => {
+                        const resp = results[i];
+                        if (resp && resp.success && resp.data) {
+                            const bookingData = resp.data.booking || resp.data.Booking || resp.data;
+                            if (bookingData) {
+                                const targetIdx = need.idx;
+                                const existing = next[targetIdx] || {};
+                                next[targetIdx] = { ...existing, booking: bookingData };
+                            }
+                        }
+                    });
+                    return next;
+                });
+            } catch (err) {
+                console.debug('Profile.enrichBookingPosts failed', err?.message || err);
+            }
+        };
+
+        enrichBookingPosts();
+        return () => { mounted = false; };
+    }, [posts]);
 
     // Follow/unfollow handled in child (UserProfileInfo) via onChildFollowChange
 
@@ -251,12 +297,14 @@ const Profile = () => {
                                     Chưa có bài viết nào
                                 </div>
                             ) : (
-                                posts.map((post) => (
-                                    <PostCard 
-                                        key={post._id} 
-                                        post={post} 
-                                    />
-                                ))
+                                                posts.map((post) => (
+                                                    // If the transformed post contains booking info, render the specialized BookingStatusCard
+                                                    post.booking && post.booking.BookingID ? (
+                                                        <BookingStatusCard key={post._id} post={post} />
+                                                    ) : (
+                                                        <PostCard key={post._id} post={post} />
+                                                    )
+                                                ))
                             )}
                         </div>
                     )}
@@ -272,10 +320,11 @@ const Profile = () => {
                                 </div>
                             ) : (
                                 posts.map((post) => (
-                                    <PostCard 
-                                        key={post._id} 
-                                        post={post} 
-                                    />
+                                    post.booking && post.booking.BookingID ? (
+                                        <BookingStatusCard key={post._id} post={post} />
+                                    ) : (
+                                        <PostCard key={post._id} post={post} />
+                                    )
                                 ))
                             )}
                         </div>

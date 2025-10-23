@@ -4,7 +4,7 @@
  * 
  * THAY ĐỔI:
  * - Sử dụng Post table với BookingID thay vì bảng BookingPost riêng
- * - Sử dụng View vw_BookingPosts để query
+ * - Queries now use explicit JOINs across Post/Booking/SportField/Facility/Account so a separate DB view is not required
  * - Đơn giản hóa logic, giảm số queries
  */
 const BookingPost = require('../../models/Social/BookingPost');
@@ -54,20 +54,29 @@ async function createBookingPost(req, res) {
 
     // ✅ OPTIMIZED: Chỉ 1 method thay vì 2 bước
     // Model sẽ tự verify booking, deposit, và tạo post trong 1 transaction
+    // If a file was uploaded via multer (field name 'image'), expose URL
+    let imagesToSave = Array.isArray(imageUrls) ? imageUrls : [];
+    if (req.file && req.file.filename) {
+      // Build URL path that the frontend can access via /uploads
+      const imageUrl = `/uploads/posts/${req.file.filename}`;
+      imagesToSave = [...imagesToSave, imageUrl];
+    }
+
     const result = await BookingPost.createBookingPost({
       accountId,
       bookingId: bookingCheck.value,
       content: content.trim(),
       sportTypeId,
       maxPlayers: maxPlayers || 10,
-      images: Array.isArray(imageUrls) ? imageUrls : []
+      images: imagesToSave
     });
 
     // Lấy thông tin đầy đủ từ View (bao gồm thông tin booking, field, facility)
     const fullBookingPost = await BookingPost.getById(result.postId);
 
     return sendCreated(res, {
-      bookingPost: fullBookingPost
+      bookingPost: fullBookingPost,
+      PostID: result.postId
     }, 'Tạo bài đăng "đã đặt sân" thành công');
   } catch (error) {
     console.error('Create booking post error:', error);
@@ -219,7 +228,7 @@ async function getPlayers(req, res) {
 
 /**
  * Lấy bài đăng theo môn thể thao
- * OPTIMIZED: Sử dụng View vw_BookingPosts
+ * Note: The implementation uses join-based queries; an optional view `vw_BookingPosts` is available in the repo for performance reference but is not required.
  */
 async function getPostsBySportType(req, res) {
   try {
@@ -235,7 +244,7 @@ async function getPostsBySportType(req, res) {
     const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
     const offset = (pageNum - 1) * limitNum;
 
-    // ✅ OPTIMIZED: Query từ View thay vì JOIN nhiều bảng
+  // Query uses join-based SQL to fetch booking + post + owner + field/facility details
     const posts = await BookingPost.getBySportType(
       sportCheck.value,
       limitNum,
@@ -258,7 +267,7 @@ async function getPostsBySportType(req, res) {
 
 /**
  * Lấy thông tin bài đăng booking
- * OPTIMIZED: Sử dụng View vw_BookingPosts
+ * Note: Uses join-based query to return booking + post + owner + field/facility details
  */
 async function getBookingPost(req, res) {
   try {
@@ -271,12 +280,24 @@ async function getBookingPost(req, res) {
 
     // ✅ OPTIMIZED: Query từ View (bao gồm tất cả thông tin)
     const bookingPost = await BookingPost.getById(postCheck.value);
-    
-    if (!bookingPost) {
-      return sendNotFound(res, 'Không tìm thấy bài đăng "đã đặt sân"');
-    }
+        // If optimized view didn't return a booking post, try the canonical PostDAL.getById
+        // which also attaches Booking info for posts that reference a BookingID.
+        if (!bookingPost) {
+          try {
+            const PostDAL = require('../../DAL/Social/PostDAL');
+            const post = await PostDAL.getById(postCheck.value);
+            if (post) {
+              // Convert post model to frontend-safe JSON if needed (controller helpers will later format)
+              return sendSuccess(res, post, 'Lấy thông tin bài đăng thành công (fallback từ PostDAL)');
+            }
+          } catch (e) {
+            console.debug('bookingPostController.getBookingPost: fallback to PostDAL.getById failed', e?.message || e);
+          }
 
-    return sendSuccess(res, bookingPost, 'Lấy thông tin bài đăng thành công');
+          return sendNotFound(res, 'Không tìm thấy bài đăng "đã đặt sân"');
+        }
+
+        return sendSuccess(res, bookingPost, 'Lấy thông tin bài đăng thành công');
   } catch (error) {
     console.error('Get booking post error:', error);
     return sendError(res, 'Lỗi server khi lấy thông tin bài đăng', 500, { error: error.message });

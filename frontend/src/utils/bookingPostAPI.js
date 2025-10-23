@@ -63,6 +63,14 @@ export const bookingPostAPI = {
    * @param {Object} data - { bookingId, content, maxPlayers, imageUrls }
    */
   create: async (data) => {
+    // If caller provided a FormData (multipart), pass it through as-is
+    if (data instanceof FormData) {
+      return apiCall('/booking-posts', {
+        method: 'POST',
+        body: data,
+      });
+    }
+
     return apiCall('/booking-posts', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -107,6 +115,31 @@ export const bookingPostAPI = {
       return cached.data;
     }
 
+    // First try the generic posts endpoint — it usually returns the post with booking
+    // attached (PostDAL.getById now includes Booking data). This avoids a round of
+    // 404s when the optimized view-backed endpoint isn't populated or available.
+    try {
+      const postResp = await apiCall(`/posts/${postId}`);
+      // If the generic post endpoint returned booking information, prefer it
+      const postHasBooking = !!(postResp && postResp.success && (postResp.data?.booking || postResp.data?.Booking));
+      if (postResp && postResp.success && postHasBooking) {
+        const payload = postResp;
+        try {
+          bookingPostCache.set(key, { expires: now + CACHE_TTL_MS, data: payload });
+          setTimeout(() => {
+            const cur = bookingPostCache.get(key);
+            if (cur && cur.expires <= Date.now()) bookingPostCache.delete(key);
+          }, CACHE_TTL_MS + 50);
+        } catch { /* ignore cache failures */ }
+        return payload;
+      }
+    } catch (e) {
+      // If generic post endpoint fails, we'll attempt the booking-posts endpoint below
+      // but swallow error to avoid throwing immediately.
+      console.debug('bookingPostAPI.getById: generic post endpoint failed, will try booking-posts endpoint', e?.message || e);
+    }
+
+    // Fallback: try the optimized booking-posts endpoint (may 404 if view not populated)
     const data = await apiCall(`/booking-posts/${postId}`);
     try {
       bookingPostCache.set(key, { expires: now + CACHE_TTL_MS, data });

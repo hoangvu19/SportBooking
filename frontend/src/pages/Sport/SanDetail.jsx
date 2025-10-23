@@ -7,15 +7,75 @@ import BookingModal from "../../components/Sport/BookingModal";
 import FeedbackSection from "../../components/Sport/FeedbackSection";
 import Loading from "../../components/Shared/Loading";
 import { generateTimeSlots } from "../../utils/bookingUtils";
+import { bookingAPI } from "../../utils/api";
 
 export default function SanDetail() {
   const { sanId } = useParams();
   const [schedule, setSchedule] = useState([]);
   const [selectedDate, setSelectedDate] = useState(0); // Index of the selected day
   const [showBooking, setShowBooking] = useState(false);
+  const [bookingInitialSlots, setBookingInitialSlots] = useState([]);
+  const [bookingInitialDate, setBookingInitialDate] = useState(null);
   const [san, setSan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // generateSchedule hoisted to avoid TDZ and stable reference
+  function generateSchedule(basePrice, fieldId) {
+    const days = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 7; i++) {
+      const currentDate = new Date(today);
+      currentDate.setDate(today.getDate() + i);
+      
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const displayStr = i === 0 ? 'Hôm nay' : 
+                        i === 1 ? 'Ngày mai' :
+                        currentDate.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric' });
+      
+      // Attempt to fetch real availability from backend for this field/day
+      // We'll optimistically create a placeholder slots array and then try to patch booked state
+      let slots = generateTimeSlots(dateStr, basePrice);
+
+      // fetch bookings for this field/date from API and map to slot.isBooked
+      (async () => {
+        try {
+          const resp = await bookingAPI.getFieldAvailability(fieldId, dateStr);
+          if (resp && resp.success && Array.isArray(resp.data)) {
+            const bookings = resp.data;
+            // Normalize bookings into set of start times for quick lookup (HH:MM format)
+            const bookedStarts = new Set();
+            bookings.forEach(b => {
+              try {
+                const start = new Date(b.StartTime);
+                const hh = String(start.getHours()).padStart(2, '0');
+                const mm = String(start.getMinutes()).padStart(2, '0');
+                bookedStarts.add(`${hh}:${mm}`);
+              } catch { /* ignore parse errors */ }
+            });
+
+            // Patch slots in state for the corresponding day
+            setSchedule(prev => prev.map(d => {
+              if (d.date !== dateStr) return d;
+              const newSlots = d.slots.map(s => ({ ...s, isBooked: bookedStarts.has(s.start) }));
+              return { ...d, slots: newSlots };
+            }));
+          }
+        } catch (err) {
+          console.debug('Could not fetch real availability, using mock slots', err);
+        }
+      })();
+      
+      days.push({
+        date: dateStr,
+        display: displayStr,
+        slots: slots
+      });
+    }
+    
+    setSchedule(days);
+  }
 
   const fetchFacilityDetail = React.useCallback(async () => {
     setLoading(true);
@@ -41,10 +101,10 @@ export default function SanDetail() {
             Avatar: field.OwnerAvatar || DEFAULT_AVATAR
           }
         };
-        setSan(sanData);
+  setSan(sanData);
         
-        // Generate schedule with time slots for next 7 days
-        generateSchedule(sanData.GiaThue);
+        // Generate schedule with time slots for next 7 days using real field id
+        generateSchedule(sanData.GiaThue, sanData.FieldID || sanData.SanID);
       } else {
         setError(result.message || 'Không thể tải thông tin sân');
       }
@@ -60,31 +120,7 @@ export default function SanDetail() {
     fetchFacilityDetail();
   }, [fetchFacilityDetail]);
 
-  const generateSchedule = (basePrice) => {
-    const days = [];
-    const today = new Date();
-    
-    for (let i = 0; i < 7; i++) {
-      const currentDate = new Date(today);
-      currentDate.setDate(today.getDate() + i);
-      
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const displayStr = i === 0 ? 'Hôm nay' : 
-                        i === 1 ? 'Ngày mai' :
-                        currentDate.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric' });
-      
-      // Generate time slots for this day using utility
-      const slots = generateTimeSlots(dateStr, basePrice);
-      
-      days.push({
-        date: dateStr,
-        display: displayStr,
-        slots: slots
-      });
-    }
-    
-    setSchedule(days);
-  };
+  
 
   if (loading) return <Loading />;
   
@@ -209,13 +245,13 @@ export default function SanDetail() {
           {schedule.length > 0 ? (
             <>
               {/* Date Tabs */}
-              <div className="flex overflow-x-auto pb-3 mb-6 space-x-2 no-scrollbar">
+              <div className="flex overflow-x-auto pb-2 mb-4 space-x-2 no-scrollbar">
                 {schedule.map((day, idx) => (
                   <button 
                     key={day.date} 
-                    className={`px-5 py-3 text-center rounded-xl cursor-pointer flex-shrink-0 font-semibold transition-all duration-200 ${
+                    className={`px-3 py-2 text-sm text-center rounded-md cursor-pointer flex-shrink-0 font-medium transition-colors duration-150 ${
                       selectedDate === idx 
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105' 
+                        ? 'bg-indigo-600 text-white' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                     onClick={() => setSelectedDate(idx)}
@@ -224,37 +260,80 @@ export default function SanDetail() {
                   </button>
                 ))}
               </div>
-              
-              {/* Time Slots Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* Legend + Time Slots Grid */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-white border border-gray-300 inline-block"/> Còn trống</span>
+                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-200 inline-block"/> Đã đặt</span>
+                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-200 inline-block"/> Đã chọn</span>
+                  </div>
+                </div>
+                <div>
+                  <button
+                    className="text-indigo-600 text-sm underline"
+                    onClick={() => {
+                      // Quick jump: open booking modal for today
+                      setBookingInitialDate(schedule[selectedDate]?.date || null);
+                      setBookingInitialSlots([]);
+                      setShowBooking(true);
+                    }}
+                  >
+                    Đặt nhiều khung giờ
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-2">
                 {schedule[selectedDate]?.slots.map(slot => (
+                  // compute slot absolute time to mark past vs future
+                  (() => {
+                    const day = schedule[selectedDate]?.date;
+                    const isoStart = `${day}T${slot.start}:00`;
+                    const startDt = new Date(isoStart);
+                    const now = new Date();
+                    let slotState = 'available'; // available | booked | past
+                    if (slot.isBooked) slotState = 'booked';
+                    else if (startDt < now) slotState = 'past';
+
+                    const baseClass = slotState === 'booked'
+                      ? 'bg-red-100 border-red-200 text-red-600'
+                      : slotState === 'past'
+                        ? 'bg-gray-50 border-gray-100 text-gray-400 opacity-80'
+                        : 'bg-green-50 border-green-100 text-gray-800';
+
+                    return (
                   <div 
                     key={slot.id}
-                    className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${
-                      slot.isBooked 
-                        ? 'bg-gray-50 border-gray-200 opacity-60' 
-                        : 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 hover:shadow-md hover:scale-105 cursor-pointer'
-                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { if (slotState === 'available') { setBookingInitialDate(schedule[selectedDate].date); setBookingInitialSlots([slot.start]); setShowBooking(true); } } }}
+                    onClick={() => { if (slotState === 'available') { setBookingInitialDate(schedule[selectedDate].date); setBookingInitialSlots([slot.start]); setShowBooking(true); } }}
+                    className={`relative p-2 rounded-md border text-xs flex flex-col justify-between ${baseClass} ${slotState !== 'available' ? 'cursor-default' : 'cursor-pointer'}`}
                   >
-                    {slot.isBooked && (
-                      <div className="absolute top-2 right-2">
-                        <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                        </svg>
+                      {/* Booked slots are now shown with strong red background and white text */}
+
+                      <div>
+                        <div className="flex items-center gap-1 mb-0">
+                          <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className={`font-semibold text-sm ${slotState === 'past' ? 'text-gray-500' : 'text-gray-800'}`}>{slot.start}</span>
+                          <span className={`text-[11px] ${slotState === 'past' ? 'text-gray-400' : 'text-gray-400'}`}> - {slot.end}</span>
+                        </div>
+                        <div className="mt-1">
+                          {slotState === 'booked' ? (
+                            <span className="text-red-600 text-[12px]">Đã được đặt</span>
+                          ) : slotState === 'past' ? (
+                            <span className="text-gray-400 text-[12px]">Quá giờ</span>
+                          ) : (
+                            <span className="text-green-700 text-sm">{slot.price.toLocaleString()}đ</span>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    <div className="flex items-center space-x-2 mb-2">
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="font-bold text-gray-800">{slot.start} - {slot.end}</span>
                     </div>
-                    <div className={`text-sm font-semibold ${
-                      slot.isBooked ? 'text-gray-400' : 'text-green-600'
-                    }`}>
-                      {slot.isBooked ? '❌ Đã đặt' : `💰 ${slot.price.toLocaleString()}đ`}
-                    </div>
-                  </div>
+                    );
+                  })()
                 ))}
               </div>
             </>
@@ -274,8 +353,9 @@ export default function SanDetail() {
       {showBooking && (
         <BookingModal
           san={san}
-          onClose={() => setShowBooking(false)}
-          initialDate={schedule[selectedDate]?.date || null}
+          onClose={() => { setShowBooking(false); setBookingInitialSlots([]); setBookingInitialDate(null); }}
+          initialDate={bookingInitialDate || schedule[selectedDate]?.date || null}
+          initialSelectedSlots={bookingInitialSlots}
           initialArea={san.KhuVuc || null}
         />
       )}

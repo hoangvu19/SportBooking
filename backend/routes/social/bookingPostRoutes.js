@@ -6,12 +6,13 @@ const express = require('express');
 const router = express.Router();
 const bookingPostController = require('../../controllers/Social/bookingPostController');
 const { authenticateToken } = require('../../middleware/auth');
+const { uploadPostImage } = require('../../middleware/uploadPostImage');
 
 // Tất cả routes đều cần authentication
 router.use(authenticateToken);
 
-// Tạo bài đăng "đã đặt sân"
-router.post('/', bookingPostController.createBookingPost);
+// Tạo bài đăng "đã đặt sân" (hỗ trợ multipart/form-data với trường 'image')
+router.post('/', uploadPostImage, bookingPostController.createBookingPost);
 
 // Lấy bài đăng theo môn thể thao
 router.get('/sport/:sportTypeId', bookingPostController.getPostsBySportType);

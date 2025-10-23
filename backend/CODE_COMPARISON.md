@@ -171,7 +171,8 @@ static async getBySportType(sportTypeId, limit, offset) {
   // ✅ CHỈ query View (đã JOIN sẵn, optimized)
   const result = await pool.request()
     .query(`
-      SELECT * FROM vw_BookingPosts
+  -- Optional helper: the repository includes a CREATE VIEW script for `vw_BookingPosts` used previously for optimization.
+  -- SELECT * FROM vw_BookingPosts
       WHERE SportTypeID = @SportTypeID
         AND Status = 'Visible'
         AND IsAutoHidden = 0
@@ -259,7 +260,7 @@ CREATE TABLE FacilityPolicy (...);
 CREATE TABLE ContentModerationLog (...);
 
 -- 5. View để query dễ dàng
-CREATE VIEW vw_BookingPosts AS
+-- CREATE VIEW vw_BookingPosts AS  -- (optional - included for reference)
 SELECT 
     p.*,
     b.*,

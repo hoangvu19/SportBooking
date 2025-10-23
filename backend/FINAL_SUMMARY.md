@@ -67,7 +67,7 @@ SELECT * FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME IN ('PostPlayer', 'FacilityPolicy', 'ContentModerationLog');
 
 -- Check View
-SELECT * FROM vw_BookingPosts;
+-- Optional: SELECT * FROM vw_BookingPosts; (the view is provided as an optional optimization)
 
 -- Test Stored Procedure
 EXEC sp_AutoHideExpiredBookingPosts;
@@ -148,7 +148,8 @@ backend/
 **Lỗi: "Column 'BookingID' already exists"**
 → Migration đã chạy rồi, skip bước này
 
-**Lỗi: "View 'vw_BookingPosts' not found"**
+**Note: "View 'vw_BookingPosts' not found"**
+If you see this message in older logs, it means the optional optimization view wasn't present. The application now uses join-based queries and no longer requires the view. You may still create the view using the provided script for performance reasons.
 → Chạy lại migration script từ đầu
 
 **Lỗi: "Stored procedure not found"**

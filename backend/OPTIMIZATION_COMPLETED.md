@@ -9,7 +9,7 @@
 ### 2. ✅ Cập Nhật Controllers
 - **Modified:** `bookingPostController.js`
   - Đơn giản hóa `createBookingPost()` - CHỈ 1 method thay vì 2 bước
-  - Sử dụng View `vw_BookingPosts` trong `getPostsBySportType()` và `getBookingPost()`
+  - Previously used an optional view `vw_BookingPosts` for optimized queries in `getPostsBySportType()` and `getBookingPost()`; code now uses join-based queries so the view is not required.
   - Giảm số queries, tăng performance
 
 ### 3. ✅ Archived Old Files
@@ -38,7 +38,7 @@
 ```
 ✅ CHỈ 3 bảng mới (PostPlayer, FacilityPolicy, ContentModerationLog)
 ✅ 7 cột mới trong Post (BookingID, SportTypeID, MaxPlayers, CurrentPlayers, IsAutoHidden, HiddenAt, PostType)
-✅ 1 View: vw_BookingPosts (query nhanh, bao gồm tất cả thông tin)
+✅ Optimization available: queries no longer require the `vw_BookingPosts` view; join-based queries return the same fields.
 ✅ 1 method tạo post: BookingPost.createBookingPost()
 ✅ Code đơn giản, performance cao
 ```

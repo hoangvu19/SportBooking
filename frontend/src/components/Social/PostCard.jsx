@@ -8,6 +8,7 @@ import useAuth from "../../hooks/useAuth";
 import PostModal from './PostModal';
 import ShareModal from './ShareModal';
 import BookingStatusCard from './BookingStatusCard';
+import { bookingPostAPI } from '../../utils/bookingPostAPI';
 
 
 const PostCard = ({post}) => {
@@ -16,7 +17,8 @@ const PostCard = ({post}) => {
     const postWithHashtags = rawContent.replace(/#(\w+)/g, '<span class="text-indigo-600 ">#$1</span>');
 
     // Booking post detection: some booking posts come with Booking-specific fields
-    const isBookingPost = !!(post?.BookingID || post?.is_booking || post?.PostID && post.FieldName);
+    // Also treat posts that have a nested `Booking` object as booking posts
+    const isBookingPost = !!(post?.Booking || post?.BookingID || post?.is_booking || (post?.PostID && post?.FieldName));
 
     // normalize likes: use number for count and boolean for whether current user liked
     // canonical postId to support both booking-origin posts and normal posts
@@ -242,10 +244,43 @@ const PostCard = ({post}) => {
             return;
         }
 
-        // No booking data found in chain; use root shared_post as-is
-        // (Backend should have attached booking data if BookingID exists, but if not, render what we have)
-        console.debug('[PostCard] ⚠️ No booking data in chain, using shared_post as-is', { postId: postId });
-        setEmbeddedPost(sp);
+        // No booking data found in chain; attempt to fetch booking-post details
+        // from booking-posts endpoint as a fallback (profile APIs sometimes omit full booking fields)
+        const attemptFetchBookingPost = async () => {
+            try {
+                const candidateId = sp?._id || sp?.PostID || sp?.PostId || sp?.id;
+                if (candidateId) {
+                    // First try booking-posts endpoint (optimized view)
+                    const resp = await bookingPostAPI.getById(candidateId).catch(() => null);
+                    if (resp && resp.success && resp.data) {
+                        console.debug('[PostCard] Fetched booking-post fallback data for shared_post (bookingPostAPI)', { postId: postId, bookingId: candidateId });
+                        setEmbeddedPost(resp.data);
+                        return;
+                    }
+
+                    // If booking-posts endpoint didn't find it (404) or isn't available,
+                    // try the generic posts endpoint — PostDAL.getById attaches Booking info too.
+                    try {
+                        const postResp = await postAPI.getById(candidateId).catch(() => null);
+                        if (postResp && postResp.success && postResp.data) {
+                            console.debug('[PostCard] Fetched booking-post fallback data for shared_post (postAPI)', { postId: postId, bookingId: candidateId });
+                            setEmbeddedPost(postResp.data);
+                            return;
+                        }
+                    } catch (e) {
+                        console.debug('postAPI.getById fallback failed', e);
+                    }
+                }
+            } catch (err) {
+                console.debug('Fallback booking post fetch failed', err);
+            }
+
+            // fallback to using shared_post as-is
+            console.debug('[PostCard] ⚠️ No booking data in chain, using shared_post as-is', { postId: postId });
+            setEmbeddedPost(sp);
+        };
+
+        attemptFetchBookingPost();
     }, [post.shared_post, postId]);
 
     return (
@@ -384,28 +419,44 @@ const PostCard = ({post}) => {
                                         {post.content && <div className="mt-2 text-sm text-gray-800 whitespace-pre-line">{post.content}</div>}
 
                                         {/* Booking details copied from BookingPostCard */}
-                                        <div className="mt-3 p-3 border rounded bg-gray-50">
-                                            <div className="text-sm text-gray-700 mb-2">
-                                                <strong>{post.FacilityName || post.facilityName}</strong> - {post.FieldName || post.fieldName}
-                                            </div>
-                                            <div className="text-sm text-gray-600 mb-2">{post.StartTime && post.EndTime ? `${new Date(post.StartTime).toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})} - ${new Date(post.EndTime).toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})}` : ''}</div>
-                                            <div className="text-sm text-gray-600">{post.RentalPrice ? `${Number(post.RentalPrice).toLocaleString('vi-VN')}đ` : ''}</div>
+                                                        <div className="mt-3 p-3 border rounded bg-gray-50">
+                                                            {/** Prefer nested booking object if available, else use top-level fields */}
+                                                            {(() => {
+                                                                const booking = post.Booking || post;
+                                                                const facility = booking.FacilityName || booking.facilityName || '';
+                                                                const fieldName = booking.FieldName || booking.fieldName || '';
+                                                                const start = booking.StartTime || booking.startTime || booking.Start || null;
+                                                                const end = booking.EndTime || booking.endTime || booking.End || null;
+                                                                const price = booking.TotalAmount || booking.RentalPrice || booking.rentalPrice || booking.Total || null;
+                                                                const currentPlayers = booking.CurrentPlayers || booking.currentPlayers || 0;
+                                                                const maxPlayers = booking.MaxPlayers || booking.maxPlayers || booking.Max || 0;
 
-                                            <div className="mt-3 flex items-center justify-between">
-                                                <div className="players-status flex items-center gap-3">
-                                                    <div className="text-sm">👥 {post.CurrentPlayers || post.currentPlayers || 0}/{post.MaxPlayers || post.maxPlayers || 0} người chơi</div>
-                                                </div>
-                                                <div>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); /* navigate to booking detail */ navigate(`/booking-post/${post.PostID || postId || post.PostId}`); }}
-                                                            className={`px-3 py-1 rounded border ${((post.MaxPlayers && post.CurrentPlayers) && (post.CurrentPlayers >= post.MaxPlayers)) ? 'opacity-60 cursor-not-allowed' : 'bg-green-600 text-white'}`}
-                                                            disabled={post.MaxPlayers && post.CurrentPlayers && (post.CurrentPlayers >= post.MaxPlayers)}
-                                                        >
-                                                            { (post.MaxPlayers && post.CurrentPlayers && (post.CurrentPlayers >= post.MaxPlayers)) ? 'Đã đủ người' : 'Tham gia'}
-                                                        </button>
-                                                </div>
-                                            </div>
-                                        </div>
+                                                                return (
+                                                                    <>
+                                                                        <div className="text-sm text-gray-700 mb-2">
+                                                                            <strong>{facility}</strong> - {fieldName}
+                                                                        </div>
+                                                                        <div className="text-sm text-gray-600 mb-2">{start && end ? `${new Date(start).toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})} - ${new Date(end).toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})}` : ''}</div>
+                                                                        <div className="text-sm text-gray-600">{price ? `${Number(price).toLocaleString('vi-VN')}đ` : ''}</div>
+
+                                                                        <div className="mt-3 flex items-center justify-between">
+                                                                            <div className="players-status flex items-center gap-3">
+                                                                                <div className="text-sm">👥 {currentPlayers}/{maxPlayers} người chơi</div>
+                                                                            </div>
+                                                                            <div>
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); /* navigate to booking detail */ navigate(`/booking-post/${post.PostID || postId || post.PostId}`); }}
+                                                                                    className={`px-3 py-1 rounded border ${((maxPlayers && currentPlayers) && (currentPlayers >= maxPlayers)) ? 'opacity-60 cursor-not-allowed' : 'bg-green-600 text-white'}`}
+                                                                                    disabled={maxPlayers && currentPlayers && (currentPlayers >= maxPlayers)}
+                                                                                >
+                                                                                    { (maxPlayers && currentPlayers && (currentPlayers >= maxPlayers)) ? 'Đã đủ người' : 'Tham gia'}
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -120,9 +120,15 @@ const CreateBookingPost = () => {
       }
 
       const response = await bookingPostAPI.create(formDataToSend);
-      
+
+      // response shape may be { success: true, data: { bookingPost: {...}, PostID } }
+      const createdId = response?.data?.PostID || response?.data?.bookingPost?.PostID || response?.data?.bookingPost?.PostID || null;
       alert('✅ Tạo bài đăng thành công!');
-      navigate(`/booking-post/${response.data.PostID}`);
+      if (createdId) {
+        navigate(`/booking-post/${createdId}`);
+      } else {
+        navigate('/feed');
+      }
     } catch (err) {
       console.error('Error creating booking post:', err);
       setError(err.message || 'Không thể tạo bài đăng');

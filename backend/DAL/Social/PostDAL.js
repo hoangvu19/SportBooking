@@ -31,12 +31,47 @@ class PostDAL {
       const posts = await Promise.all(result.recordset.map(async (postData) => {
         const images = await PostDAL.getPostImages(postData.PostID);
         const reactions = await PostDAL.getPostReactions(postData.PostID);
-        
-        return new Post({
+        const postObj = new Post({
           ...postData,
           Images: images,
           Reactions: reactions
         });
+
+        // If post references a BookingID, attach booking details (same as getById)
+        try {
+          if ((postData.BookingID || postData.Booking_BookingID) && !postObj.Booking) {
+            const bid = postData.Booking_BookingID || postData.BookingID;
+            const bookingRes = await pool.request()
+              .input('BookingID', sql.Int, bid)
+              .query(`
+                SELECT b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit AS DepositPaid, b.Status,
+                       sf.FieldName, f.FacilityName, st.SportName
+                FROM Booking b
+                JOIN SportField sf ON b.FieldID = sf.FieldID
+                LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
+                LEFT JOIN SportType st ON sf.SportTypeID = st.SportTypeID
+                WHERE b.BookingID = @BookingID
+              `);
+            if (bookingRes && bookingRes.recordset && bookingRes.recordset[0]) {
+              const bk = bookingRes.recordset[0];
+              postObj.Booking = {
+                BookingID: bk.BookingID,
+                BookingStatus: bk.Status || 'Pending',
+                FacilityName: bk.FacilityName,
+                FieldName: bk.FieldName,
+                SportName: bk.SportName,
+                StartTime: bk.StartTime,
+                EndTime: bk.EndTime,
+                TotalAmount: bk.TotalAmount,
+                DepositPaid: bk.DepositPaid
+              };
+            }
+          }
+        } catch (e) {
+          console.debug('PostDAL.getByUserId: could not attach booking details', e && e.message ? e.message : e);
+        }
+
+        return postObj;
       }));
       
       return posts;
@@ -661,9 +696,23 @@ class PostDAL {
         .input('Limit', sql.Int, limit)
         .query(`
           SELECT p.PostID, p.AccountID, p.Content, p.CreatedDate, p.Status, p.IsShare, p.SharedFromPostID, p.SharedNote,
-                 a.Username, a.FullName, a.AvatarUrl
+                 a.Username, a.FullName, a.AvatarUrl,
+                 -- Booking info (if any)
+                 b.BookingID AS Booking_BookingID,
+                 b.Status AS BookingStatus,
+                 b.StartTime,
+                 b.EndTime,
+                 b.TotalAmount,
+                 b.Deposit AS DepositPaid,
+                 sf.FieldName,
+                 f.FacilityName,
+                 st.SportName
           FROM Post p
           JOIN Account a ON p.AccountID = a.AccountID
+          LEFT JOIN Booking b ON p.BookingID = b.BookingID
+          LEFT JOIN SportField sf ON b.FieldID = sf.FieldID
+          LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
+          LEFT JOIN SportType st ON sf.SportTypeID = st.SportTypeID
           WHERE p.AccountID = @AccountID 
             AND p.Status = 'Visible' 
             AND a.Status = 'Active'
@@ -700,6 +749,22 @@ class PostDAL {
           }
         }
 
+        // Build booking data if BookingID exists (normalize shape like getFeedPosts)
+        let booking = null;
+        if (postData.BookingID || postData.Booking_BookingID) {
+          booking = {
+            BookingID: postData.Booking_BookingID || postData.BookingID,
+            BookingStatus: postData.BookingStatus || 'Pending',
+            FacilityName: postData.FacilityName || 'Cơ sở thể thao',
+            FieldName: postData.FieldName || 'Sân',
+            SportName: postData.SportName || 'Thể thao',
+            StartTime: postData.StartTime,
+            EndTime: postData.EndTime,
+            TotalAmount: postData.TotalAmount || 0,
+            DepositPaid: postData.DepositPaid || 0
+          };
+        }
+
         return new Post({
           ...postData,
           Images: images,
@@ -707,7 +772,8 @@ class PostDAL {
           SharesCount: postData.SharesCount || 0,
           SharedPost: sharedPost,
           IsShare: !!postData.IsShare,
-          SharedNote: postData.SharedNote || null
+          SharedNote: postData.SharedNote || null,
+          Booking: booking
         });
       }));
       

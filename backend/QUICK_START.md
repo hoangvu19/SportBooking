@@ -12,7 +12,8 @@
 ### 2️⃣ Verify (2 phút)
 ```sql
 -- Kiểm tra nhanh
-SELECT * FROM vw_BookingPosts;
+-- The project previously used an optional view `vw_BookingPosts` for optimized booking-post queries.
+-- The current code uses join-based queries and does not require the view. If you want to create the view for performance, a CREATE VIEW script is available in the repo.
 EXEC sp_AutoHideExpiredBookingPosts;
 ```
 
@@ -63,7 +64,7 @@ POST /api/booking-posts
 ## ✅ Checklist
 
 - [ ] Run `migration_booking_posts_optimized.sql`
-- [ ] Test `SELECT * FROM vw_BookingPosts`
+-- [ ] (Optional) Test `SELECT * FROM vw_BookingPosts` if you choose to create the view for optimization
 - [ ] Test API endpoint
 - [ ] Đọc `OPTIMIZATION_COMPLETED.md`
 

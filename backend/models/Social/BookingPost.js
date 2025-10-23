@@ -1,14 +1,3 @@
-/**
- * BookingPost Model - OPTIMIZED VERSION
- * 
- * THAY ĐỔI QUAN TRỌNG:
- * - KHÔNG dùng bảng BookingPost riêng nữa
- * - Sử dụng bảng Post với cột BookingID
- * - Sử dụng View vw_BookingPosts để query nhanh
- * - Sử dụng bảng PostPlayer thay vì BookingPostPlayer
- * 
- * Migration file: migration_booking_posts_optimized.sql
- */
 
 const { poolPromise } = require('../../config/db');
 const sql = require('mssql');
@@ -328,47 +317,31 @@ class BookingPost {
    */
   static async getBySportType(sportTypeId, limit = 20, offset = 0) {
     const pool = await poolPromise;
-
     try {
       const result = await pool.request()
         .input('SportTypeID', sql.Int, sportTypeId)
         .input('Limit', sql.Int, limit)
         .input('Offset', sql.Int, offset)
         .query(`
-          SELECT * FROM vw_BookingPosts
-          WHERE SportTypeID = @SportTypeID 
-            AND Status = 'Visible'
-            AND IsAutoHidden = 0
-            AND EndTime > GETDATE()
-          ORDER BY CreatedDate DESC
+          SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+                 sf.FieldName, f.FacilityName, sf.SportTypeID,
+                 a.AccountID as OwnerAccountID, a.Username as OwnerUsername, a.FullName as OwnerFullName, a.AvatarUrl as OwnerAvatar
+          FROM Post p
+          JOIN Booking b ON p.BookingID = b.BookingID
+          JOIN SportField sf ON b.FieldID = sf.FieldID
+          LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
+          LEFT JOIN Account a ON p.AccountID = a.AccountID
+          WHERE p.SportTypeID = @SportTypeID
+            AND p.Status = 'Visible'
+            AND p.IsAutoHidden = 0
+            AND b.EndTime > GETDATE()
+          ORDER BY p.CreatedDate DESC
           OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
         `);
 
       return result.recordset;
     } catch (error) {
-      // If the optimized view is missing, fallback to a JOIN-based query on Post + Booking + SportField + Facility
-      console.warn('vw_BookingPosts not available, falling back to join query:', error.message);
-      if (error && error.message && error.message.includes('Invalid object name')) {
-        const fallback = await pool.request()
-          .input('SportTypeID', sql.Int, sportTypeId)
-          .input('Limit', sql.Int, limit)
-          .input('Offset', sql.Int, offset)
-          .query(`
-            SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
-                   sf.FieldName, f.FacilityName, sf.SportTypeID
-            FROM Post p
-            JOIN Booking b ON p.BookingID = b.BookingID
-            JOIN SportField sf ON b.FieldID = sf.FieldID
-            LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
-            WHERE p.SportTypeID = @SportTypeID
-              AND p.Status = 'Visible'
-              AND p.IsAutoHidden = 0
-              AND b.EndTime > GETDATE()
-            ORDER BY p.CreatedDate DESC
-            OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
-          `);
-        return fallback.recordset;
-      }
+      console.error('Error fetching booking posts by sport type:', error.message);
       throw error;
     }
   }
@@ -378,42 +351,27 @@ class BookingPost {
    */
   static async getAll(limit = 20, offset = 0) {
     const pool = await poolPromise;
-
     try {
       const result = await pool.request()
         .input('Limit', sql.Int, limit)
         .input('Offset', sql.Int, offset)
         .query(`
-          SELECT * FROM vw_BookingPosts
-          WHERE Status = 'Visible'
-            AND IsAutoHidden = 0
-            AND EndTime > GETDATE()
-          ORDER BY CreatedDate DESC
+          SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+                 sf.FieldName, f.FacilityName, sf.SportTypeID
+          FROM Post p
+          JOIN Booking b ON p.BookingID = b.BookingID
+          JOIN SportField sf ON b.FieldID = sf.FieldID
+          LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
+          WHERE p.Status = 'Visible'
+            AND p.IsAutoHidden = 0
+            AND b.EndTime > GETDATE()
+          ORDER BY p.CreatedDate DESC
           OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
         `);
 
       return result.recordset;
     } catch (error) {
-      console.warn('vw_BookingPosts not available, falling back to join query:', error.message);
-      if (error && error.message && error.message.includes('Invalid object name')) {
-        const fallback = await pool.request()
-          .input('Limit', sql.Int, limit)
-          .input('Offset', sql.Int, offset)
-          .query(`
-            SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
-                   sf.FieldName, f.FacilityName, sf.SportTypeID
-            FROM Post p
-            JOIN Booking b ON p.BookingID = b.BookingID
-            JOIN SportField sf ON b.FieldID = sf.FieldID
-            LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
-            WHERE p.Status = 'Visible'
-              AND p.IsAutoHidden = 0
-              AND b.EndTime > GETDATE()
-            ORDER BY p.CreatedDate DESC
-            OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
-          `);
-        return fallback.recordset;
-      }
+      console.error('Error fetching all booking posts:', error.message);
       throw error;
     }
   }
@@ -423,34 +381,24 @@ class BookingPost {
    */
   static async getById(postId) {
     const pool = await poolPromise;
-
     try {
       const result = await pool.request()
         .input('PostID', sql.Int, postId)
         .query(`
-          SELECT * FROM vw_BookingPosts
-          WHERE PostID = @PostID
+          SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+                 sf.FieldName, f.FacilityName, sf.SportTypeID,
+                 a.AccountID as OwnerAccountID, a.Username as OwnerUsername, a.FullName as OwnerFullName, a.AvatarUrl as OwnerAvatar
+          FROM Post p
+          JOIN Booking b ON p.BookingID = b.BookingID
+          JOIN SportField sf ON b.FieldID = sf.FieldID
+          LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
+          LEFT JOIN Account a ON p.AccountID = a.AccountID
+          WHERE p.PostID = @PostID
         `);
 
       return result.recordset[0] || null;
     } catch (error) {
-      console.warn('vw_BookingPosts not available, falling back to join query:', error.message);
-      if (error && error.message && error.message.includes('Invalid object name')) {
-        const fallback = await pool.request()
-          .input('PostID', sql.Int, postId)
-          .query(`
-            SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
-                   sf.FieldName, f.FacilityName, sf.SportTypeID,
-                   a.AccountID as OwnerAccountID, a.Username as OwnerUsername, a.FullName as OwnerFullName, a.AvatarUrl as OwnerAvatar
-            FROM Post p
-            JOIN Booking b ON p.BookingID = b.BookingID
-            JOIN SportField sf ON b.FieldID = sf.FieldID
-            LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
-            LEFT JOIN Account a ON p.AccountID = a.AccountID
-            WHERE p.PostID = @PostID
-          `);
-        return fallback.recordset[0] || null;
-      }
+      console.error('Error fetching booking post by id:', error.message);
       throw error;
     }
   }
@@ -460,32 +408,22 @@ class BookingPost {
    */
   static async getByBookingId(bookingId) {
     const pool = await poolPromise;
-
     try {
       const result = await pool.request()
         .input('BookingID', sql.Int, bookingId)
         .query(`
-          SELECT * FROM vw_BookingPosts
-          WHERE BookingID = @BookingID
+          SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+                 sf.FieldName, f.FacilityName, sf.SportTypeID
+          FROM Post p
+          JOIN Booking b ON p.BookingID = b.BookingID
+          JOIN SportField sf ON b.FieldID = sf.FieldID
+          LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
+          WHERE b.BookingID = @BookingID
         `);
 
       return result.recordset[0] || null;
     } catch (error) {
-      console.warn('vw_BookingPosts not available, falling back to join query:', error.message);
-      if (error && error.message && error.message.includes('Invalid object name')) {
-        const fallback = await pool.request()
-          .input('BookingID', sql.Int, bookingId)
-          .query(`
-            SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
-                   sf.FieldName, f.FacilityName, sf.SportTypeID
-            FROM Post p
-            JOIN Booking b ON p.BookingID = b.BookingID
-            JOIN SportField sf ON b.FieldID = sf.FieldID
-            LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
-            WHERE b.BookingID = @BookingID
-          `);
-        return fallback.recordset[0] || null;
-      }
+      console.error('Error fetching booking post by booking id:', error.message);
       throw error;
     }
   }
@@ -515,40 +453,26 @@ class BookingPost {
    */
   static async getByUserId(userId, limit = 20, offset = 0) {
     const pool = await poolPromise;
-
     try {
       const result = await pool.request()
         .input('AccountID', sql.Int, userId)
         .input('Limit', sql.Int, limit)
         .input('Offset', sql.Int, offset)
         .query(`
-          SELECT * FROM vw_BookingPosts
-          WHERE AccountID = @AccountID
-          ORDER BY CreatedDate DESC
+          SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+                 sf.FieldName, f.FacilityName, sf.SportTypeID
+          FROM Post p
+          JOIN Booking b ON p.BookingID = b.BookingID
+          JOIN SportField sf ON b.FieldID = sf.FieldID
+          LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
+          WHERE p.AccountID = @AccountID
+          ORDER BY p.CreatedDate DESC
           OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
         `);
 
       return result.recordset;
     } catch (error) {
-      console.warn('vw_BookingPosts not available, falling back to join query:', error.message);
-      if (error && error.message && error.message.includes('Invalid object name')) {
-        const fallback = await pool.request()
-          .input('AccountID', sql.Int, userId)
-          .input('Limit', sql.Int, limit)
-          .input('Offset', sql.Int, offset)
-          .query(`
-            SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
-                   sf.FieldName, f.FacilityName, sf.SportTypeID
-            FROM Post p
-            JOIN Booking b ON p.BookingID = b.BookingID
-            JOIN SportField sf ON b.FieldID = sf.FieldID
-            LEFT JOIN Facility f ON sf.FacilityID = f.FacilityID
-            WHERE p.AccountID = @AccountID
-            ORDER BY p.CreatedDate DESC
-            OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY
-          `);
-        return fallback.recordset;
-      }
+      console.error('Error fetching booking posts by user:', error.message);
       throw error;
     }
   }

@@ -20,7 +20,31 @@ const MyInvitations = () => {
 
     try {
       const response = await bookingPostAPI.getMyInvitations();
-      setInvitations(response.data || response);
+      const raw = response.data || response;
+      // Normalize to PostCard shape, preserving booking fields
+      const normalized = (Array.isArray(raw) ? raw : (raw.items || raw.list || [])).map((inv) => ({
+        _id: inv.PostID?.toString() || inv._id || inv.postId?.toString(),
+        PostID: inv.PostID || inv._id || inv.postId,
+        content: inv.Content || inv.content || '',
+        createdAt: inv.CreatedDate || inv.createdAt || new Date().toISOString(),
+        image_urls: inv.Images || inv.image_urls || inv.imageUrls || [],
+        user: inv.user || inv.owner || (inv.AccountID ? { _id: inv.AccountID, full_name: inv.OwnerFullName || inv.OwnerName, profile_picture: inv.OwnerAvatar } : {}),
+        likes_count: inv.likesCount || inv.reactionsCount || 0,
+        liked_by_current_user: inv.likedByCurrentUser || inv.liked_by_current_user || false,
+        comments_count: inv.commentsCount || inv.comments_count || 0,
+        // booking-specific fields
+        BookingID: inv.BookingID || inv.bookingId || inv.booking?.BookingID,
+        FacilityName: inv.FacilityName || inv.facilityName || inv.booking?.FacilityName,
+        FieldName: inv.FieldName || inv.fieldName || inv.booking?.FieldName,
+        StartTime: inv.StartTime || inv.startTime || inv.booking?.StartTime,
+        EndTime: inv.EndTime || inv.endTime || inv.booking?.EndTime,
+        RentalPrice: inv.RentalPrice || inv.rentalPrice || inv.booking?.RentalPrice,
+        CurrentPlayers: inv.CurrentPlayers || inv.currentPlayers || inv.booking?.CurrentPlayers,
+        MaxPlayers: inv.MaxPlayers || inv.maxPlayers || inv.booking?.MaxPlayers,
+        Status: inv.Status || inv.status || inv.InvitationStatus,
+      }));
+
+      setInvitations(normalized);
     } catch (err) {
       console.error('Error fetching invitations:', err);
       setError(err.message || 'Không thể tải danh sách lời mời');

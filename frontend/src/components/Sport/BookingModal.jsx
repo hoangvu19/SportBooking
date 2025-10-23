@@ -8,12 +8,15 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
   const [date, setDate] = React.useState(initialDate || new Date().toISOString().split('T')[0]);
   const [activeArea, setActiveArea] = React.useState(initialArea || 'A1');
   const [selectedSlots, setSelectedSlots] = React.useState(Array.isArray(initialSelectedSlots) ? initialSelectedSlots : []);
-  const [form, setForm] = React.useState({ note: "" });
+  const [form, _setForm] = React.useState({ note: "" });
   
   // Make sure san is defined - render guard is moved to after hooks to avoid conditional hook calls
   
   // Fetch areas from facility data (not from assets)
   const [areas, setAreas] = React.useState([]);
+  const [availabilityLoading, setAvailabilityLoading] = React.useState(false);
+  const [availabilityError, setAvailabilityError] = React.useState(null);
+  const [bookedIntervals, setBookedIntervals] = React.useState([]); // array of { start: Date, end: Date }
   
   React.useEffect(() => {
     // Get areas from the facility's FieldArea
@@ -43,8 +46,24 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
     return san?.HinhAnh || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" fill="%23E2E8F0"%3E%3Crect width="200" height="140" fill="%23E2E8F0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%23718096"%3ENo Image%3C/text%3E%3C/svg%3E';
   };
   
-  // Lấy tình trạng trống hay đã đặt (giả lập)
+  // Lấy tình trạng trống hay đã đặt (thử với dữ liệu thật trước, fallback heuristics)
   const getSlotStatus = (area, slot) => {
+    // Parse slot datetime
+    let slotDt;
+    try {
+      slotDt = new Date(`${date}T${slot}:00`);
+      const now = new Date();
+      if (slotDt < now) return 'quá giờ';
+    } catch { /* ignore parse errors and continue */ }
+
+    // Check real booked intervals (overlap)
+    for (const it of bookedIntervals) {
+      if (!it || !it.start || !it.end) continue;
+      const slotEnd = new Date(slotDt.getTime() + 30 * 60 * 1000);
+      if (slotDt && slotEnd > it.start && slotDt < it.end) return 'đã đặt';
+    }
+
+    // Fallback mock heuristics
     if (date === '2025-09-12' && slot > '18:00') return 'đã đặt';
     if (slot < '08:00' && area === 'A1') return 'đã đặt';
     if (slot > '20:00' && (area === 'A3' || area === 'B1')) return 'đã đặt';
@@ -77,6 +96,39 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
       setSelectedSlots(initialSelectedSlots);
     }
   }, [initialSelectedSlots]);
+
+  // Fetch real availability for the selected date and san
+  React.useEffect(() => {
+    if (!san || !(san.FieldID || san.SanID) || !date) {
+      setBookedIntervals([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchAvail = async () => {
+      setAvailabilityLoading(true);
+      setAvailabilityError(null);
+      try {
+        const resp = await bookingAPI.getFieldAvailability(san.FieldID || san.SanID, date);
+        if (cancelled) return;
+        if (resp && resp.success && Array.isArray(resp.data)) {
+          const intervals = resp.data.map(b => {
+            try { return { start: new Date(b.StartTime), end: new Date(b.EndTime) }; } catch { return null; }
+          }).filter(Boolean);
+          setBookedIntervals(intervals);
+        } else {
+          setBookedIntervals([]);
+        }
+      } catch (err) {
+        console.error('Error fetching availability:', err);
+        setAvailabilityError('Không thể tải lịch thực tế');
+        setBookedIntervals([]);
+      } finally {
+        if (!cancelled) setAvailabilityLoading(false);
+      }
+    };
+    fetchAvail();
+    return () => { cancelled = true; };
+  }, [san, date]);
 
   // When active area changes, clear selected slots (user should reselect for that area)
   React.useEffect(() => {
@@ -209,21 +261,42 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
         {/* Bảng chọn giờ */}
         <div className="p-4">
           <h4 className="text-lg font-semibold mb-3">Chọn giờ đặt sân - Khu vực {activeArea}</h4>
+          <div className="flex items-center justify-between mb-2">
+            <div />
+            <div className="text-sm text-gray-500">
+              {availabilityLoading ? 'Đang tải lịch...' : availabilityError ? availabilityError : ''}
+            </div>
+          </div>
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-56 overflow-y-auto">
             {timeSlots.map((slot) => {
-              const status = getSlotStatus(activeArea, slot);
+              const status = getSlotStatus(activeArea, slot); // 'trống' | 'đã đặt' | 'quá giờ'
               const isSelected = selectedSlots.includes(slot);
+
+              // Determine classes and disabled state
+              let classes = 'px-2 py-3 rounded text-sm';
+              let disabled = false;
+
+              if (status === 'quá giờ') {
+                classes += ' bg-gray-100 text-gray-400 cursor-not-allowed';
+                disabled = true;
+              } else if (status === 'đã đặt') {
+                // light red for already-booked slots (non-editable)
+                classes += ' bg-red-100 text-red-600 cursor-not-allowed relative border-red-200';
+                disabled = true;
+              } else {
+                // available
+                if (isSelected) classes += ' bg-green-500 text-white';
+                else classes += ' bg-white hover:bg-green-50 border';
+              }
+
               return (
                 <button
                   key={slot}
-                  className={`px-2 py-3 rounded text-sm ${
-                    isSelected ? 'bg-green-500 text-white' : 
-                    status === 'đã đặt' ? 'bg-red-100 text-red-500 cursor-not-allowed' : 
-                    'bg-gray-100 hover:bg-gray-200'
-                  }`}
+                  className={classes}
                   onClick={() => handleSelectSlot(slot)}
-                  disabled={status === 'đã đặt'}
+                  disabled={disabled}
                 >
+                  {/* booked badge removed as requested; color alone indicates booked */}
                   {slot}
                 </button>
               );

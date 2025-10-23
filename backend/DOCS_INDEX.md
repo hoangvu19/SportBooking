@@ -122,7 +122,7 @@ backend/scripts/migration_booking_posts_optimized.sql
 
 ### 2. Verify:
 ```sql
-SELECT * FROM vw_BookingPosts;
+-- Optional: SELECT * FROM vw_BookingPosts; see backend/sql/create_vw_BookingPosts.sql if you want to create the view for optimization.
 ```
 
 ### 3. Test API:

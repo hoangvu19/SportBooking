@@ -749,6 +749,14 @@ export const bookingAPI = {
     },
 
     /**
+     * Get field availability for a specific date (requires auth)
+     * Returns { success, message, data: [ { StartTime, EndTime, Status }, ... ] }
+     */
+    getFieldAvailability: async (fieldId, date) => {
+        return apiCall(`/bookings/fields/${fieldId}/availability?date=${encodeURIComponent(date)}`);
+    },
+
+    /**
      * Update booking status (admin only)
      */
     updateStatus: async (bookingId, status) => {
