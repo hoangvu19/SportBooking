@@ -45,10 +45,10 @@ const Login = () => {
             );
             
             if (!result.success) {
-                setError(result.message || 'Đăng nhập thất bại');
+                setError(result.message || 'Login failed');
             }
         } catch {
-            setError('Có lỗi xảy ra khi đăng nhập');
+            setError('An error occurred during login');
         } finally {
             setIsLoading(false);
         }
@@ -61,13 +61,13 @@ const Login = () => {
         setSuccessMessage('');
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Mật khẩu không khớp');
+            setError('Passwords do not match');
             setIsLoading(false);
             return;
         }
 
         if (formData.password.length < 6) {
-            setError('Mật khẩu phải có ít nhất 6 ký tự');
+            setError('Password must be at least 6 characters');
             setIsLoading(false);
             return;
         }
@@ -84,7 +84,7 @@ const Login = () => {
             });
 
             if (result.success) {
-                setSuccessMessage('Đăng ký thành công! Vui lòng đăng nhập.');
+                setSuccessMessage('Registration successful! Please log in.');
                 setCurrentForm('login');
                 setFormData(prev => ({
                     ...prev,
@@ -92,10 +92,10 @@ const Login = () => {
                     password: ''
                 }));
             } else {
-                setError(result.message || 'Đăng ký thất bại');
+                setError(result.message || 'Registration failed');
             }
         } catch {
-            setError('Có lỗi xảy ra khi đăng ký');
+            setError('An error occurred during registration');
         } finally {
             setIsLoading(false);
         }
@@ -155,7 +155,7 @@ const Login = () => {
                     
                     {currentForm === 'login' && (
                         <>
-                            <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-purple-100 to-white bg-clip-text text-transparent mb-6 text-center text-glow">Đăng nhập</h2>
+                            <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-purple-100 to-white bg-clip-text text-transparent mb-6 text-center text-glow">Login</h2>
                             <form onSubmit={handleLogin} className="space-y-4">
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-5 w-5" />
@@ -164,7 +164,7 @@ const Login = () => {
                                         name="usernameOrEmail"
                                         value={formData.usernameOrEmail}
                                         onChange={handleInputChange}
-                                        placeholder="Username hoặc Email"
+                                        placeholder="Username or Email"
                                         className="w-full pl-12 pr-4 py-3 bg-white/10 border-2 border-purple-400/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-yellow-400/60 focus:border-pink-400/70 focus:bg-white/20 login-input shadow-lg backdrop-blur-sm"
                                         required
                                     />
@@ -177,7 +177,7 @@ const Login = () => {
                                         name="password"
                                         value={formData.password}
                                         onChange={handleInputChange}
-                                        placeholder="Mật khẩu"
+                                        placeholder="Password"
                                         className="w-full pl-12 pr-12 py-3 bg-white/10 border-2 border-purple-400/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-yellow-400/60 focus:border-pink-400/70 focus:bg-white/20 login-input shadow-lg backdrop-blur-sm"
                                         required
                                     />
@@ -207,7 +207,7 @@ const Login = () => {
                                     disabled={isLoading}
                                     className="w-full mx-auto block py-3 login-btn text-white rounded-xl transition-all duration-100 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.05] ring-2 ring-white/20"
                                 >
-                                    {isLoading ? 'Đang đăng nhập...' : 'ĐĂNG NHẬP'}
+                                    {isLoading ? 'Logging in...' : 'Login'}
                                 </button>
 
                                 <div className="text-center space-y-2">
@@ -216,16 +216,16 @@ const Login = () => {
                                         // onClick={() => setCurrentForm('forgot')}
                                         className="text-blue-200 hover:text-blue-100 text-sm font-semibold underline block w-full transition-colors duration-200"
                                     >
-                                        Quên mật khẩu?
+                                        Forgot password?
                                     </button>
                                     <div className="text-white/90 text-sm font-medium">
-                                        Chưa có tài khoản? {' '}
+                                        Don't have an account? {' '}
                                         <button
                                             type="button"
                                             onClick={() => setCurrentForm('signup')}
                                             className="text-blue-200 hover:text-blue-100 hover:underline font-bold transition-colors duration-200"
                                         >
-                                            Đăng ký ngay
+                                            Sign up
                                         </button>
                                     </div>
                                 </div>
@@ -235,7 +235,7 @@ const Login = () => {
 
                     {currentForm === 'signup' && (
                         <>
-                            <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-green-100 to-white bg-clip-text text-transparent mb-6 text-center drop-shadow-lg">Đăng ký</h2>
+                            <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-green-100 to-white bg-clip-text text-transparent mb-6 text-center drop-shadow-lg">Sign up</h2>
                             <form onSubmit={handleSignup} className="space-y-4">
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="relative">
@@ -245,7 +245,7 @@ const Login = () => {
                                             name="username"
                                             value={formData.username}
                                             onChange={handleInputChange}
-                                            placeholder="Tên đăng nhập"
+                                            placeholder="Username"
                                             className="w-full pl-12 pr-4 py-3 bg-gradient-to-r from-white/15 via-purple-50/10 to-pink-50/5 border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 backdrop-blur-sm transition-all duration-300 hover:bg-white/25 shadow-md"
                                             required
                                         />
@@ -271,7 +271,7 @@ const Login = () => {
                                             name="fullName"
                                             value={formData.fullName}
                                             onChange={handleInputChange}
-                                            placeholder="Họ và tên"
+                                            placeholder="Full name"
                                             className="w-full pl-12 pr-4 py-3 bg-gradient-to-r from-white/10 via-white/15 to-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400/50 backdrop-blur-sm transition-all duration-300 hover:bg-white/20"
                                             required
                                         />
@@ -286,9 +286,9 @@ const Login = () => {
                                             className="w-full pl-12 pr-4 py-3 bg-gradient-to-r from-white/10 via-white/15 to-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-400/50 backdrop-blur-sm transition-all duration-300 hover:bg-white/20 appearance-none cursor-pointer"
                                             required
                                         >
-                                            <option value="" className="text-gray-400">Chọn giới tính</option>
-                                            <option value="male" className="text-black bg-white">👨 Nam</option>
-                                            <option value="female" className="text-black bg-white">👩 Nữ</option>
+                                            <option value="" className="text-gray-400">Select gender</option>
+                                            <option value="male" className="text-black bg-white">👨 Male</option>
+                                            <option value="female" className="text-black bg-white">👩 Female</option>
                                         </select>
                                             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70 h-5 w-5 pointer-events-none" />
                                     </div>
@@ -300,7 +300,7 @@ const Login = () => {
                                             name="password"
                                             value={formData.password}
                                             onChange={handleInputChange}
-                                            placeholder="Mật khẩu"
+                                            placeholder="Password"
                                             className="w-full pl-12 pr-4 py-3 bg-gradient-to-r from-white/10 via-white/15 to-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400/50 backdrop-blur-sm transition-all duration-300 hover:bg-white/20"
                                             required
                                             minLength={6}
@@ -314,7 +314,7 @@ const Login = () => {
                                             name="confirmPassword"
                                             value={formData.confirmPassword}
                                             onChange={handleInputChange}
-                                            placeholder="Xác nhận mật khẩu"
+                                            placeholder="Confirm password"
                                             className="w-full pl-12 pr-4 py-3 bg-gradient-to-r from-white/10 via-white/15 to-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400/50 backdrop-blur-sm transition-all duration-300 hover:bg-white/20"
                                             required
                                         />
@@ -338,18 +338,18 @@ const Login = () => {
                                     disabled={isLoading}
                                     className="w-full py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 text-white rounded-lg hover:from-pink-600 hover:via-purple-600 hover:to-yellow-600 transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] ring-2 ring-white/20"
                                 >
-                                    {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
+                                    {isLoading ? 'Registering...' : 'REGISTER'}
                                 </button>
 
                                 <div className="text-center">
                                     <div className="text-white/80 text-sm">
-                                        Đã có tài khoản? {' '}
+                                        Already have an account? {' '}
                                         <button
                                             type="button"
                                             onClick={() => setCurrentForm('login')}
                                             className="text-white hover:underline font-semibold"
                                         >
-                                            Đăng nhập ngay
+                                            Login now
                                         </button>
                                     </div>
                                 </div>

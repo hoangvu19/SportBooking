@@ -5,6 +5,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { bookingPostAPI } from '../../utils/bookingPostAPI';
+import toast from 'react-hot-toast';
+import { useI18n } from '../../i18n/hooks';
 import PostCard from '../../components/Social/PostCard';
 import './MyInvitations.css';
 
@@ -47,7 +49,7 @@ const MyInvitations = () => {
       setInvitations(normalized);
     } catch (err) {
       console.error('Error fetching invitations:', err);
-      setError(err.message || 'Không thể tải danh sách lời mời');
+      setError(err.message || 'Unable to load invitations');
     } finally {
       setLoading(false);
     }
@@ -57,21 +59,23 @@ const MyInvitations = () => {
     fetchInvitations();
   }, [fetchInvitations]);
 
+  const { t } = useI18n();
+
   const handleQuickAction = async (postId, action) => {
     try {
       if (action === 'accept') {
         await bookingPostAPI.acceptInvitation(postId);
-        alert('✅ Đã chấp nhận lời mời!');
+  toast.success(t('post.invitationAccepted'));
       } else if (action === 'reject') {
-        if (!confirm('Bạn có chắc muốn từ chối lời mời?')) return;
+  if (!window.confirm(t('post.declineInviteConfirm'))) return;
         await bookingPostAPI.rejectInvitation(postId);
-        alert('✅ Đã từ chối lời mời!');
+  toast.success(t('post.invitationDeclined'));
       }
       
       // Refresh list
       fetchInvitations();
     } catch (err) {
-      alert(`❌ ${err.message || 'Không thể thực hiện hành động'}`);
+  toast.error(t('post.invitationActionFailed').replace('{msg}', err.message || 'Unable to perform action'));
     }
   };
 
@@ -87,8 +91,8 @@ const MyInvitations = () => {
     <div className="my-invitations-page">
       {/* Header */}
       <div className="page-header">
-        <h1>📬 Lời Mời Của Tôi</h1>
-        <p>Quản lý các lời mời tham gia trận đấu</p>
+  <h1>📬 My Invitations</h1>
+  <p>Manage invitations to join matches</p>
       </div>
 
       {/* Tabs */}
@@ -97,7 +101,7 @@ const MyInvitations = () => {
           className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
           onClick={() => setActiveTab('pending')}
         >
-          ⏳ Chờ xác nhận
+          ⏳ Pending
           {invitations.filter((i) => i.Status === 'Pending').length > 0 && (
             <span className="badge">
               {invitations.filter((i) => i.Status === 'Pending').length}
@@ -108,7 +112,7 @@ const MyInvitations = () => {
           className={`tab ${activeTab === 'accepted' ? 'active' : ''}`}
           onClick={() => setActiveTab('accepted')}
         >
-          ✅ Đã chấp nhận
+          ✅ Accepted
           {invitations.filter((i) => i.Status === 'Accepted').length > 0 && (
             <span className="badge accepted">
               {invitations.filter((i) => i.Status === 'Accepted').length}
@@ -119,7 +123,7 @@ const MyInvitations = () => {
           className={`tab ${activeTab === 'rejected' ? 'active' : ''}`}
           onClick={() => setActiveTab('rejected')}
         >
-          ❌ Đã từ chối
+          ❌ Rejected
           {invitations.filter((i) => i.Status === 'Rejected').length > 0 && (
             <span className="badge rejected">
               {invitations.filter((i) => i.Status === 'Rejected').length}
@@ -133,7 +137,7 @@ const MyInvitations = () => {
         <div className="error-message">
           <span className="error-icon">⚠️</span>
           <span>{error}</span>
-          <button onClick={fetchInvitations}>Thử lại</button>
+          <button onClick={fetchInvitations}>Retry</button>
         </div>
       )}
 
@@ -162,17 +166,17 @@ const MyInvitations = () => {
               {activeTab === 'rejected' && '🚫'}
             </div>
             <h3>
-              {activeTab === 'pending' && 'Chưa có lời mời nào'}
-              {activeTab === 'accepted' && 'Chưa chấp nhận lời mời nào'}
-              {activeTab === 'rejected' && 'Chưa từ chối lời mời nào'}
+              {activeTab === 'pending' && 'No invitations yet'}
+              {activeTab === 'accepted' && 'No accepted invitations'}
+              {activeTab === 'rejected' && 'No rejected invitations'}
             </h3>
             <p>
               {activeTab === 'pending' &&
-                'Các lời mời tham gia sẽ hiển thị ở đây'}
+                'Invitations to join matches will appear here.'}
               {activeTab === 'accepted' &&
-                'Các lời mời đã chấp nhận sẽ hiển thị ở đây'}
+                'Accepted invitations will appear here.'}
               {activeTab === 'rejected' &&
-                'Các lời mời đã từ chối sẽ hiển thị ở đây'}
+                'Rejected invitations will appear here.'}
             </p>
           </div>
         )}
@@ -204,14 +208,14 @@ const MyInvitations = () => {
               {activeTab === 'accepted' && (
                 <div className="status-info accepted">
                   <span className="status-icon">✅</span>
-                  <span>Bạn đã chấp nhận lời mời này</span>
+                  <span>You have accepted this invitation</span>
                 </div>
               )}
 
               {activeTab === 'rejected' && (
                 <div className="status-info rejected">
                   <span className="status-icon">❌</span>
-                  <span>Bạn đã từ chối lời mời này</span>
+                  <span>You have rejected this invitation</span>
                 </div>
               )}
             </div>

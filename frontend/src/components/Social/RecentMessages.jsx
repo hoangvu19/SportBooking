@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import moment from 'moment';
 import { messageAPI } from "../../utils/api";
 import DEFAULT_AVATAR from "../../utils/defaults";
+import { useI18n } from '../../i18n/hooks';
 
 const RecentMessages = () => {
 
     const [messages, setMessages] = React.useState([]);
+    const { t } = useI18n();
 
     const fetchRecentMessages = async () => {
         try {
@@ -37,8 +39,8 @@ const RecentMessages = () => {
     }, []);
 
     return (
-       <div className='bg-white max-w-xs mt-4 p-4 min-h-20 rounded-md shadow text-xs text-slate-800'>
-        <h3 className='font-semibold text-slate-600 mb-4'>Recent Messages</h3>
+    <div className='bg-white max-w-xs mt-4 p-4 min-h-20 rounded-md shadow text-xs text-slate-800'>
+     <h3 className='font-semibold text-slate-600 mb-4'>{t('messages.recent', 'Recent Messages')}</h3>
         <div className='flex flex-col max-h-56 overflow-y-scroll no-scrollbar'>
         {messages.map((message, index) => (
             <Link to={`/messages/${message._id}`} key={index} className='flex items-start gap-2 py-2 hover:bg-slate-100'>
@@ -61,7 +63,7 @@ const RecentMessages = () => {
                 {/* Content and unread indicator */}
                 <div className='flex justify-between'>
                     <p className='text-gray-500'>
-                    {message.text ? message.text : 'Media'}
+                    {message.text ? message.text : t('messages.media', 'Media')}
                     </p>
                     {message.seen === false && (
                     <p className='bg-indigo-500 text-white w-4 h-4 flex items-center justify-center rounded-full text-[10px]'>

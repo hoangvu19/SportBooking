@@ -209,6 +209,16 @@ export const authAPI = {
     getCurrentUser: async () => {
         return apiCall('/auth/me');
     },
+    /**
+     * Change password for current user (requires auth)
+     * body: { oldPassword, newPassword }
+     */
+    changePassword: async (oldPassword, newPassword) => {
+        return apiCall('/auth/password', {
+            method: 'PUT',
+            body: JSON.stringify({ oldPassword, newPassword }),
+        });
+    },
 };
 
 // ==================== POST APIs ====================
@@ -609,7 +619,7 @@ export const formatErrorMessage = (error) => {
     if (error.message) {
         return error.message;
     }
-    return 'Đã xảy ra lỗi. Vui lòng thử lại.';
+    return 'An error occurred. Please try again.';
 };
 
 // ==================== STORY APIs ====================

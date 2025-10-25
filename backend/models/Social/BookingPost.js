@@ -168,7 +168,7 @@ class BookingPost {
         .input('SenderID', sql.Int, ownerId)
         .input('Type', sql.NVarChar, 'player_invitation')
         .input('ContentID', sql.Int, postId)
-        .input('Content', sql.NVarChar, 'Bạn được mời tham gia chơi')
+  .input('Content', sql.NVarChar, 'You are invited to join')
         .query(`
           INSERT INTO Notification (
             RecipientAccountID, SenderAccountID, Type, ContentID, Content, 
@@ -231,7 +231,7 @@ class BookingPost {
         .input('SenderID', sql.Int, playerId)
         .input('Type', sql.NVarChar, 'player_accepted')
         .input('ContentID', sql.Int, postId)
-        .input('Content', sql.NVarChar, 'Người chơi đã chấp nhận lời mời')
+  .input('Content', sql.NVarChar, 'Player has accepted the invitation')
         .query(`
           INSERT INTO Notification (
             RecipientAccountID, SenderAccountID, Type, ContentID, Content, 

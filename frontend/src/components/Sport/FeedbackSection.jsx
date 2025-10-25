@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useI18n } from '../../i18n/hooks';
 import { ratingAPI, fieldCommentAPI } from '../../utils/api';
+import toast from 'react-hot-toast';
 
 // StarRating Component - Interactive star display
 const StarRating = ({ rating, onRatingChange, readonly = false, size = 'md' }) => {
@@ -59,8 +61,8 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
 
   // Fetch user's rating
   const fetchMyRating = useCallback(async () => {
-    try {
-      const result = await ratingAPI.getMyRating(targetType, targetId);
+  try {
+  const result = await ratingAPI.getMyRating(targetType, targetId);
       if (result.success && result.data) {
         setMyRating(result.data.Rating);
       }
@@ -96,7 +98,7 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
       }
     } catch (err) {
       console.error('Error fetching comments:', err);
-      setError('Không thể tải nhận xét');
+      setError(t('feedback.loadError','Unable to load reviews'));
     } finally {
       setLoadingComments(false);
     }
@@ -132,11 +134,11 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
         // Hide success message after 2 seconds
         setTimeout(() => setRatingSuccess(false), 2000);
       } else {
-        alert(result.message || 'Không thể lưu đánh giá');
+        toast.error(result.message || t('feedback.unableToSaveRating'));
       }
     } catch (err) {
       console.error('Error saving rating:', err);
-      alert('Lỗi khi lưu đánh giá');
+      toast.error(t('feedback.errorSavingRating'));
     } finally {
       setSavingRating(false);
     }
@@ -147,7 +149,7 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
     e.preventDefault();
     
     if (!commentContent.trim()) {
-      alert('Vui lòng nhập nội dung nhận xét');
+      toast.error(t('feedback.pleaseEnterReview'));
       return;
     }
 
@@ -162,13 +164,13 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
         // Reload comments to show new comment
         await fetchComments(1);
         setCommentPage(1);
-        alert('Gửi nhận xét thành công!');
+        toast.success(t('feedback.reviewSubmitted'));
       } else {
-        alert(result.message || 'Không thể gửi nhận xét');
+        toast.error(result.message || t('feedback.unableToSubmitReview'));
       }
     } catch (err) {
       console.error('Error submitting comment:', err);
-      alert('Lỗi khi gửi nhận xét');
+      toast.error(t('feedback.errorSubmittingReview'));
     } finally {
       setSubmittingComment(false);
     }
@@ -190,16 +192,18 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Vừa xong';
-    if (diffMins < 60) return `${diffMins} phút trước`;
-    if (diffHours < 24) return `${diffHours} giờ trước`;
-    if (diffDays < 30) return `${diffDays} ngày trước`;
-    return date.toLocaleDateString('vi-VN');
+  if (diffMins < 1) return t('common.justNow','Just now');
+  if (diffMins < 60) return t('common.minutesAgo','{n} minutes ago').replace('{n}', diffMins);
+  if (diffHours < 24) return t('common.hoursAgo','{n} hours ago').replace('{n}', diffHours);
+  if (diffDays < 30) return t('common.daysAgo','{n} days ago').replace('{n}', diffDays);
+  return date.toLocaleDateString();
   };
+
+  const { t } = useI18n();
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Đánh giá & Nhận xét</h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">{t('feedback.title')}</h2>
 
       {/* Rating Stats */}
       {ratingStats && (
@@ -212,10 +216,10 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
               <StarRating rating={Math.round(ratingStats.averageRating)} readonly size="sm" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-600">{ratingStats.totalCount} đánh giá</p>
+              <p className="text-sm text-gray-600">{ratingStats.totalCount} reviews</p>
               {ratingStats.distribution.map((dist) => (
                 <div key={dist.star} className="flex items-center space-x-2 text-xs">
-                  <span className="w-12">{dist.star} sao</span>
+                  <span className="w-12">{dist.star} star</span>
                   <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-yellow-400"
@@ -233,7 +237,7 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
       {/* Rating Section - User can click stars to rate */}
       <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl">
         <label className="block text-sm font-semibold text-gray-700 mb-3">
-          Đánh giá của bạn:
+          {t('feedback.yourRating','Your rating:')}
         </label>
         <div className="flex items-center space-x-3">
           <StarRating
@@ -241,14 +245,14 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
             onRatingChange={handleRatingClick}
           />
           {savingRating && (
-            <span className="text-sm text-indigo-600 animate-pulse">Đang lưu...</span>
+            <span className="text-sm text-indigo-600 animate-pulse">{t('common.saving','Saving...')}</span>
           )}
           {ratingSuccess && !savingRating && (
-            <span className="text-sm text-green-600">✓ Đã lưu đánh giá {myRating} sao!</span>
+            <span className="text-sm text-green-600">{t('feedback.savedRating','✓ Saved rating {count} stars').replace('{count}', String(myRating))}</span>
           )}
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          Click vào sao để đánh giá ngay lập tức
+          {t('feedback.clickToRate','Click a star to rate instantly')}
         </p>
       </div>
 
@@ -256,14 +260,14 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
       <form onSubmit={handleCommentSubmit} className="mb-6 p-4 bg-gray-50 rounded-xl">
         <div className="mb-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Viết nhận xét của bạn:
+            {t('feedback.writeYourReview','Write your review:')}
           </label>
           <textarea
             value={commentContent}
             onChange={(e) => setCommentContent(e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none placeholder-gray-400 placeholder-opacity-70"
             rows="4"
-            placeholder="Aa"
+            placeholder={t('feedback.placeholder','Write your review...')}
             disabled={submittingComment}
           />
         </div>
@@ -273,13 +277,13 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
           disabled={submittingComment || !commentContent.trim()}
           className="w-full px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 transition-colors"
         >
-          {submittingComment ? 'Đang gửi...' : 'Gửi nhận xét'}
+          {submittingComment ? t('feedback.submitting') : t('feedback.submitButton')}
         </button>
       </form>
 
       {/* Comments List */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800">Nhận xét ({comments.length})</h3>
+  <h3 className="text-lg font-semibold text-gray-800">{t('feedback.reviews','Reviews ({count})').replace('{count}', String(comments.length))}</h3>
         
         {loadingComments && commentPage === 1 ? (
           <div className="text-center py-8">
@@ -287,7 +291,7 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            Chưa có nhận xét nào. Hãy là người đầu tiên nhận xét!
+            {t('feedback.noReviews','No reviews yet. Be the first!')}
           </div>
         ) : (
           <>
@@ -314,7 +318,7 @@ const FeedbackSection = ({ targetType = 'Field', targetId }) => {
                 disabled={loadingComments}
                 className="w-full px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
               >
-                {loadingComments ? 'Đang tải...' : 'Xem thêm nhận xét'}
+                {loadingComments ? t('common.loading') : t('feedback.loadMore')}
               </button>
             )}
           </>

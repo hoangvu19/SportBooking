@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Loading from "../../components/Shared/Loading";
+import { useI18n } from '../../i18n/hooks';
 import { PenBox } from 'lucide-react';
 import UserProfileInfo from "../../components/Social/UserProfileInfo";
 import moment from "moment";
@@ -32,7 +33,7 @@ const Profile = () => {
             setError(null);
 
             if (!targetUserId) {
-                setError('Không tìm thấy user ID');
+                setError(t('profile.userIdNotFound', 'User ID not found'));
                 setLoading(false);
                 return;
             }
@@ -41,7 +42,7 @@ const Profile = () => {
             const userResponse = await userAPI.getProfile(targetUserId);
 
             if (!userResponse.success) {
-                setError(userResponse.message || 'Không thể tải profile');
+                setError(userResponse.message || t('profile.unableToLoadProfile', 'Unable to load profile'));
                 return;
             }
 
@@ -72,6 +73,8 @@ const Profile = () => {
                 profile_picture: userResponse.data.profile_picture || userResponse.data.AvatarUrl || userResponse.data.ProfilePictureURL || userResponse.data.avatarUrl || DEFAULT_AVATAR,
                 cover_photo: '',
                 location: userResponse.data.address || '',
+                gender: userResponse.data.gender || userResponse.data.sex || userResponse.data.GioiTinh || userResponse.data.gender_text || null,
+                createdAt: userResponse.data.createdAt || userResponse.data.CreatedDate || userResponse.data.createdDate || userResponse.data.created_at || userResponse.data.registeredAt || null,
                 website: '',
                 followers_count: Number(userResponse.data.followersCount ?? userResponse.data.followers_count ?? 0) || 0,
                 following_count: Number(userResponse.data.followingCount ?? userResponse.data.following_count ?? 0) || 0,
@@ -93,7 +96,7 @@ const Profile = () => {
 
         } catch (err) {
             console.error('Error fetching profile:', err);
-            setError('Không thể kết nối đến server');
+            setError(t('profile.unableToConnect', 'Unable to connect to server'));
         } finally {
             setLoading(false);
         }
@@ -111,28 +114,60 @@ const Profile = () => {
     }, [targetUserId, currentUser?.AccountID]);
 
     // Mirror Feed.jsx mapping so profile posts use the exact same shape as feed posts
+    // Recursively transform shared_post to ensure nested posts are also properly formatted
     const transformPosts = (postsArray = [], userDataLocal = user) => {
-        return postsArray.map(post => ({
-            _id: post.PostID || post._id || post.postId,
-            PostID: post.PostID || post._id || post.postId,
-            content: post.content || post.Content || '',
-            createdAt: post.createdAt || post.CreatedDate || post.createdDate || new Date().toISOString(),
-            image_urls: post.image_urls || post.imageUrls || post.Images || [],
-            user: {
-                _id: post.user?._id || post.user?.AccountID || post.AccountID || userDataLocal?._id,
-                username: post.user?.username || post.Username || userDataLocal?.username,
-                full_name: post.user?.full_name || post.user?.FullName || post.FullName || userDataLocal?.full_name,
-                profile_picture: post.user?.profile_picture || post.user?.AvatarUrl || post.user?.ProfilePictureURL || post.user?.avatarUrl || DEFAULT_AVATAR,
-            },
-            likes_count: post.likesCount || post.reactionsCount || (Array.isArray(post.likes_count) ? post.likes_count.length : 0),
-            liked_by_current_user: post.likedByCurrentUser || post.liked_by_current_user || false,
-            comments_count: post.commentsCount || post.comments_count || 0,
-            is_shared: post.is_shared ?? post.IsShare ?? false,
-            shared_note: post.shared_note || post.SharedNote || null,
-            shared_post: post.shared_post || post.SharedPost || null,
-            shares_count: post.sharesCount ?? post.shares_count ?? post.SharesCount ?? 0,
-            booking: post.booking || post.Booking || null,
-        }));
+        return postsArray.map(post => {
+            // Transform shared_post recursively if it exists
+            let transformedSharedPost = null;
+            const rawSharedPost = post.shared_post || post.SharedPost;
+            if (rawSharedPost) {
+                transformedSharedPost = {
+                    _id: rawSharedPost.PostID || rawSharedPost._id || rawSharedPost.postId,
+                    PostID: rawSharedPost.PostID || rawSharedPost._id || rawSharedPost.postId,
+                    content: rawSharedPost.content || rawSharedPost.Content || '',
+                    createdAt: rawSharedPost.createdAt || rawSharedPost.CreatedDate || rawSharedPost.createdDate || new Date().toISOString(),
+                    image_urls: rawSharedPost.image_urls || rawSharedPost.imageUrls || rawSharedPost.Images || [],
+                    user: {
+                        _id: rawSharedPost.user?._id || rawSharedPost.user?.AccountID || rawSharedPost.AccountID,
+                        username: rawSharedPost.user?.username || rawSharedPost.Username,
+                        full_name: rawSharedPost.user?.full_name || rawSharedPost.user?.FullName || rawSharedPost.FullName,
+                        profile_picture: rawSharedPost.user?.profile_picture || rawSharedPost.user?.AvatarUrl || rawSharedPost.user?.ProfilePictureURL || rawSharedPost.user?.avatarUrl || DEFAULT_AVATAR,
+                    },
+                    likes_count: rawSharedPost.likesCount || rawSharedPost.reactionsCount || 0,
+                    liked_by_current_user: rawSharedPost.likedByCurrentUser || rawSharedPost.liked_by_current_user || false,
+                    comments_count: rawSharedPost.commentsCount || rawSharedPost.comments_count || 0,
+                    booking: rawSharedPost.booking || rawSharedPost.Booking || null,
+                    BookingID: rawSharedPost.BookingID || rawSharedPost.booking?.BookingID || null,
+                    // Include booking-related fields if present
+                    FacilityName: rawSharedPost.FacilityName || rawSharedPost.booking?.FacilityName,
+                    FieldName: rawSharedPost.FieldName || rawSharedPost.booking?.FieldName,
+                    SportName: rawSharedPost.SportName || rawSharedPost.booking?.SportName,
+                };
+            }
+
+            return {
+                _id: post.PostID || post._id || post.postId,
+                PostID: post.PostID || post._id || post.postId,
+                content: post.content || post.Content || '',
+                createdAt: post.createdAt || post.CreatedDate || post.createdDate || new Date().toISOString(),
+                image_urls: post.image_urls || post.imageUrls || post.Images || [],
+                user: {
+                    _id: post.user?._id || post.user?.AccountID || post.AccountID || userDataLocal?._id,
+                    username: post.user?.username || post.Username || userDataLocal?.username,
+                    full_name: post.user?.full_name || post.user?.FullName || post.FullName || userDataLocal?.full_name,
+                    profile_picture: post.user?.profile_picture || post.user?.AvatarUrl || post.user?.ProfilePictureURL || post.user?.avatarUrl || DEFAULT_AVATAR,
+                },
+                likes_count: post.likesCount || post.reactionsCount || (Array.isArray(post.likes_count) ? post.likes_count.length : 0),
+                liked_by_current_user: post.likedByCurrentUser || post.liked_by_current_user || false,
+                comments_count: post.commentsCount || post.comments_count || 0,
+                is_shared: post.is_shared ?? post.IsShare ?? false,
+                shared_note: post.shared_note || post.SharedNote || null,
+                shared_post: transformedSharedPost,
+                shares_count: post.sharesCount ?? post.shares_count ?? post.SharesCount ?? 0,
+                booking: post.booking || post.Booking || null,
+                BookingID: post.BookingID || post.booking?.BookingID || null,
+            };
+        });
     };
 
     // Load data for the active tab (posts / likes)
@@ -147,9 +182,11 @@ const Profile = () => {
                     const resp = await userAPI.getLikedPosts(targetUserId, 1, 20);
                     if (resp.success) {
                         const arr = Array.isArray(resp.data) ? resp.data : (resp.data.posts || resp.data || []);
+                        console.log('📋 Likes tab loaded:', arr.length, 'posts');
+                        console.log('📋 Sample post:', arr[0]);
                         setPosts(transformPosts(arr));
                     } else {
-                        setError(resp.message || 'Không thể tải mục Likes');
+                        setError(resp.message || t('profile.unableToLoadLikes', 'Unable to load Likes'));
                     }
                 } else if (activeTab === 'posts') {
                     const resp = await postAPI.getUserPosts(targetUserId, 1, 20);
@@ -157,12 +194,12 @@ const Profile = () => {
                         const arr = Array.isArray(resp.data) ? resp.data : (resp.data.posts || resp.data || []);
                         setPosts(transformPosts(arr));
                     } else {
-                        setError(resp.message || 'Không thể tải bài viết');
+                        setError(resp.message || t('profile.unableToLoadPosts', 'Unable to load posts'));
                     }
                 }
             } catch (err) {
                 console.error('Error loading tab data:', err);
-                setError('Không thể kết nối đến server');
+                setError('Unable to connect to server');
             } finally {
                 setLoading(false);
             }
@@ -173,34 +210,79 @@ const Profile = () => {
     }, [activeTab, targetUserId]);
 
     // Enrich posts that reference a BookingID but don't have nested `booking` data
+    // Also enrich shared_post if it has BookingID
     useEffect(() => {
         let mounted = true;
         const enrichBookingPosts = async () => {
             try {
-                // find posts that have BookingID but missing booking object
-                const needs = posts
-                    .map((p, idx) => ({ p, idx }))
-                    .filter(item => item.p && (item.p.BookingID || item.p.BookingID === 0) && (!item.p.booking || !item.p.booking.BookingID));
+                // Find posts that need booking data (top level)
+                const topLevelNeeds = posts
+                    .map((p, idx) => ({ p, idx, isShared: false }))
+                    .filter(item => {
+                        const hasBookingId = item.p && (item.p.BookingID || item.p.BookingID === 0);
+                        const missingBooking = !item.p.booking || !item.p.booking.BookingID;
+                        return hasBookingId && missingBooking;
+                    });
 
-                if (needs.length === 0) return;
+                // Find shared posts that need booking data
+                const sharedNeeds = posts
+                    .map((p, idx) => ({ p, idx, isShared: true }))
+                    .filter(item => {
+                        const sp = item.p?.shared_post;
+                        if (!sp) return false;
+                        const hasBookingId = sp.BookingID || sp.BookingID === 0;
+                        const missingBooking = !sp.booking || !sp.booking.BookingID;
+                        return hasBookingId && missingBooking;
+                    });
 
-                const results = await Promise.all(needs.map(n =>
-                    bookingPostAPI.getById(n.p.PostID || n.p.PostId || n.p._id).catch(() => null)
-                ));
+                const allNeeds = [...topLevelNeeds, ...sharedNeeds];
+
+                if (allNeeds.length === 0) return;
+
+                console.log('🔄 Enriching booking posts:', { topLevel: topLevelNeeds.length, shared: sharedNeeds.length });
+
+                const results = await Promise.all(allNeeds.map(n => {
+                    // For shared posts, fetch the shared post's ID
+                    const postId = n.isShared 
+                        ? (n.p.shared_post?.PostID || n.p.shared_post?._id)
+                        : (n.p.PostID || n.p.PostId || n.p._id);
+                    
+                    console.log('📡 Fetching booking data for', n.isShared ? 'shared post' : 'post', ':', postId);
+                    return bookingPostAPI.getById(postId).catch(err => {
+                        console.warn('Failed to fetch booking for post', postId, err);
+                        return null;
+                    });
+                }));
 
                 if (!mounted) return;
 
-                // apply updates
+                // Apply updates
                 setPosts(prev => {
-                    const next = Array.isArray(prev) ? [...prev] : prev;
-                    needs.forEach((need, i) => {
+                    const next = Array.isArray(prev) ? [...prev] : [];
+                    allNeeds.forEach((need, i) => {
                         const resp = results[i];
                         if (resp && resp.success && resp.data) {
+                            // Extract booking data from response
                             const bookingData = resp.data.booking || resp.data.Booking || resp.data;
-                            if (bookingData) {
+                            if (bookingData && (bookingData.BookingID || bookingData.FacilityName)) {
                                 const targetIdx = need.idx;
                                 const existing = next[targetIdx] || {};
-                                next[targetIdx] = { ...existing, booking: bookingData };
+                                
+                                if (need.isShared) {
+                                    // Update shared_post's booking
+                                    console.log('✅ Enriched shared post with booking:', bookingData);
+                                    next[targetIdx] = {
+                                        ...existing,
+                                        shared_post: {
+                                            ...existing.shared_post,
+                                            booking: bookingData
+                                        }
+                                    };
+                                } else {
+                                    // Update top-level post's booking
+                                    console.log('✅ Enriched post with booking:', bookingData);
+                                    next[targetIdx] = { ...existing, booking: bookingData };
+                                }
                             }
                         }
                     });
@@ -213,9 +295,12 @@ const Profile = () => {
 
         enrichBookingPosts();
         return () => { mounted = false; };
-    }, [posts]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [posts.length]); // Only run when posts array length changes to avoid infinite loops
 
     // Follow/unfollow handled in child (UserProfileInfo) via onChildFollowChange
+
+    const { t } = useI18n();
 
     // currentUser stored by auth may contain AccountID or _id
     const currentUserId = currentUser?.AccountID || currentUser?._id || currentUser?.userId;
@@ -240,7 +325,7 @@ const Profile = () => {
                     className={`h-40 md:h-56 bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200 ${isOwnProfile ? 'cursor-pointer' : ''}`}
                     onClick={() => { if (isOwnProfile) setShowEdit(true); }}
                     role={isOwnProfile ? 'button' : undefined}
-                    aria-label={isOwnProfile ? 'Edit cover photo' : undefined}
+                    aria-label={isOwnProfile ? t('profile.editCover','Edit cover photo') : undefined}
                 >
                     {user.cover_photo ? (
                         <div className="relative w-full h-full">
@@ -282,19 +367,23 @@ const Profile = () => {
                 {/* Tabs */}
                 <div className='mt-6'>
                     <div className='bg-white rounded-xl shadow p-1 flex max-w-md mx-auto'>
-                        {["posts", "media", "likes"].map((tab) => (
-                        <button onClick={() => setActiveTab(tab)} key={tab} className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer
-                            ${activeTab === tab  ? "bg-indigo-600 text-white" : "text-gray-600 hover:text-gray-900" }`} >
-                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                        </button>
-                        ))}
+                        {[
+                            { id: 'posts', label: t('profile.tabs.posts','Posts') },
+                            { id: 'media', label: t('profile.tabs.media','Media') },
+                            { id: 'likes', label: t('profile.tabs.likes','Likes') }
+                        ].map((tab) => (
+                            <button onClick={() => setActiveTab(tab.id)} key={tab.id} className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer
+                                ${activeTab === tab.id  ? "bg-indigo-600 text-white" : "text-gray-600 hover:text-gray-900" }`} >
+                                {tab.label}
+                            </button>
+                            ))}
                     </div>
                     {/* Posts */}
                     {activeTab === "posts" && (
                         <div className="mt-6 flex flex-col items-center gap-6">
                             {posts.length === 0 ? (
                                 <div className='text-center text-gray-500 py-8'>
-                                    Chưa có bài viết nào
+                                    {t('profile.emptyPosts','No posts yet')}
                                 </div>
                             ) : (
                                                 posts.map((post) => (
@@ -312,11 +401,11 @@ const Profile = () => {
                     {activeTab === "likes" && (
                         <div className="mt-6 flex flex-col items-center gap-6">
                             <div className="w-full max-w-3xl text-right text-sm text-gray-500 mb-2">
-                                {posts.length === 0 ? '' : `Có ${posts.length} bài viết đã thích`}
+                                {posts.length === 0 ? '' : t('profile.likedPostsCount','{count} liked posts').replace('{count}', posts.length)}
                             </div>
                             {posts.length === 0 ? (
                                 <div className='text-center text-gray-500 py-8'>
-                                    Chưa có bài viết nào trong Likes
+                                    {t('profile.emptyLikes','No liked posts')}
                                 </div>
                             ) : (
                                 posts.map((post) => (

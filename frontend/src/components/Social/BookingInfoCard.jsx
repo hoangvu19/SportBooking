@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, MapPin, Clock, DollarSign } from 'lucide-react';
+import { useI18n } from '../../i18n/hooks';
 
 /**
  * BookingInfoCard Component
@@ -7,6 +8,7 @@ import { Calendar, MapPin, Clock, DollarSign } from 'lucide-react';
  * Trạng thái sẽ tự động cập nhật khi booking thay đổi (Pending → Confirmed → Cancelled)
  */
 const BookingInfoCard = ({ booking }) => {
+  const { t } = useI18n();
   if (!booking) return null;
 
   const {
@@ -23,7 +25,7 @@ const BookingInfoCard = ({ booking }) => {
   const formatTime = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleString('vi-VN', {
+    return date.toLocaleString(undefined, {
       hour: '2-digit',
       minute: '2-digit',
       day: '2-digit',
@@ -35,7 +37,7 @@ const BookingInfoCard = ({ booking }) => {
   // Format tiền
   const formatCurrency = (amount) => {
     if (!amount) return '0đ';
-    return new Intl.NumberFormat('vi-VN', {
+    return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
@@ -47,25 +49,25 @@ const BookingInfoCard = ({ booking }) => {
       case 'Pending':
         return (
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-            ⏳ Chờ xác nhận
+            ⏳ {t('booking.status.Pending')}
           </span>
         );
       case 'Confirmed':
         return (
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-            ✅ Đã xác nhận
+            ✅ {t('booking.status.Confirmed')}
           </span>
         );
       case 'Cancelled':
         return (
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-            ❌ Đã hủy
+            ❌ {t('booking.status.Cancelled')}
           </span>
         );
       case 'Completed':
         return (
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-            🏁 Hoàn thành
+            🏁 {t('booking.status.Completed')}
           </span>
         );
       default:
@@ -81,7 +83,7 @@ const BookingInfoCard = ({ booking }) => {
     <div className="mt-3 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 shadow-sm">
       {/* Header với icon sân thể thao */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
             <span className="text-2xl">⚽</span>
           </div>
@@ -95,7 +97,7 @@ const BookingInfoCard = ({ booking }) => {
 
       {/* Thông tin chi tiết */}
       <div className="space-y-2">
-        {/* Môn thể thao */}
+  {/* Sport */}
         <div className="flex items-center gap-2 text-gray-700">
           <span className="text-lg">🏃</span>
           <span className="font-medium">{SportName}</span>
@@ -105,7 +107,7 @@ const BookingInfoCard = ({ booking }) => {
         <div className="flex items-center gap-2 text-gray-700">
           <Clock className="w-4 h-4 text-blue-600" />
           <span className="text-sm">
-            <strong>Bắt đầu:</strong> {formatTime(StartTime)}
+            <strong>{t('booking.date')}:</strong> {formatTime(StartTime)}
           </span>
         </div>
 
@@ -113,7 +115,7 @@ const BookingInfoCard = ({ booking }) => {
         <div className="flex items-center gap-2 text-gray-700">
           <Clock className="w-4 h-4 text-blue-600" />
           <span className="text-sm">
-            <strong>Kết thúc:</strong> {formatTime(EndTime)}
+            <strong>{t('booking.time')}:</strong> {formatTime(EndTime)}
           </span>
         </div>
 
@@ -121,7 +123,7 @@ const BookingInfoCard = ({ booking }) => {
         <div className="flex items-center gap-2 text-gray-700">
           <DollarSign className="w-4 h-4 text-green-600" />
           <span className="text-sm">
-            <strong>Tổng tiền:</strong> {formatCurrency(TotalAmount)}
+            <strong>{t('booking.total')}:</strong> {formatCurrency(TotalAmount)}
           </span>
         </div>
       </div>
@@ -129,7 +131,7 @@ const BookingInfoCard = ({ booking }) => {
       {/* Footer note */}
       <div className="mt-3 pt-3 border-t border-blue-200">
         <p className="text-xs text-gray-500 italic">
-          ℹ️ Trạng thái được cập nhật tự động khi booking thay đổi
+          ℹ️ {t('booking.statusInfo') || 'Status auto-updates when the booking changes'}
         </p>
       </div>
     </div>

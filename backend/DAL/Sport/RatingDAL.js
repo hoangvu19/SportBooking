@@ -170,7 +170,7 @@ class RatingDAL {
         `);
       
       if (result.rowsAffected[0] === 0) {
-        return { success: false, message: 'Không tìm thấy đánh giá để xóa' };
+        return { success: false, message: 'Rating not found to delete' };
       }
       
       return { success: true };

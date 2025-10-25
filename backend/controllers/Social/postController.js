@@ -35,12 +35,12 @@ async function createPost(req, res) {
     const { content, imageUrls, bookingId } = req.body || {};
 
     if (isBlank(content)) {
-      return sendValidationError(res, 'Nội dung post không được để trống');
+      return sendValidationError(res, 'Post content must not be empty');
     }
 
     const accountId = getAccountId(req);
     if (!accountId) {
-      return sendUnauthorized(res, 'Không xác định được người dùng để tạo bài viết');
+      return sendUnauthorized(res, 'Could not identify user to create post');
     }
 
     // Validate booking if provided
@@ -49,11 +49,11 @@ async function createPost(req, res) {
       const booking = await BookingDAL.getById(bookingId);
       
       if (!booking) {
-        return sendValidationError(res, 'Booking không tồn tại');
+        return sendValidationError(res, 'Booking does not exist');
       }
       
       if (booking.CustomerID !== accountId) {
-        return sendUnauthorized(res, 'Không có quyền tạo post cho booking này');
+        return sendUnauthorized(res, 'Not authorized to create post for this booking');
       }
     }
 
@@ -61,9 +61,9 @@ async function createPost(req, res) {
     const moderationResult = await moderationService.moderatePost(content.trim(), imageUrls || []);
     
     if (!moderationResult.isClean) {
-      // Từ chối bài đăng
+      // Reject post
       await logModeration(null, null, content, moderationResult);
-      return sendValidationError(res, moderationResult.reason || 'Nội dung vi phạm quy định cộng đồng');
+      return sendValidationError(res, moderationResult.reason || 'Content violates community guidelines');
     }
 
     const post = await PostDAL.create({
@@ -81,7 +81,7 @@ async function createPost(req, res) {
 
     const baseUrl = buildBaseUrl(req);
 
-    return sendCreated(res, formatPostForResponse(post, baseUrl), 'Tạo post thành công');
+  return sendCreated(res, formatPostForResponse(post, baseUrl), 'Post created successfully');
   } catch (error) {
     console.error('❌ Error creating post:', error);
     console.error('❌ Error details:', {
@@ -90,7 +90,7 @@ async function createPost(req, res) {
       number: error.number,
       stack: error.stack
     });
-    return sendError(res, 'Lỗi server khi tạo post', 500, { 
+    return sendError(res, 'Server error creating post', 500, { 
       error: error.message,
       code: error.code 
     });
@@ -118,7 +118,7 @@ async function getFeedPosts(req, res) {
       }
     });
   } catch (error) {
-    return sendError(res, 'Lỗi server khi lấy feed posts', 500, { error });
+  return sendError(res, 'Server error fetching feed posts', 500, { error });
   }
 }
 
@@ -145,7 +145,7 @@ async function getUserPosts(req, res) {
       pagination: buildPaginationMeta(posts.length, limit, page)
     });
   } catch (error) {
-    return sendError(res, 'Lỗi server khi lấy posts của người dùng', 500, { error });
+  return sendError(res, 'Server error fetching user posts', 500, { error });
   }
 }
 
@@ -164,14 +164,14 @@ async function getPostById(req, res) {
     const post = await PostDAL.getById(idCheck.value, true);
 
     if (!post) {
-      return sendNotFound(res, 'Post không tồn tại');
+      return sendNotFound(res, 'Post not found');
     }
 
     const baseUrl = buildBaseUrl(req);
 
     return sendSuccess(res, formatPostForResponse(post, baseUrl));
   } catch (error) {
-    return sendError(res, 'Lỗi server khi lấy thông tin post', 500, { error });
+  return sendError(res, 'Server error fetching post details', 500, { error });
   }
 }
 
@@ -184,7 +184,7 @@ async function updatePost(req, res) {
     const { content } = req.body;
 
     if (isBlank(content)) {
-      return sendValidationError(res, 'Nội dung post không được để trống');
+      return sendValidationError(res, 'Post content must not be empty');
     }
 
     const idCheck = ensurePositiveInteger(postId, 'postId');
@@ -199,24 +199,24 @@ async function updatePost(req, res) {
 
     const existing = await PostDAL.getById(idCheck.value);
     if (!existing) {
-      return sendNotFound(res, 'Post không tồn tại');
+      return sendNotFound(res, 'Post not found');
     }
 
     if (parseInt(existing.AccountID, 10) !== parseInt(accountId, 10)) {
-      return sendUnauthorized(res, 'Bạn không có quyền sửa bài viết này');
+      return sendUnauthorized(res, 'You are not authorized to edit this post');
     }
 
     const updatedPost = await PostDAL.update(idCheck.value, { Content: content.trim() });
 
     if (!updatedPost) {
-      return sendError(res, 'Không thể cập nhật bài viết', 500);
+      return sendError(res, 'Unable to update post', 500);
     }
 
     const baseUrl = buildBaseUrl(req);
 
-    return sendSuccess(res, formatPostForResponse(updatedPost, baseUrl), 'Cập nhật post thành công');
+  return sendSuccess(res, formatPostForResponse(updatedPost, baseUrl), 'Post updated successfully');
   } catch (error) {
-    return sendError(res, 'Lỗi server khi cập nhật post', 500, { error });
+  return sendError(res, 'Server error updating post', 500, { error });
   }
 }
 
@@ -238,22 +238,22 @@ async function deletePost(req, res) {
 
     const existing = await PostDAL.getById(idCheck.value);
     if (!existing) {
-      return sendNotFound(res, 'Post không tồn tại');
+      return sendNotFound(res, 'Post not found');
     }
 
     if (parseInt(existing.AccountID, 10) !== parseInt(accountId, 10)) {
-      return sendUnauthorized(res, 'Bạn không có quyền xóa bài viết này');
+      return sendUnauthorized(res, 'You are not authorized to delete this post');
     }
 
     const success = await PostDAL.delete(idCheck.value);
 
     if (!success) {
-      return sendError(res, 'Không thể xóa bài viết', 500);
+      return sendError(res, 'Unable to delete post', 500);
     }
 
-    return sendSuccess(res, null, 'Xóa post thành công');
+    return sendSuccess(res, null, 'Post deleted successfully');
   } catch (error) {
-    return sendError(res, 'Lỗi server khi xóa post', 500, { error });
+  return sendError(res, 'Server error deleting post', 500, { error });
   }
 }
 
@@ -272,7 +272,7 @@ async function reactToPost(req, res) {
 
     const normalizedReaction = normalizeReactionType(reactionType);
     if (!normalizedReaction) {
-      return sendValidationError(res, 'Loại reaction không hợp lệ');
+      return sendValidationError(res, 'Invalid reaction type');
     }
 
     const accountId = getAccountId(req);
@@ -305,7 +305,7 @@ async function reactToPost(req, res) {
                 username: fromUser.Username,
                 avatar: fromUser.AvatarUrl
               },
-              message: `${fromUser.FullName || fromUser.Username} đã thích bài viết của bạn!`,
+              message: `${fromUser.FullName || fromUser.Username} liked your post!`,
               link: `/post/${idCheck.value}`,
               createdAt: new Date(),
               read: false
@@ -318,14 +318,14 @@ async function reactToPost(req, res) {
     }
 
     const messageByAction = {
-      created: 'React thành công',
-      updated: 'Cập nhật reaction thành công',
-      removed: 'Đã bỏ reaction'
+      created: 'Reaction added',
+      updated: 'Reaction updated successfully',
+      removed: 'Reaction removed'
     };
 
-    return sendSuccess(res, result, messageByAction[result?.action] || 'Xử lý reaction thành công');
+    return sendSuccess(res, result, messageByAction[result?.action] || 'Reaction processed successfully');
   } catch (error) {
-    return sendError(res, 'Lỗi server khi react', 500, { error });
+  return sendError(res, 'Server error reacting to post', 500, { error });
   }
 }
 
@@ -348,14 +348,14 @@ async function removeReaction(req, res) {
     const existingReaction = await ReactionDAL.getUserReaction(accountId, idCheck.value);
 
     if (!existingReaction) {
-      return sendNotFound(res, 'Không tìm thấy reaction để xóa');
+      return sendNotFound(res, 'Reaction to delete not found');
     }
 
     await ReactionDAL.delete(existingReaction.ReactionID);
 
-    return sendSuccess(res, { reactionId: existingReaction.ReactionID }, 'Bỏ react thành công');
+  return sendSuccess(res, { reactionId: existingReaction.ReactionID }, 'Reaction removed successfully');
   } catch (error) {
-    return sendError(res, 'Lỗi server khi bỏ react', 500, { error });
+  return sendError(res, 'Server error removing reaction', 500, { error });
   }
 }
 
@@ -368,7 +368,7 @@ async function addComment(req, res) {
     const { content, imageUrls } = req.body;
 
     if (isBlank(content)) {
-      return sendValidationError(res, 'Nội dung comment không được để trống');
+      return sendValidationError(res, 'Comment content must not be empty');
     }
 
     const postCheck = ensurePositiveInteger(postId, 'postId');
@@ -388,7 +388,7 @@ async function addComment(req, res) {
     });
 
     if (!comment) {
-      return sendError(res, 'Không thể tạo comment', 500);
+      return sendError(res, 'Unable to create comment', 500);
     }
 
     const images = Array.isArray(imageUrls) ? imageUrls : [];
@@ -416,7 +416,7 @@ async function addComment(req, res) {
               username: fromUser.Username,
               avatar: fromUser.AvatarUrl
             },
-            message: `${fromUser.FullName || fromUser.Username} đã bình luận bài viết của bạn!`,
+            message: `${fromUser.FullName || fromUser.Username} commented on your post!`,
             link: `/post/${postCheck.value}`,
             createdAt: new Date(),
             read: false
@@ -429,9 +429,9 @@ async function addComment(req, res) {
 
     const baseUrl = buildBaseUrl(req);
 
-    return sendCreated(res, formatCommentForResponse(comment, baseUrl), 'Tạo comment thành công');
+  return sendCreated(res, formatCommentForResponse(comment, baseUrl), 'Comment created successfully');
   } catch (error) {
-    return sendError(res, 'Lỗi server khi tạo comment', 500, { error });
+  return sendError(res, 'Server error creating comment', 500, { error });
   }
 }
 
@@ -457,7 +457,7 @@ async function getPostComments(req, res) {
       pagination: buildPaginationMeta(comments.length, limit, page)
     });
   } catch (error) {
-    return sendError(res, 'Lỗi server khi lấy comments', 500, { error });
+  return sendError(res, 'Server error fetching comments', 500, { error });
   }
 }
 
@@ -470,7 +470,7 @@ async function updateComment(req, res) {
     const { content } = req.body;
 
     if (isBlank(content)) {
-      return sendValidationError(res, 'Nội dung comment không được để trống');
+      return sendValidationError(res, 'Comment content must not be empty');
     }
 
     const idCheck = ensurePositiveInteger(commentId, 'commentId');
@@ -485,15 +485,15 @@ async function updateComment(req, res) {
 
     const isOwner = await CommentDAL.isOwner(idCheck.value, accountId);
     if (!isOwner) {
-      return sendUnauthorized(res, 'Comment không tồn tại hoặc bạn không có quyền sửa');
+      return sendUnauthorized(res, 'Comment not found or you do not have permission to edit');
     }
 
     const updatedComment = await CommentDAL.update(idCheck.value, content.trim());
     const baseUrl = buildBaseUrl(req);
 
-    return sendSuccess(res, formatCommentForResponse(updatedComment, baseUrl), 'Cập nhật comment thành công');
+  return sendSuccess(res, formatCommentForResponse(updatedComment, baseUrl), 'Comment updated successfully');
   } catch (error) {
-    return sendError(res, 'Lỗi server khi cập nhật comment', 500, { error });
+  return sendError(res, 'Server error updating comment', 500, { error });
   }
 }
 
@@ -515,14 +515,14 @@ async function deleteComment(req, res) {
 
     const isOwner = await CommentDAL.isOwner(idCheck.value, accountId);
     if (!isOwner) {
-      return sendUnauthorized(res, 'Comment không tồn tại hoặc bạn không có quyền xóa');
+      return sendUnauthorized(res, 'Comment not found or you do not have permission to delete');
     }
 
     await CommentDAL.delete(idCheck.value);
 
-    return sendSuccess(res, null, 'Xóa comment thành công');
+  return sendSuccess(res, null, 'Comment deleted successfully');
   } catch (error) {
-    return sendError(res, 'Lỗi server khi xóa comment', 500, { error });
+  return sendError(res, 'Server error deleting comment', 500, { error });
   }
 }
 
@@ -551,18 +551,18 @@ async function sharePost(req, res) {
     });
 
     if (!sharedPost) {
-      return sendError(res, 'Không thể chia sẻ post', 500);
+      return sendError(res, 'Unable to share post', 500);
     }
 
     const baseUrl = buildBaseUrl(req);
 
-    return sendCreated(res, formatPostForResponse(sharedPost, baseUrl), 'Chia sẻ post thành công');
+  return sendCreated(res, formatPostForResponse(sharedPost, baseUrl), 'Post shared successfully');
   } catch (error) {
     if (error && error.code === 'ORIGINAL_NOT_FOUND') {
-      return sendNotFound(res, 'Bài viết gốc không tồn tại');
+      return sendNotFound(res, 'Original post not found');
     }
 
-    return sendError(res, 'Lỗi server khi chia sẻ post', 500, {
+    return sendError(res, 'Server error sharing post', 500, {
       error,
       details: { code: error?.code || 'INTERNAL_ERROR' }
     });

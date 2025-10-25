@@ -1,8 +1,9 @@
-import { Calendar, MapPin, PenBox, Verified, UserPlus, UserMinus } from 'lucide-react'
+import { Calendar, MapPin, PenBox, Verified, UserPlus, UserMinus, User } from 'lucide-react'
 import moment from 'moment'
 import React, { useState, useEffect } from 'react'
 import DEFAULT_AVATAR from "../../utils/defaults";
 import { userAPI } from "../../utils/api";
+import { useI18n } from '../../i18n/hooks';
 
 
 const UserProfileInfo = ({ user, setShowEdit, posts, isOwnProfile, followLoading, onChildFollowChange }) => {
@@ -16,6 +17,17 @@ const UserProfileInfo = ({ user, setShowEdit, posts, isOwnProfile, followLoading
     setIsFollowing(Boolean(user?.is_following));
     setLocalFollowers(user?.followers_count || 0);
   }, [user]);
+
+  const { t } = useI18n();
+
+  const getGenderLabel = () => {
+    const raw = (user?.gender || user?.sex || user?.GioiTinh || user?.gender_text || '').toString().trim().toLowerCase();
+    if (!raw) return t('profile.preferNotToSay', 'Prefer not to say');
+    if (['male', 'm', 'nam'].includes(raw)) return t('profile.male', 'Male');
+    if (['female', 'f', 'nu', 'nữ'].includes(raw)) return t('profile.female', 'Female');
+    if (['other', 'khac', 'khác'].includes(raw)) return t('profile.other', 'Other');
+    return t('profile.preferNotToSay', 'Prefer not to say');
+  };
 
   // Debug: show user prop when component renders
   React.useEffect(() => {
@@ -94,7 +106,7 @@ const UserProfileInfo = ({ user, setShowEdit, posts, isOwnProfile, followLoading
                   className="flex items-center gap-2 border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   <PenBox className="w-4 h-4" />
-                  Edit
+                  {t('common.edit', 'Edit')}
                 </button>
               )}
 
@@ -113,12 +125,12 @@ const UserProfileInfo = ({ user, setShowEdit, posts, isOwnProfile, followLoading
                   {isFollowing ? (
                     <>
                       <UserMinus className="w-4 h-4" />
-                      {localLoading || followLoading ? 'Processing...' : 'Following'}
+                      {localLoading || followLoading ? t('common.processing', 'Processing...') : t('profile.following', 'Following')}
                     </>
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4" />
-                      {localLoading || followLoading ? 'Processing...' : 'Follow'}
+                      {localLoading || followLoading ? t('common.processing', 'Processing...') : t('profile.follow', 'Follow')}
                     </>
                   )}
                 </button>
@@ -139,13 +151,17 @@ const UserProfileInfo = ({ user, setShowEdit, posts, isOwnProfile, followLoading
             {/* Location + Joined */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500 mt-4">
               <span className="flex items-center gap-1.5">
+                <User className="w-4 h-4" />
+                {getGenderLabel()}
+              </span>
+              <span className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4" />
-                {user.location || 'Add location'}
+                {user.location || t('user.addLocation', 'Add location')}
               </span>
               
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
-                Joined{' '}
+                {t('user.joined', 'Joined')}{' '}
                 <span className="font-medium">
                   {moment(user.createdAt).fromNow()}
                 </span>
@@ -157,16 +173,16 @@ const UserProfileInfo = ({ user, setShowEdit, posts, isOwnProfile, followLoading
                     <span className='sm:text-xl font-bold text-gray-900'>
                     {posts.length}
                     </span>
-                    <span className='text-xs sm:text-sm text-gray-500 ml-1.5'>
-                    Posts
-                    </span>
+          <span className='text-xs sm:text-sm text-gray-500 ml-1.5'>
+          {t('user.posts', 'Posts')}
+          </span>
                 </div>
         <div>
           <span className='sm:text-xl font-bold text-gray-900'>
           {localFollowers || 0}
           </span>
                     <span className='text-xs sm:text-sm text-gray-500 ml-1.5'>
-                    Followers
+          {t('user.followers', 'Followers')}
                     </span>
                 </div>
                 <div>
@@ -174,7 +190,7 @@ const UserProfileInfo = ({ user, setShowEdit, posts, isOwnProfile, followLoading
                     {user.following_count || 0}
                     </span>
                     <span className='text-xs sm:text-sm text-gray-500 ml-1.5'>
-                    Following
+          {t('user.following', 'Following')}
                     </span>
                 </div>
             </div>

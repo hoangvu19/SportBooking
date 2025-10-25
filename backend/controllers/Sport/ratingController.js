@@ -17,7 +17,7 @@ async function setRating(req, res) {
     if (!targetType || !targetId || !rating) {
       return res.status(400).json({
         success: false,
-        message: 'Thiếu thông tin: loại đối tượng, ID, điểm số'
+        message: 'Missing information: target type, ID, rating'
       });
     }
     
@@ -26,7 +26,7 @@ async function setRating(req, res) {
     if (!validTargetTypes.includes(targetType)) {
       return res.status(400).json({
         success: false,
-        message: 'Loại đối tượng không hợp lệ (chỉ hỗ trợ Facility, Field)'
+        message: 'Invalid target type (only supports Facility, Field)'
       });
     }
     
@@ -34,7 +34,7 @@ async function setRating(req, res) {
     if (rating < 1 || rating > 5) {
       return res.status(400).json({
         success: false,
-        message: 'Điểm đánh giá phải từ 1 đến 5'
+        message: 'Rating must be between 1 and 5'
       });
     }
     
@@ -48,20 +48,20 @@ async function setRating(req, res) {
     if (result.success) {
       res.status(200).json({
         success: true,
-        message: result.isUpdate ? 'Cập nhật đánh giá thành công' : 'Đánh giá thành công',
+        message: result.isUpdate ? 'Rating updated successfully' : 'Rating submitted successfully',
         data: result.data
       });
     } else {
       res.status(400).json({
         success: false,
-        message: result.message || 'Không thể lưu đánh giá'
+        message: result.message || 'Unable to save rating'
       });
     }
   } catch (error) {
     console.error('Set rating error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server khi lưu đánh giá',
+      message: 'Server error saving rating',
       error: error.message
     });
   }
@@ -85,14 +85,14 @@ async function getMyRating(req, res) {
     } else {
       res.status(500).json({
         success: false,
-        message: 'Không thể lấy đánh giá của bạn'
+        message: 'Unable to fetch your rating'
       });
     }
   } catch (error) {
     console.error('Get my rating error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server',
+      message: 'Server error',
       error: error.message
     });
   }
@@ -115,14 +115,14 @@ async function getRatingStats(req, res) {
     } else {
       res.status(500).json({
         success: false,
-        message: 'Không thể lấy thống kê đánh giá'
+        message: 'Unable to fetch rating statistics'
       });
     }
   } catch (error) {
     console.error('Get rating stats error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server',
+      message: 'Server error',
       error: error.message
     });
   }
@@ -141,19 +141,19 @@ async function deleteRating(req, res) {
     if (result.success) {
       res.json({
         success: true,
-        message: 'Xóa đánh giá thành công'
+        message: 'Rating deleted successfully'
       });
     } else {
       res.status(400).json({
         success: false,
-        message: result.message || 'Không thể xóa đánh giá'
+        message: result.message || 'Unable to delete rating'
       });
     }
   } catch (error) {
     console.error('Delete rating error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server',
+      message: 'Server error',
       error: error.message
     });
   }

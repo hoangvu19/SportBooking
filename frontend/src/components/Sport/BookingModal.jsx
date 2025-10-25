@@ -2,10 +2,12 @@ import React from 'react';
 import { getEndTime, timeSlots } from "../../utils/bookingUtils";
 import { bookingAPI } from "../../utils/api";
 import toast from 'react-hot-toast';
+import { useI18n } from '../../i18n/hooks';
 
 // Modal đặt sân
 const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots = [], initialArea = null }) => {
   const [date, setDate] = React.useState(initialDate || new Date().toISOString().split('T')[0]);
+  const { t } = useI18n();
   const [activeArea, setActiveArea] = React.useState(initialArea || 'A1');
   const [selectedSlots, setSelectedSlots] = React.useState(Array.isArray(initialSelectedSlots) ? initialSelectedSlots : []);
   const [form, _setForm] = React.useState({ note: "" });
@@ -36,8 +38,8 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
       setActiveArea(areaList[0]);
     } else {
       // Fallback if no area data
-      setAreas(['Khu vực chính']);
-      setActiveArea('Khu vực chính');
+        setAreas(['Main area']);
+        setActiveArea('Main area');
     }
   }, [san]);
 
@@ -46,33 +48,34 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
     return san?.HinhAnh || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" fill="%23E2E8F0"%3E%3Crect width="200" height="140" fill="%23E2E8F0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%23718096"%3ENo Image%3C/text%3E%3C/svg%3E';
   };
   
-  // Lấy tình trạng trống hay đã đặt (thử với dữ liệu thật trước, fallback heuristics)
+  // Determine slot status (try real data first, fallback heuristics)
   const getSlotStatus = (area, slot) => {
     // Parse slot datetime
     let slotDt;
     try {
       slotDt = new Date(`${date}T${slot}:00`);
       const now = new Date();
-      if (slotDt < now) return 'quá giờ';
+    if (slotDt < now) return 'past';
     } catch { /* ignore parse errors and continue */ }
 
     // Check real booked intervals (overlap)
     for (const it of bookedIntervals) {
       if (!it || !it.start || !it.end) continue;
       const slotEnd = new Date(slotDt.getTime() + 30 * 60 * 1000);
-      if (slotDt && slotEnd > it.start && slotDt < it.end) return 'đã đặt';
+  if (slotDt && slotEnd > it.start && slotDt < it.end) return 'booked';
     }
 
     // Fallback mock heuristics
-    if (date === '2025-09-12' && slot > '18:00') return 'đã đặt';
-    if (slot < '08:00' && area === 'A1') return 'đã đặt';
-    if (slot > '20:00' && (area === 'A3' || area === 'B1')) return 'đã đặt';
-    return 'trống';
+  if (date === '2025-09-12' && slot > '18:00') return 'booked';
+  if (slot < '08:00' && area === 'A1') return 'booked';
+  if (slot > '20:00' && (area === 'A3' || area === 'B1')) return 'booked';
+  return 'available';
   };
 
   // Chọn slot
   const handleSelectSlot = (slot) => {
-    if (getSlotStatus(activeArea, slot) === 'đã đặt') return;
+  const st = getSlotStatus(activeArea, slot);
+  if (st === 'booked' || st === 'past') return;
     
     if (selectedSlots.includes(slot)) {
       setSelectedSlots(prev => prev.filter(s => s !== slot));
@@ -110,7 +113,7 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
       try {
         const resp = await bookingAPI.getFieldAvailability(san.FieldID || san.SanID, date);
         if (cancelled) return;
-        if (resp && resp.success && Array.isArray(resp.data)) {
+  if (resp && resp.success && Array.isArray(resp.data)) {
           const intervals = resp.data.map(b => {
             try { return { start: new Date(b.StartTime), end: new Date(b.EndTime) }; } catch { return null; }
           }).filter(Boolean);
@@ -118,9 +121,9 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
         } else {
           setBookedIntervals([]);
         }
-      } catch (err) {
-        console.error('Error fetching availability:', err);
-        setAvailabilityError('Không thể tải lịch thực tế');
+  } catch (err) {
+    console.error('Error fetching availability:', err);
+  setAvailabilityError(t('booking.loadAvailabilityError','Unable to load availability'));
         setBookedIntervals([]);
       } finally {
         if (!cancelled) setAvailabilityLoading(false);
@@ -141,7 +144,7 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
   // Form xác nhận
   const handleSubmit = async () => {
     if (selectedSlots.length === 0) {
-      toast.error('Vui lòng chọn ít nhất một khung giờ!');
+      toast.error(t('booking.selectAtLeastOne'));
       return;
     }
 
@@ -157,7 +160,7 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
     }
 
     if (!userData) {
-      toast.error('Vui lòng đăng nhập để đặt sân!');
+      toast.error(t('booking.pleaseLogin'));
       return;
     }
 
@@ -177,7 +180,7 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
         startTime: startTime,
         endTime: endTime,
         deposit: 0, // Optional
-        customerName: userData.FullName || userData.Username || 'Khách hàng',
+    customerName: userData.FullName || userData.Username || 'Customer',
         customerPhone: userData.PhoneNumber || userData.Phone || '',
         customerEmail: userData.Email || '',
         note: form.note || ''
@@ -187,28 +190,28 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
       const result = await bookingAPI.create(bookingData);
       
       if (result.success) {
-        toast.success('✅ Đặt sân thành công! Hệ thống sẽ liên hệ xác nhận.');
+          toast.success(t('booking.bookingSuccess'));
         onClose();
       } else {
-        toast.error('❌ ' + (result.message || 'Không thể đặt sân'));
+          toast.error(t('booking.bookingFailed').replace('{msg}', result.message || 'Unable to create booking'));
       }
     } catch (error) {
       console.error('Booking error:', error);
-      toast.error('❌ Lỗi khi đặt sân: ' + (error.message || 'Vui lòng thử lại'));
+        toast.error(t('booking.bookingError').replace('{msg}', error.message || 'Please try again'));
     }
   };
 
   // Render guard after hooks
-  if (!san) {
+    if (!san) {
     console.error("BookingModal: san is undefined");
     return (
       <div data-testid="booking-modal" className="fixed inset-0 bg-white flex items-center justify-center z-50 p-4 overflow-y-auto">
         <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-4 border-b flex justify-between items-center">
-            <h3 className="text-xl font-bold">Lỗi: Không tìm thấy thông tin sân</h3>
+            <h3 className="text-xl font-bold">{t('booking.facilityNotFound','Facility not found')}</h3>
             <button data-testid="booking-close" onClick={onClose} className="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
           </div>
-          <div className="p-4">Có lỗi xảy ra khi tải thông tin sân</div>
+          <div className="p-4">{t('booking.facilityLoadError','An error occurred while loading facility details')}</div>
         </div>
       </div>
     );
@@ -221,22 +224,22 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
         <div className="p-0 border-b sticky top-0 bg-white">
           {/* Area image */}
           <div className="w-full h-40 overflow-hidden rounded-t-xl">
-            <img src={getAreaImage()} alt={`Khu vực ${activeArea}`} className="w-full h-full object-cover" />
+            <img src={getAreaImage()} alt={`Area ${activeArea}`} className="w-full h-full object-cover" />
           </div>
           <div className="p-4 border-b flex justify-between items-center">
-            <h3 className="text-xl font-bold">Đặt sân - {san?.TenSan || ''} (Khu {activeArea})</h3>
+            <h3 className="text-xl font-bold">{t('booking.book','Book')} - {san?.TenSan || ''} ({t('booking.area','Area')} {activeArea})</h3>
             <button data-testid="booking-close" onClick={onClose} className="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
           </div>
         </div>
 
         {/* Chọn ngày và khu vực */}
         <div className="p-4 flex flex-wrap gap-4 border-b">
-          <div>
-            <label className="block font-medium mb-2">Ngày</label>
+            <div>
+            <label className="block font-medium mb-2">{t('booking.dateLabel','Date')}</label>
             <input type="date" value={date} onChange={e => setDate(e.target.value)} className="border rounded px-3 py-2" min={new Date().toISOString().split('T')[0]} />
           </div>
           <div>
-            <label className="block font-medium mb-2">Khu vực</label>
+            <label className="block font-medium mb-2">{t('booking.area','Area')}</label>
             <div className="flex flex-wrap gap-2">
               {areas.map(area => {
                 const imgSrc = getAreaImage();
@@ -260,26 +263,25 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
 
         {/* Bảng chọn giờ */}
         <div className="p-4">
-          <h4 className="text-lg font-semibold mb-3">Chọn giờ đặt sân - Khu vực {activeArea}</h4>
-          <div className="flex items-center justify-between mb-2">
+          <h4 className="text-lg font-semibold mb-3">{t('booking.selectTimeSlots','Select time slots - Area {area}').replace('{area}', activeArea)}</h4>
+            <div className="flex items-center justify-between mb-2">
             <div />
             <div className="text-sm text-gray-500">
-              {availabilityLoading ? 'Đang tải lịch...' : availabilityError ? availabilityError : ''}
+              {availabilityLoading ? t('booking.loadingAvailability','Loading availability...') : availabilityError ? availabilityError : ''}
             </div>
           </div>
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-56 overflow-y-auto">
             {timeSlots.map((slot) => {
-              const status = getSlotStatus(activeArea, slot); // 'trống' | 'đã đặt' | 'quá giờ'
+              const status = getSlotStatus(activeArea, slot); // 'available' | 'booked' | 'past'
               const isSelected = selectedSlots.includes(slot);
 
               // Determine classes and disabled state
               let classes = 'px-2 py-3 rounded text-sm';
               let disabled = false;
-
-              if (status === 'quá giờ') {
+              if (status === 'past') {
                 classes += ' bg-gray-100 text-gray-400 cursor-not-allowed';
                 disabled = true;
-              } else if (status === 'đã đặt') {
+              } else if (status === 'booked') {
                 // light red for already-booked slots (non-editable)
                 classes += ' bg-red-100 text-red-600 cursor-not-allowed relative border-red-200';
                 disabled = true;
@@ -295,9 +297,15 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
                   className={classes}
                   onClick={() => handleSelectSlot(slot)}
                   disabled={disabled}
+                  aria-disabled={disabled}
+                  title={status === 'booked' ? t('booking.booked','Booked') : status === 'past' ? t('booking.past','Past') : ''}
                 >
-                  {/* booked badge removed as requested; color alone indicates booked */}
-                  {slot}
+                  <div className="flex items-center justify-center">
+                    <span>{slot}</span>
+                    {status === 'booked' && (
+                      <span className="ml-2 text-xs text-red-600 font-medium">{t('booking.legend.booked')}</span>
+                    )}
+                  </div>
                 </button>
               );
             })}
@@ -305,10 +313,10 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
         </div>
 
         {/* Giờ đã chọn */}
-        <div className="p-4 border-t">
-          <h4 className="text-lg font-semibold mb-2">Giờ đã chọn</h4>
+          <div className="p-4 border-t">
+          <h4 className="text-lg font-semibold mb-2">{t('booking.selectedSlots') || t('booking.timeSlotsLabel')}</h4>
           {selectedSlots.length === 0 ? (
-            <p className="text-gray-500">Chưa chọn giờ nào</p>
+            <p className="text-gray-500">{t('booking.noSlotsSelected')}</p>
           ) : (
             <div className="mb-4">
               <ul className="flex flex-wrap gap-2 mb-3">
@@ -324,25 +332,25 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
                   </li>
                 ))}
               </ul>
-              <div className="font-bold text-lg">Tổng tiền: <span className="text-green-600">{tongTien.toLocaleString()}đ</span></div>
+              <div className="font-bold text-lg">{t('booking.total','Total')}: <span className="text-green-600">{tongTien.toLocaleString()}đ</span></div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t flex justify-end">
+          <div className="p-4 border-t flex justify-end">
           <button 
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded mr-2"
             onClick={onClose}
           >
-            Hủy
+            {t('common.cancel')}
           </button>
           <button 
             className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 hover:bg-blue-700"
             disabled={selectedSlots.length === 0}
             onClick={handleSubmit}
           >
-            Xác nhận đặt sân
+            {t('booking.confirmButton')}
           </button>
         </div>
       </div>

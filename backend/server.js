@@ -42,7 +42,7 @@ const generalLimiter = rateLimit({
   max: 5000, // raised from 1000 -> 5000 to reduce false positives in development/testing
   message: {
     success: false,
-    message: 'Quá nhiều requests từ IP này, vui lòng thử lại sau 15 phút'
+    message: 'Too many requests from this IP, please try again in 15 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false
@@ -53,7 +53,7 @@ const authLimiter = rateLimit({
   max: 20,
   message: {
     success: false,
-    message: 'Quá nhiều lần đăng nhập thất bại, vui lòng thử lại sau 15 phút'
+    message: 'Too many failed login attempts, please try again in 15 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -143,7 +143,7 @@ app.get('/', async (req, res) => {
   
   res.json({
     success: true,
-    message: 'Social Media Backend API đang hoạt động',
+  message: 'Social Media Backend API is running',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     database: {

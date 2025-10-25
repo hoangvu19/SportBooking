@@ -183,7 +183,7 @@ class InvoiceDAL {
 
       if (invoiceResult.recordset.length === 0) {
         await transaction.rollback();
-        return { success: false, message: 'Invoice không thể được thanh toán' };
+        return { success: false, message: 'Invoice cannot be paid' };
       }
 
       const bookingId = invoiceResult.recordset[0].BookingID;
@@ -197,7 +197,7 @@ class InvoiceDAL {
         `);
 
       await transaction.commit();
-      return { success: true, message: 'Thanh toán thành công' };
+      return { success: true, message: 'Payment successful' };
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -216,7 +216,7 @@ class InvoiceDAL {
       `);
 
     if (result.recordset.length === 0) {
-      return { success: false, message: 'Không thể hoàn tiền cho invoice này' };
+      return { success: false, message: 'Cannot refund this invoice' };
     }
 
     return { success: true, data: result.recordset[0] };

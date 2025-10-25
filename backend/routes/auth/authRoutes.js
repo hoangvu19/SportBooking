@@ -21,7 +21,7 @@ const authenticateToken = (req, res, next) => {
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Access token không được cung cấp'
+      message: 'Access token not provided'
     });
   }
 
@@ -34,7 +34,7 @@ const authenticateToken = (req, res, next) => {
   } catch (error) {
     return res.status(403).json({
       success: false,
-      message: 'Token không hợp lệ'
+      message: 'Invalid token'
     });
   }
 };

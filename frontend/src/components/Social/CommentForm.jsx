@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Send, Camera } from 'lucide-react';
 import { commentAPI } from "../../utils/api";
+import { useI18n } from '../../i18n/hooks';
 
 const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply }) => {
+  const { t } = useI18n();
   const [text, setText] = useState('');
   // track IME composition state so Enter isn't treated as send while composing (important for Vietnamese)
   const [isComposing, setIsComposing] = useState(false);
@@ -33,10 +35,10 @@ const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply 
     // Kiểm tra nội dung bình luận
     const hasValidContent = content.length > 0 && /[a-zA-Z0-9\u00C0-\u1EF9]+/.test(content); // Regex kiểm tra có ít nhất 1 ký tự chữ/số (bao gồm Unicode cho tiếng Việt)
     
-    // Chỉ cho phép gửi khi có nội dung hợp lệ hoặc có file đính kèm
+    // Only allow submit when valid content or files attached
     if (!hasValidContent && files.length === 0) {
       if (content.length > 0) {
-        setError('Bình luận phải có nội dung chữ hoặc số, không chỉ là dấu câu hoặc khoảng trắng.');
+        setError(t('comment.invalidContent', 'Comment must contain text or numbers, not just punctuation or whitespace.'));
       }
       return;
     }
@@ -51,18 +53,18 @@ const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply 
       };
       
       const res = await commentAPI.create(payload);
-      if (res && res.success) {
+        if (res && res.success) {
         setText('');
         setFiles([]);
         setPreviews([]);
         if (typeof onCreated === 'function') onCreated(res.data);
         if (typeof onCancelReply === 'function') onCancelReply();
-      } else {
-        setError(res && res.message ? res.message : 'Không thể tạo bình luận');
+        } else {
+          setError(res && res.message ? res.message : t('comment.createError', 'Unable to create comment'));
       }
     } catch (err) {
       console.error('Create comment error:', err);
-      setError(err.message || 'Lỗi khi gửi bình luận');
+      setError(err.message || t('comment.sendingError', 'Error sending comment'));
     } finally {
       setSubmitting(false);
     }
@@ -71,12 +73,12 @@ const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply 
   if (!isAuthed) {
     return (
       <div className="mt-2 flex items-center gap-2">
-        <div className="text-sm text-gray-600">Vui lòng đăng nhập để bình luận</div>
+        <div className="text-sm text-gray-600">{t('comment.loginPrompt', 'Please log in to comment')}</div>
         <button
           className="px-3 py-1 bg-indigo-600 text-white rounded"
           onClick={() => navigate('/login')}
         >
-          Đăng nhập
+          {t('auth.login', 'Log in')}
         </button>
       </div>
     );
@@ -87,7 +89,7 @@ const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply 
       <div className="relative flex items-center group">
         {/* Input with improved styling */}
         <input
-          aria-label="Viết bình luận"
+    aria-label={t('comment.inputAria', 'Write a comment')}
           className={`
             w-full px-4 py-2.5 pr-24
             border border-gray-200 rounded-full
@@ -99,7 +101,7 @@ const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply 
             ${previews.length > 0 ? 'pl-20' : ''}
             ${error ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : ''}
           `}
-          placeholder="Viết bình luận..."
+          placeholder={t('comment.placeholderInput', 'Write a comment...')}
           value={text}
           onChange={(e) => setText(e.target.value)}
           disabled={submitting}
@@ -139,17 +141,17 @@ const CommentForm = ({ postId, onCreated, parentCommentId = null, onCancelReply 
         {/* camera button (hidden input is below) placed left of send */}
         <button
           type="button"
-          aria-label="Thêm ảnh"
+          aria-label={t('comment.addImageAria', 'Add image')}
           onClick={() => document.getElementById('comment-file-input')?.click()}
           className="absolute right-10 top-1/2 -translate-y-1/2 p-2 rounded-full text-gray-600 hover:text-gray-800"
-          title="Thêm ảnh"
+          title={t('comment.addImageTitle', 'Add image')}
         >
           <Camera className="w-4 h-4" />
         </button>
 
         <button
           type="button"
-          aria-label="Gửi bình luận"
+          aria-label={t('comment.sendAria', 'Send comment')}
           onClick={handleSubmit}
           disabled={submitting || (text.trim() === '' && files.length === 0)}
           className={`absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-full ${text.trim() === '' && files.length === 0 ? 'bg-gray-300' : 'bg-indigo-600 text-white'}`}

@@ -1,4 +1,5 @@
 import React ,{useEffect,useState}from 'react'
+import { useI18n } from '../../i18n/hooks';
 import DEFAULT_AVATAR from "../../utils/defaults";
 import { Plus } from 'lucide-react';
 import moment from 'moment';
@@ -13,6 +14,8 @@ const StoriesBar =() => {
     const [viewStory, setViewStory] = useState(null)
     const [currentIndex, setCurrentIndex] = useState(0)
     const [loading, setLoading] = useState(true)
+
+    const { t } = useI18n();
 
     const fetchStories = async () => {
         try {
@@ -55,7 +58,7 @@ const StoriesBar =() => {
                         <div className='size-10 bg-indigo-500 rounded-full flex items-center justify-center mb-3'>
                             <Plus className='w-5 h-5 text-white' />
                         </div>
-                        <p className='text-sm font-medium text-gray-700 text-center'>Create Story</p>
+                        <p className='text-sm font-medium text-gray-700 text-center'>{t('story.createCTA', 'Create Story')}</p>
                     </div>
                 </div>
                 {/* Story Cards */}

@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import livestreamApi from "../../utils/livestreamApi";
 import useAuth from "../../hooks/useAuth";
 import { useSearchParams } from 'react-router-dom';
 import './livestreams.css';
 import DEFAULT_AVATAR from '../../utils/defaults';
+import { useI18n } from '../../i18n/hooks';
+import toast from 'react-hot-toast';
 
 export default function Livestreams() {
   const [searchParams] = useSearchParams();
@@ -20,6 +22,20 @@ export default function Livestreams() {
   const videoRef = useRef(null);
   const localStreamRef = useRef(null);
 
+  const checkUserStream = useCallback(async () => {
+    try {
+      const result = await livestreamApi.listActive();
+      const streams = result.success ? result.data : result;
+      const myStream = Array.isArray(streams) ? streams.find(s => s.AccountID === user?.AccountID) : null;
+      if (myStream) {
+        setStream(myStream);
+        setIsStreaming(true);
+      }
+    } catch (err) {
+      console.error('Check user stream error:', err);
+    }
+  }, [user]);
+
   // Load existing stream or create new
   useEffect(() => {
     if (roomId) {
@@ -29,41 +45,29 @@ export default function Livestreams() {
       checkUserStream();
     }
     setLoading(false);
-  }, [roomId, user]);
+  }, [roomId, user, checkUserStream]);
+
+  const { t } = useI18n();
 
   async function loadStream(id) {
     try {
-      const result = await livestreamApi.getById(id);
+  const result = await livestreamApi.getById(id);
       const streamData = result.success ? result.data : result;
       setStream(streamData);
-      setTitle(streamData.Title || '');
+  setTitle(streamData.Title || '');
       // Mock viewers
       setViewers([
-        { id: 1, name: 'Người xem 1', avatar: DEFAULT_AVATAR },
-        { id: 2, name: 'Người xem 2', avatar: DEFAULT_AVATAR }
-      ]);
+          { id: 1, name: 'Viewer 1', avatar: DEFAULT_AVATAR },
+          { id: 2, name: 'Viewer 2', avatar: DEFAULT_AVATAR }
+        ]);
     } catch (err) {
       console.error('Load stream error:', err);
     }
   }
 
-  async function checkUserStream() {
-    try {
-      const result = await livestreamApi.listActive();
-      const streams = result.success ? result.data : result;
-      const myStream = Array.isArray(streams) ? streams.find(s => s.AccountID === user.AccountID) : null;
-      if (myStream) {
-        setStream(myStream);
-        setIsStreaming(true);
-      }
-    } catch (err) {
-      console.error('Check user stream error:', err);
-    }
-  }
-
   async function handleStartStream() {
     if (!title.trim()) {
-      alert('Vui lòng nhập tiêu đề livestream');
+      toast.error(t('livestream.enterTitle'));
       return;
     }
 
@@ -92,7 +96,7 @@ export default function Livestreams() {
       setViewers([]);
     } catch (err) {
       console.error('Start stream error:', err);
-      alert('❌ Không thể bắt đầu livestream: ' + (err?.message || 'Vui lòng cho phép truy cập camera/mic'));
+      toast.error(t('livestream.startError').replace('{msg}', err?.message || 'Please allow camera/microphone access'));
     }
   }
 
@@ -124,10 +128,10 @@ export default function Livestreams() {
     
     const comment = {
       id: Date.now(),
-      author: user?.FullName || user?.Username || 'Ẩn danh',
+      author: user?.FullName || user?.Username || 'Anonymous',
       avatar: user?.AvatarUrl || DEFAULT_AVATAR,
       content: newComment,
-      time: new Date().toLocaleTimeString('vi-VN')
+      time: new Date().toLocaleTimeString()
     };
     
     setComments(prev => [...prev, comment]);
@@ -135,7 +139,7 @@ export default function Livestreams() {
   }
 
   if (loading) {
-    return <div className="p-6">Đang tải...</div>;
+    return <div className="p-6">{t('common.loading')}</div>;
   }
 
   return (
@@ -153,14 +157,14 @@ export default function Livestreams() {
           />
           
           {/* Top overlay */}
-          <div className='ls-overlay-top'>
+            <div className='ls-overlay-top'>
             <div className='flex items-center gap-2'>
-              <div className='live-badge'>LIVE</div>
-              <span className='streamer-name'>{stream?.Title || title || 'Chưa có tiêu đề'}</span>
+              <div className='live-badge'>{t('livestream.liveBadge')}</div>
+              <span className='streamer-name'>{stream?.Title || title || t('livestream.noTitle')}</span>
             </div>
             <div className='viewer-pill'>
               <span>👁</span>
-              <span>{viewers.length} đang xem</span>
+              <span>{t('livestream.viewers').replace('{count}', String(viewers.length))}</span>
             </div>
           </div>
         </div>
@@ -169,14 +173,14 @@ export default function Livestreams() {
       {/* Right sidebar - Comments and viewers */}
       <div className='ls-right'>
         <div className='right-header'>
-          <h3 className='font-bold'>Bình luận</h3>
-          <span className='text-sm text-gray-400'>{viewers.length} đang xem</span>
+          <h3 className='font-bold'>{t('livestream.comments')}</h3>
+          <span className='text-sm text-gray-400'>{t('livestream.viewers').replace('{count}', String(viewers.length))}</span>
         </div>
 
         {/* Comments list */}
         <div className='comments-list'>
           {comments.length === 0 ? (
-            <div className='text-center text-gray-500 py-8'>Không có bình luận</div>
+            <div className='text-center text-gray-500 py-8'>{t('chat.noComments')}</div>
           ) : (
             comments.map(comment => (
               <div key={comment.id} className='comment-item'>
@@ -193,18 +197,18 @@ export default function Livestreams() {
 
         {/* Comment input */}
         <div className='comment-input'>
-          <input
-            type='text'
-            placeholder='Nhập bình luận...'
-            value={newComment}
-            onChange={e => setNewComment(e.target.value)}
-            onKeyPress={e => e.key === 'Enter' && handleSendComment()}
-          />
+            <input
+                type='text'
+                placeholder={t('chat.placeholder')}
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                onKeyPress={e => e.key === 'Enter' && handleSendComment()}
+              />
           <button 
             onClick={handleSendComment}
             className='bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700'
           >
-            Gửi
+            {t('livestream.send')}
           </button>
         </div>
 
@@ -215,7 +219,7 @@ export default function Livestreams() {
               <>
                 <input
                   type='text'
-                  placeholder='Nhập tiêu đề livestream...'
+                  placeholder={t('livestream.enterTitle')}
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                   className='w-full px-3 py-2 border rounded-lg'
@@ -224,7 +228,7 @@ export default function Livestreams() {
                   onClick={handleStartStream}
                   className='w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 font-bold'
                 >
-                  🔴 Bắt đầu phát trực tiếp
+                  {t('livestream.startButton')}
                 </button>
               </>
             ) : (
@@ -232,7 +236,7 @@ export default function Livestreams() {
                 onClick={handleStopStream}
                 className='w-full bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700'
               >
-                ⏹ Dừng phát
+                {t('livestream.stopButton')}
               </button>
             )}
           </div>

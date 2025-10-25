@@ -17,7 +17,7 @@ async function createComment(req, res) {
     if (!targetType || !targetId || !content) {
       return res.status(400).json({
         success: false,
-        message: 'Thiếu thông tin: loại đối tượng, ID, nội dung'
+        message: 'Missing information: target type, ID, content'
       });
     }
     
@@ -26,7 +26,7 @@ async function createComment(req, res) {
     if (!validTargetTypes.includes(targetType)) {
       return res.status(400).json({
         success: false,
-        message: 'Loại đối tượng không hợp lệ (chỉ hỗ trợ Facility, Field)'
+        message: 'Invalid target type (only supports Facility, Field)'
       });
     }
     
@@ -34,7 +34,7 @@ async function createComment(req, res) {
     if (!content.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Nội dung nhận xét không được để trống'
+        message: 'Comment content must not be empty'
       });
     }
     
@@ -48,20 +48,20 @@ async function createComment(req, res) {
     if (result.success) {
       res.status(201).json({
         success: true,
-        message: 'Gửi nhận xét thành công',
+        message: 'Comment submitted successfully',
         data: result.data
       });
     } else {
       res.status(400).json({
         success: false,
-        message: result.message || 'Không thể gửi nhận xét'
+        message: result.message || 'Unable to submit comment'
       });
     }
   } catch (error) {
     console.error('Create comment error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server khi gửi nhận xét',
+      message: 'Server error submitting comment',
       error: error.message
     });
   }
@@ -91,14 +91,14 @@ async function getComments(req, res) {
     } else {
       res.status(500).json({
         success: false,
-        message: 'Không thể lấy danh sách nhận xét'
+        message: 'Unable to fetch comments list'
       });
     }
   } catch (error) {
     console.error('Get comments error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server',
+      message: 'Server error',
       error: error.message
     });
   }
@@ -116,7 +116,7 @@ async function updateComment(req, res) {
     if (!content || !content.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Nội dung nhận xét không được để trống'
+        message: 'Comment content must not be empty'
       });
     }
     
@@ -129,20 +129,20 @@ async function updateComment(req, res) {
     if (result.success) {
       res.json({
         success: true,
-        message: 'Cập nhật nhận xét thành công',
+        message: 'Comment updated successfully',
         data: result.data
       });
     } else {
       res.status(400).json({
         success: false,
-        message: result.message || 'Không thể cập nhật nhận xét'
+        message: result.message || 'Unable to update comment'
       });
     }
   } catch (error) {
     console.error('Update comment error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server',
+      message: 'Server error',
       error: error.message
     });
   }
@@ -166,19 +166,19 @@ async function deleteComment(req, res) {
     if (result.success) {
       res.json({
         success: true,
-        message: 'Xóa nhận xét thành công'
+        message: 'Comment deleted successfully'
       });
     } else {
       res.status(400).json({
         success: false,
-        message: result.message || 'Không thể xóa nhận xét'
+        message: result.message || 'Unable to delete comment'
       });
     }
   } catch (error) {
     console.error('Delete comment error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server',
+      message: 'Server error',
       error: error.message
     });
   }
@@ -207,7 +207,7 @@ async function getMyComments(req, res) {
     } else {
       res.status(500).json({
         success: false,
-        message: 'Không thể lấy danh sách nhận xét của bạn'
+        message: 'Unable to fetch your comments list'
       });
     }
   } catch (error) {

@@ -6,6 +6,7 @@ import { API_BASE_URL } from "../../config/apiConfig";
 import getBackendOrigin, { toAbsoluteUrl } from '../../utils/urlHelpers';
 import { useMemo, useCallback } from 'react';
 import useAuth from "../../hooks/useAuth";
+import { useI18n } from '../../i18n/hooks';
 import Loading from "../../components/Shared/Loading";
 import DEFAULT_AVATAR from "../../utils/defaults";
 
@@ -66,6 +67,8 @@ const ChatBox = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId, currentUser]);
+
+    const { t } = useI18n();
 
     // when messages change, validate media URLs in background and cache results
     useEffect(() => {
@@ -324,7 +327,7 @@ const ChatBox = () => {
 
     if (!otherUser || !currentUser) {
         return <div className='flex items-center justify-center h-screen'>
-            <p className='text-gray-500'>Không tìm thấy cuộc hội thoại</p>
+            <p className='text-gray-500'>{t('chat.conversationNotFound')}</p>
         </div>;
     }
 
@@ -332,31 +335,44 @@ const ChatBox = () => {
 
     return (
         <div className="flex flex-col h-screen">
-            {/* Inline CSS for highlight animation (scoped here) */}
+            {/* Inline CSS for chat styling and highlight animation (scoped here) */}
             <style>{`
-                @keyframes pinnedHighlight {
-                    0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.0); }
-                    20% { box-shadow: 0 0 12px 4px rgba(250, 204, 21, 0.18); }
-                    100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.0); }
-                }
-                .animate-pinned-highlight {
-                    animation: pinnedHighlight 2s ease-in-out;
-                }
-                /* Hide any unwanted blue dots/indicators on image messages */
-                img[alt=""]::before,
-                img[alt=""]::after {
-                    display: none !important;
-                }
+                :root { --chat-bg: #f8fafc; --bubble-mine: linear-gradient(90deg,#6366f1,#8b5cf6); --bubble-other: #ffffff; }
+                .chat-container { height: 100vh; display: flex; flex-direction: column; background: var(--chat-bg); }
+                @keyframes pinnedHighlight { 0% { box-shadow: 0 0 0 0 rgba(250,204,21,0.0);} 20% { box-shadow: 0 0 16px 6px rgba(250,204,21,0.18);} 100% { box-shadow: 0 0 0 0 rgba(250,204,21,0.0);} }
+                .animate-pinned-highlight { animation: pinnedHighlight 2s ease-in-out; }
+                .chat-header { display:flex; align-items:center; gap:12px; padding:12px 16px; background: linear-gradient(90deg,#eef2ff,#f5f3ff); border-bottom:1px solid #e6e6ea; }
+                .chat-header .avatar { width:48px; height:48px; border-radius:9999px; object-fit:cover; }
+                .chat-list-wrap { flex:1 1 auto; overflow:auto; padding:20px; }
+                .chat-list { display:flex; flex-direction:column; gap:10px; max-width:900px; margin:0 auto; }
+                .time-separator { text-align:center; color:#9ca3af; font-size:12px; margin:6px 0; }
+                .message-group { display:flex; gap:12px; align-items:flex-end; }
+                .message-group.left { justify-content:flex-start; }
+                .message-group.right { justify-content:flex-end; }
+                .chat-bubble-mine { color:white; background: var(--bubble-mine); box-shadow:0 6px 18px rgba(99,102,241,0.12); border-radius:16px 16px 8px 16px; padding:10px 14px; max-width:68vw; }
+                .chat-bubble-other { background: var(--bubble-other); color:#0f172a; border-radius:16px 16px 16px 8px; padding:10px 14px; max-width:68vw; box-shadow:0 2px 8px rgba(2,6,23,0.04); }
+                .chat-bubble-meta { font-size:11px; color:#94a3b8; margin-top:6px; }
+                .chat-input-bar { padding:12px 16px; border-top:1px solid #e6e6ea; background:white; display:flex; justify-content:center; }
+                .chat-input { display:flex; align-items:center; gap:8px; width:100%; max-width:960px; background:#fff; border-radius:9999px; padding:8px 12px; box-shadow:0 6px 18px rgba(2,6,23,0.04); }
+                .chat-input input { border:none; outline:none; flex:1 1 auto; padding:8px 6px; font-size:14px; }
+                .chat-input .send-btn { background: linear-gradient(90deg,#6366f1,#8b5cf6); color:white; padding:8px; border-radius:9999px; display:flex; align-items:center; justify-content:center; }
+                .chat-media-thumb { height:52px; width:52px; object-fit:cover; border-radius:8px; border:1px solid rgba(0,0,0,0.06); }
+                .chat-msg-actions button { background:transparent; border:none; padding:6px; border-radius:6px; cursor:pointer; }
+                .chat-msg-actions button:hover { background:#f3f4f6; }
+                /* small responsive tweak */
+                @media (min-width:768px) { .chat-list { padding: 0 12px; } }
+                /* hide unexpected image pseudo-elements if any */
+                img::before, img::after { display:none !important; }
             `}</style>
-            <div className="flex items-center gap-2 p-2 md:px-10 xl:pl-42 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-300">
-                <img src={otherUser.profile_picture || DEFAULT_AVATAR} onError={(e)=>{ e.target.onerror = null; e.target.src = DEFAULT_AVATAR }} alt="" className="size-8 rounded-full" />
+            <div className="chat-header">
+                <img src={otherUser.profile_picture || DEFAULT_AVATAR} onError={(e)=>{ e.target.onerror = null; e.target.src = DEFAULT_AVATAR }} alt="" className="avatar" />
                 <div>
-                <p className="font-medium">{otherUser.full_name}</p>
-                <p className="text-sm text-gray-500 -mt-1.5">@{otherUser.username}</p>
+                    <p className="font-medium">{otherUser.full_name}</p>
+                    <p className="text-sm text-gray-500 -mt-1.5">@{otherUser.username}</p>
                 </div>
             </div>
-            <div className="p-5 md:px-10 h-full overflow-y-scroll">
-                <div className="space-y-4 max-w-4xl mx-auto">
+            <div className="chat-list-wrap">
+                <div className="chat-list">
                     {/* NOTE: Pinned marker will be rendered as a sticky banner above the message list when present */}
                     {pinnedMessage && (
                         <div className="max-w-4xl mx-auto mb-3 relative">
@@ -365,17 +381,17 @@ const ChatBox = () => {
                                     <svg className="w-4 h-4 text-yellow-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                                         <path d="M12 2l2 5 5 .5-3.5 3 1 5L12 14l-4.5 2.5 1-5L5 7.5 10 7 12 2z" />
                                     </svg>
-                                    <div className="truncate">{pinnedMessage.text || (pinnedMessage.media_urls && pinnedMessage.media_urls[0]) || 'Tin đã ghim'}</div>
+                                    <div className="truncate">{pinnedMessage.text || (pinnedMessage.media_urls && pinnedMessage.media_urls[0]) || t('chat.pinnedMessage')}</div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => { togglePin(pinnedMessage); }} className="text-xs text-blue-600">Bỏ ghim</button>
+                                    <div className="flex items-center gap-2">
+                                    <button onClick={() => { togglePin(pinnedMessage); }} className="text-xs text-blue-600">{t('chat.unpin')}</button>
                                     <button onClick={() => {
                                         const el = messageRefs.current && messageRefs.current[String(pinnedMessage._id)];
                                         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                         setHighlightMessageId(String(pinnedMessage._id));
                                         if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
                                         highlightTimeoutRef.current = setTimeout(() => setHighlightMessageId(null), 2200);
-                                    }} className="text-xs text-gray-600">Đi đến</button>
+                                    }} className="text-xs text-gray-600">{t('chat.goTo')}</button>
                                     {/* FB-style single pinned message: no multi-pin dropdown */}
                                 </div>
                             </div>
@@ -422,13 +438,13 @@ const ChatBox = () => {
                                         {/* time label centered */}
                                         <div className="text-center text-xs text-gray-400 mb-2">{formatTime(group.time)}</div>
 
-                                        <div className={`flex ${group.isMine ? 'justify-end' : 'justify-start'} items-end gap-3`}> 
-                                            {!group.isMine && (
-                                                // show avatar of other user once per group
-                                                <img src={otherUser?.profile_picture || DEFAULT_AVATAR} alt="" className="w-8 h-8 rounded-full" />
-                                            )}
+                                        <div className={`message-group ${group.isMine ? 'right' : 'left'}`}> 
+                                                {!group.isMine && (
+                                                    // show avatar of other user once per group
+                                                    <img src={otherUser?.profile_picture || DEFAULT_AVATAR} alt="" className="chat-media-thumb" />
+                                                )}
 
-                                            <div className={`${group.isMine ? 'items-end' : 'items-start'} flex flex-col`}> 
+                                                <div className={`${group.isMine ? 'items-end' : 'items-start'} flex flex-col`}> 
                                                 {group.messages.map((message, mi) => {
                                                     // note: inline pinned marker removed; sticky banner used instead
                                                     const isFirst = mi === 0;
@@ -437,7 +453,7 @@ const ChatBox = () => {
 
                                                     if (group.isMine) {
                                                         // mine: blue gradient, aligned right
-                                                        const classes = `${bubbleBase} text-white bg-gradient-to-br from-indigo-500 to-purple-600 ${isFirst ? 'rounded-tl-lg' : ''} ${isLast ? 'rounded-bl-lg' : ''} rounded-br-lg`;
+                                                        const classes = `${bubbleBase} chat-bubble-mine ${isFirst ? 'rounded-tl-lg' : ''} ${isLast ? 'rounded-bl-lg' : ''} rounded-br-lg`;
                                                         return (
                                                             <div key={mi} className='w-full'>
                                                                 {/* inline pinned marker removed: using sticky pinned banner at top */}
@@ -446,8 +462,8 @@ const ChatBox = () => {
                                                                         {editingMessageId && String(editingMessageId) === String(message._id) ? (
                                                                             <div className="flex items-center gap-2">
                                                                                 <input value={editingText} onChange={(e) => setEditingText(e.target.value)} className="px-3 py-2 rounded-md border" />
-                                                                                <button onClick={() => saveEdit(message._id)} className="text-sm text-white bg-green-600 px-3 py-1 rounded">Lưu</button>
-                                                                                <button onClick={cancelEdit} className="text-sm text-gray-600 px-3 py-1 rounded border">Hủy</button>
+                                                                                <button onClick={() => saveEdit(message._id)} className="text-sm text-white bg-green-600 px-3 py-1 rounded">{t('common.save')}</button>
+                                                                                <button onClick={cancelEdit} className="text-sm text-gray-600 px-3 py-1 rounded border">{t('common.cancel')}</button>
                                                                             </div>
                                                                         ) : (
                                                                             <>
@@ -508,8 +524,8 @@ const ChatBox = () => {
                                                                                         <div className="absolute right-3 -top-2 w-3 h-3 bg-white transform rotate-45 shadow-xl" aria-hidden></div>
                                                                                     )}
                                                                                     <div className="bg-white rounded-xl shadow-xl p-2 text-sm">
-                                                                                        <button className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded" onClick={() => { if (confirm('Bạn có chắc muốn thu hồi tin nhắn này?')) { recallMessage(message._id); setOpenMenuMessageId(null); } }}>Thu hồi</button>
-                                                                                        <button className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded" onClick={() => { startEdit(message); setOpenMenuMessageId(null); }}>Sửa</button>
+                                                                                        <button className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded" onClick={() => { if (window.confirm(t('chat.recallConfirm'))) { recallMessage(message._id); setOpenMenuMessageId(null); } }}>{t('chat.recall')}</button>
+                                                                                        <button className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded" onClick={() => { startEdit(message); setOpenMenuMessageId(null); }}>{t('common.edit')}</button>
                                                                                         {/* <button className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded" onClick={() => { forwardMessage(message); setOpenMenuMessageId(null); }}>Chuyển tiếp</button>
                                                                                         <button className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded" onClick={() => { togglePin(message); setOpenMenuMessageId(null); }}>{(pinnedMessageIds && pinnedMessageIds.includes(String(message._id))) ? 'Bỏ ghim' : 'Ghim'}</button> */}
                                                                                     </div>
@@ -523,7 +539,7 @@ const ChatBox = () => {
                                                     }
 
                                                     // other: white bubble, left
-                                                    const classes = `${bubbleBase} bg-white text-slate-700 ${isFirst ? 'rounded-tr-lg' : ''} ${isLast ? 'rounded-br-lg' : ''} rounded-bl-lg`;
+                                                    const classes = `${bubbleBase} chat-bubble-other ${isFirst ? 'rounded-tr-lg' : ''} ${isLast ? 'rounded-br-lg' : ''} rounded-bl-lg`;
                                                     return (
                                                         <div key={mi} data-message-id={message._id} ref={el => { if (el) messageRefs.current[String(message._id)] = el; }} className="mb-1 flex items-start">
                                                             <div className={`${classes} ${(pinnedMessageIds && pinnedMessageIds.includes(String(message._id))) ? 'ring-2 ring-yellow-300 bg-yellow-50' : ''} ${String(highlightMessageId) === String(message._id) ? 'animate-pinned-highlight' : ''}`}>
@@ -560,7 +576,7 @@ const ChatBox = () => {
                                     <input 
                                         type="text" 
                                         className="flex-1 outline-none text-slate-700" 
-                                        placeholder="Type a message..." 
+                                        placeholder={t('chat.placeholder')}
                                         onKeyDown={(e) => {
                                             // prevent sending while composing (IME) to allow Vietnamese diacritics
                                             if (e.key === 'Enter' && !e.nativeEvent.isComposing) {

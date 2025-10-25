@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useI18n } from '../i18n/hooks';
 import { io } from 'socket.io-client';
 import livestreamApi from '../utils/livestreamApi';
 
@@ -31,6 +33,7 @@ export default function useLivestream(user) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [likes, setLikes] = useState(0);
   const [forceBroadcaster, setForceBroadcaster] = useState(false);
+  const { t } = useI18n();
   const [isSelectedRoomEphemeral, setIsSelectedRoomEphemeral] = useState(false);
   const persistedBroadcastRef = useRef(null);
   const startBroadcastRef = useRef(null);
@@ -239,13 +242,13 @@ export default function useLivestream(user) {
           const to = setTimeout(() => { s.off('connect', resolve); reject(new Error('connect timeout')); }, 5000);
           s.once('connect', () => { clearTimeout(to); resolve(); });
         });
-  } catch (e) { console.debug('socket connect wait failed', e); setIsStarting(false); return setLiveError('Không thể kết nối signaling'); }
+  } catch (e) { console.debug('socket connect wait failed', e); setIsStarting(false); return setLiveError('Unable to connect to signaling server'); }
     }
     try {
       let room = roomId;
       if (!room) {
         try {
-          const created = await livestreamApi.create({ title: `${user?.FullName || user?.Username || 'Live'}'s stream` });
+          const created = await livestreamApi.create({ title: `${user?.FullName || user?.Username || t('livestream.liveDefaultName')}'s stream` });
           const payload = created && created.data ? created.data : created;
           if (payload && payload.LivestreamID) {
             room = String(payload.LivestreamID);
@@ -279,7 +282,7 @@ export default function useLivestream(user) {
   try { persistBroadcast(room); } catch (e) { console.debug('persist on start failed', e); }
       setIsStarting(false);
       setDebugEvents(d => [{ ts: Date.now(), event: 'started-broadcast', room }, ...d].slice(0, 50));
-    } catch (err) { console.error('getUserMedia failed', err); setLiveError('Không thể truy cập camera/microphone'); setIsStarting(false); }
+    } catch (err) { console.error('getUserMedia failed', err); setLiveError('Unable to access camera/microphone'); setIsStarting(false); }
   }
 
   // expose startBroadcast via ref to avoid missing-deps in restore effect
@@ -345,8 +348,8 @@ export default function useLivestream(user) {
           return next;
         });
         setCommentText('');
-      }).catch(err => { console.debug('Failed to save comment', err); alert('Lưu bình luận thất bại'); });
-    } else {
+      }).catch(err => { console.debug('Failed to save comment', err); toast.error(t('livestream.commentSaveFailed')); });
+  } else {
       const fakeSaved = { Content: commentText, CreatedDate: new Date().toISOString(), Author: { FullName: user?.FullName || user?.Username } };
       const emitPayload = { roomId: String(selectedRoomId), comment: fakeSaved };
       if (socketRef.current && socketRef.current.emit) socketRef.current.emit('livestream-comment', emitPayload);

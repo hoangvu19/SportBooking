@@ -1,5 +1,5 @@
-const DEFAULT_SUCCESS_MESSAGE = 'Thành công';
-const DEFAULT_ERROR_MESSAGE = 'Đã xảy ra lỗi server';
+const DEFAULT_SUCCESS_MESSAGE = 'Success';
+const DEFAULT_ERROR_MESSAGE = 'An internal server error occurred';
 
 function buildSuccessPayload({ message, data, meta }) {
   const payload = { success: true };
@@ -24,11 +24,11 @@ function sendSuccess(res, data, message = DEFAULT_SUCCESS_MESSAGE, status = 200,
   return res.status(status).json(payload);
 }
 
-function sendCreated(res, data, message = 'Tạo thành công', options = {}) {
+function sendCreated(res, data, message = 'Created successfully', options = {}) {
   return sendSuccess(res, data, message, 201, options);
 }
 
-function sendAccepted(res, message = 'Đã tiếp nhận yêu cầu', options = {}) {
+function sendAccepted(res, message = 'Request accepted', options = {}) {
   return sendSuccess(res, undefined, message, 202, options);
 }
 
@@ -54,15 +54,15 @@ function sendError(res, message = DEFAULT_ERROR_MESSAGE, status = 500, options =
   return res.status(status).json(payload);
 }
 
-function sendValidationError(res, message = 'Dữ liệu không hợp lệ', details) {
+function sendValidationError(res, message = 'Invalid data', details) {
   return sendError(res, message, 400, { details });
 }
 
-function sendNotFound(res, message = 'Không tìm thấy dữ liệu') {
+function sendNotFound(res, message = 'Data not found') {
   return sendError(res, message, 404);
 }
 
-function sendUnauthorized(res, message = 'Bạn không có quyền truy cập') {
+function sendUnauthorized(res, message = 'Unauthorized') {
   return sendError(res, message, 401);
 }
 

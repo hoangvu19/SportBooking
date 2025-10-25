@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bookingAPI } from "../../utils/api";
 import CreateBookingPostButton from "../../components/Social/CreateBookingPostButton";
+import { useI18n } from '../../i18n/hooks';
+import toast from 'react-hot-toast';
 
 const statusColors = {
   Pending: 'bg-yellow-100 text-yellow-800',
@@ -10,15 +12,11 @@ const statusColors = {
   Completed: 'bg-blue-100 text-blue-800'
 };
 
-const statusLabels = {
-  Pending: 'Chờ xác nhận',
-  Confirmed: 'Đã xác nhận',
-  Cancelled: 'Đã hủy',
-  Completed: 'Hoàn thành'
-};
+// statusLabels will be computed within the component to allow i18n
 
 export default function MyBookings() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,32 +34,32 @@ export default function MyBookings() {
       if (result.success) {
         setBookings(result.data || []);
       } else {
-        setError(result.message || 'Không thể tải danh sách booking');
+        setError(result.message || 'Unable to load bookings');
       }
     } catch (err) {
       console.error('Fetch bookings error:', err);
-      setError('Lỗi khi tải danh sách booking');
+      setError('Error loading bookings');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm('Bạn có chắc muốn hủy booking này?')) {
+    if (!window.confirm(t('booking.cancelConfirm'))) {
       return;
     }
 
     try {
       const result = await bookingAPI.cancel(bookingId);
       if (result.success) {
-        alert('✅ Hủy booking thành công!');
+        toast.success(t('booking.canceledSuccess'));
         fetchBookings(); // Refresh list
       } else {
-        alert(`❌ Hủy booking thất bại: ${result.message || 'Vui lòng thử lại'}`);
+        toast.error(t('booking.cancelFailed').replace('{msg}', result.message || 'Please try again'));
       }
     } catch (err) {
       console.error('Cancel booking error:', err);
-      alert('❌ Lỗi khi hủy booking');
+      toast.error(t('booking.cancelError'));
     }
   };
 
@@ -72,7 +70,7 @@ export default function MyBookings() {
   const formatDateTime = (isoString) => {
     if (!isoString) return '';
     const date = new Date(isoString);
-    return date.toLocaleString('vi-VN', {
+    return date.toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -84,20 +82,20 @@ export default function MyBookings() {
   const formatDate = (isoString) => {
     if (!isoString) return '';
     const date = new Date(isoString);
-    return date.toLocaleDateString('vi-VN');
+    return date.toLocaleDateString('en-US');
   };
 
   const formatTime = (isoString) => {
     if (!isoString) return '';
     const date = new Date(isoString);
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Đang tải...</div>
+          <div className="text-lg">{t('common.loading')}</div>
         </div>
       </div>
     );
@@ -112,22 +110,29 @@ export default function MyBookings() {
             onClick={fetchBookings}
             className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           >
-            Thử lại
+            Retry
           </button>
         </div>
       </div>
     );
   }
 
+  const statusLabels = {
+    Pending: t('booking.status.Pending'),
+    Confirmed: t('booking.status.Confirmed'),
+    Cancelled: t('booking.status.Cancelled'),
+    Completed: t('booking.status.Completed')
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Lịch sử đặt sân</h1>
+  <h1 className="text-2xl font-bold">{t('menu.myBookings')}</h1>
         <button
           onClick={() => navigate('/sanlist')}
           className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
         >
-          Đặt sân mới
+          {t('booking.newBooking')}
         </button>
       </div>
 
@@ -138,7 +143,7 @@ export default function MyBookings() {
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded ${filter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
           >
-            Tất cả ({bookings.length})
+            {t('booking.all')} ({bookings.length})
           </button>
           {Object.keys(statusLabels).map(status => (
             <button
@@ -155,7 +160,7 @@ export default function MyBookings() {
       {/* Bookings List */}
       {filteredBookings.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <p className="text-gray-500">Không có booking nào</p>
+          <p className="text-gray-500">{t('booking.noBookings')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -176,23 +181,23 @@ export default function MyBookings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-sm text-gray-600">Ngày đặt</p>
+                  <p className="text-sm text-gray-600">{t('booking.bookingDate')}</p>
                   <p className="font-medium">{formatDate(booking.StartTime)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Thời gian</p>
+                  <p className="text-sm text-gray-600">{t('booking.time')}</p>
                   <p className="font-medium">
                     {formatTime(booking.StartTime)} - {formatTime(booking.EndTime)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Tổng tiền</p>
+                  <p className="text-sm text-gray-600">{t('booking.total')}</p>
                   <p className="font-medium text-indigo-600">
-                    {booking.TotalAmount ? `${Number(booking.TotalAmount).toLocaleString()}đ` : 'Chưa có'}
+                    {booking.TotalAmount ? `${Number(booking.TotalAmount).toLocaleString()}` : 'N/A'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Ngày tạo</p>
+                  <p className="text-sm text-gray-600">{t('booking.created')}</p>
                   <p className="font-medium">{formatDateTime(booking.CreatedDate)}</p>
                 </div>
               </div>
@@ -203,7 +208,7 @@ export default function MyBookings() {
                   onClick={() => navigate(`/sandetail?sanId=${booking.FieldID}`)}
                   className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
                 >
-                  📋 Xem sân
+                  📋 {t('booking.viewField')}
                 </button>
                 
                 {/* CreateBookingPostButton - Đăng lên Feed */}
@@ -211,7 +216,7 @@ export default function MyBookings() {
                   booking={{
                     BookingID: booking.BookingID,
                     BookingStatus: booking.Status,
-                    FacilityName: booking.FacilityName || 'Cơ sở thể thao',
+                    FacilityName: booking.FacilityName || t('booking.defaultFacility'),
                     FieldName: booking.FieldName || booking.TenSan || `Sân #${booking.FieldID}`,
                     SportName: booking.SportTypeName || 'Thể thao',
                     StartTime: booking.StartTime,
@@ -231,15 +236,15 @@ export default function MyBookings() {
                     onClick={() => handleCancelBooking(booking.BookingID)}
                     className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
                   >
-                    🚫 Hủy đặt sân
+                    🚫 {t('booking.cancelBooking','Cancel booking')}
                   </button>
                 ) : null}
                 
                 {booking.Status === 'Confirmed' && (
-                  <button
+                    <button
                     className="px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
                   >
-                    💳 Thanh toán
+                    💳 Pay
                   </button>
                 )}
               </div>

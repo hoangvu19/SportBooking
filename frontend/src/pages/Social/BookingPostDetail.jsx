@@ -4,6 +4,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
+import { useI18n } from '../../i18n/hooks';
 import { useParams, useNavigate } from 'react-router-dom';
 import { bookingPostAPI } from '../../utils/bookingPostAPI';
 import './BookingPostDetail.css';
@@ -26,7 +28,7 @@ const BookingPostDetail = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error fetching post:', err);
-      setError(err.message || 'Không thể tải bài đăng');
+  setError(err.message || 'Unable to load post');
       setLoading(false);
     }
   }, [postId]);
@@ -51,11 +53,11 @@ const BookingPostDetail = () => {
 
     try {
       await bookingPostAPI.acceptInvitation(postId);
-      alert('✅ Đã chấp nhận lời mời!');
+  toast.success(t('post.invitationAccepted'));
       fetchPostDetail();
       fetchPlayers();
     } catch (err) {
-      alert(`❌ ${err.message || 'Không thể chấp nhận lời mời'}`);
+  toast.error(t('post.invitationActionFailed').replace('{msg}', err.message || 'Unable to accept invitation'));
     } finally {
       setActionLoading(false);
     }
@@ -63,17 +65,17 @@ const BookingPostDetail = () => {
 
   const handleRejectInvitation = async () => {
     if (actionLoading) return;
-    if (!confirm('Bạn có chắc muốn từ chối lời mời?')) return;
+    if (!window.confirm(t('post.declineInviteConfirm'))) return;
 
     setActionLoading(true);
 
     try {
       await bookingPostAPI.rejectInvitation(postId);
-      alert('✅ Đã từ chối lời mời!');
+      toast.success(t('post.invitationDeclined'));
       fetchPostDetail();
       fetchPlayers();
     } catch (err) {
-      alert(`❌ ${err.message || 'Không thể từ chối lời mời'}`);
+  toast.error(t('post.invitationActionFailed').replace('{msg}', err.message || 'Unable to decline invitation'));
     } finally {
       setActionLoading(false);
     }
@@ -81,7 +83,7 @@ const BookingPostDetail = () => {
 
   const formatDateTime = (dateStr) => {
     const date = new Date(dateStr);
-    return date.toLocaleString('vi-VN', {
+    return date.toLocaleString(undefined, {
       weekday: 'long',
       day: '2-digit',
       month: '2-digit',
@@ -99,11 +101,13 @@ const BookingPostDetail = () => {
     });
   };
 
+  const { t } = useI18n();
+
   if (loading) {
     return (
       <div className="booking-post-detail-page loading">
         <div className="spinner"></div>
-        <p>Đang tải...</p>
+  <p>{t('common.loading')}</p>
       </div>
     );
   }
@@ -112,9 +116,9 @@ const BookingPostDetail = () => {
     return (
       <div className="booking-post-detail-page error">
         <div className="error-icon">⚠️</div>
-        <h2>Không thể tải bài đăng</h2>
+  <h2>Unable to load post</h2>
         <p>{error}</p>
-        <button onClick={() => navigate(-1)}>Quay lại</button>
+        <button onClick={() => navigate(-1)}>Back</button>
       </div>
     );
   }
@@ -150,7 +154,7 @@ const BookingPostDetail = () => {
     <div className="booking-post-detail-page">
       {/* Back Button */}
       <button className="back-button" onClick={() => navigate(-1)}>
-        ← Quay lại
+        ← Back
       </button>
 
       {/* Post Card */}
@@ -176,24 +180,24 @@ const BookingPostDetail = () => {
 
         {/* Booking Info */}
         <div className="booking-info-detailed">
-          <h4>📍 Thông tin sân</h4>
+          <h4>📍 Booking info</h4>
           <div className="info-grid">
             <div className="info-item">
-              <span className="label">Cơ sở:</span>
+              <span className="label">Facility:</span>
               <span className="value">{FacilityName}</span>
             </div>
             <div className="info-item">
-              <span className="label">Sân:</span>
+              <span className="label">Field:</span>
               <span className="value">{FieldName}</span>
             </div>
             <div className="info-item">
-              <span className="label">Thời gian:</span>
+              <span className="label">Time:</span>
               <span className="value">
                 {formatTime(StartTime)} - {formatTime(EndTime)}
               </span>
             </div>
             <div className="info-item">
-              <span className="label">Giá thuê:</span>
+              <span className="label">Rental price:</span>
               <span className="value price">
                 {RentalPrice?.toLocaleString('vi-VN')}đ
               </span>
@@ -203,14 +207,14 @@ const BookingPostDetail = () => {
 
         {/* Players Status */}
         <div className="players-status-detailed">
-          <h4>👥 Tình trạng người chơi</h4>
+          <h4>👥 Players status</h4>
           <div className="players-progress-section">
             <div className="progress-info">
               <span className="progress-text">
                 {CurrentPlayers}/{MaxPlayers} người
               </span>
               <span className={`progress-status ${isFull ? 'full' : ''}`}>
-                {isFull ? 'Đã đủ' : `Còn ${MaxPlayers - CurrentPlayers} chỗ`}
+                {isFull ? 'Full' : `${MaxPlayers - CurrentPlayers} spots left`}
               </span>
             </div>
             <div className="progress-bar">
@@ -230,7 +234,7 @@ const BookingPostDetail = () => {
           <div className="action-buttons">
             {!myPlayer && !isFull && (
               <p className="info-text">
-                Hãy bình luận để chủ bài đăng mời bạn tham gia!
+                Comment to request to join!
               </p>
             )}
 
@@ -241,27 +245,27 @@ const BookingPostDetail = () => {
                   onClick={handleAcceptInvitation}
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Đang xử lý...' : '✓ Chấp nhận tham gia'}
+                  {actionLoading ? 'Processing...' : '✓ Accept'}
                 </button>
                 <button
                   className="btn btn-reject"
                   onClick={handleRejectInvitation}
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Đang xử lý...' : '✗ Từ chối'}
+                  {actionLoading ? 'Processing...' : '✗ Decline'}
                 </button>
               </>
             )}
 
             {isAccepted && (
               <div className="status-message accepted">
-                ✅ Bạn đã chấp nhận tham gia
+                ✅ You have accepted
               </div>
             )}
 
             {isRejected && (
               <div className="status-message rejected">
-                ❌ Bạn đã từ chối lời mời
+                ❌ You have declined the invitation
               </div>
             )}
           </div>
@@ -270,13 +274,13 @@ const BookingPostDetail = () => {
 
       {/* Players List */}
       <div className="players-list-section">
-        <h3>👥 Danh sách người chơi</h3>
+  <h3>👥 Players list</h3>
 
         {/* Accepted Players */}
         {acceptedPlayers.length > 0 && (
           <div className="players-group">
             <h4 className="group-title accepted">
-              ✓ Đã chấp nhận ({acceptedPlayers.length})
+              ✓ Accepted ({acceptedPlayers.length})
             </h4>
             <div className="players-grid">
               {acceptedPlayers.map((player) => (
@@ -305,7 +309,7 @@ const BookingPostDetail = () => {
         {pendingPlayers.length > 0 && (
           <div className="players-group">
             <h4 className="group-title pending">
-              ⏳ Chờ phản hồi ({pendingPlayers.length})
+              ⏳ Pending ({pendingPlayers.length})
             </h4>
             <div className="players-grid">
               {pendingPlayers.map((player) => (
@@ -331,7 +335,7 @@ const BookingPostDetail = () => {
         {players.length === 0 && (
           <div className="empty-players">
             <div className="empty-icon">👤</div>
-            <p>Chưa có người chơi nào</p>
+            <p>No players yet</p>
           </div>
         )}
       </div>

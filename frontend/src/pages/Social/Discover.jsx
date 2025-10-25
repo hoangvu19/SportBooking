@@ -5,6 +5,8 @@ import UserCard from "../../components/Social/UserCard";
 import { userAPI } from "../../utils/api";
 import DEFAULT_AVATAR from "../../utils/defaults";
 
+import { useI18n } from '../../i18n/hooks';
+
 const Discover = () => {
     const [input, setInput] = useState("");
     const [users, setUsers] = useState([]);
@@ -13,6 +15,8 @@ const Discover = () => {
     const [error, setError] = useState(null);
 
     // Load suggestions and current following list on mount
+    const { t } = useI18n();
+
     useEffect(() => {
         (async () => {
             setLoading(true);
@@ -49,7 +53,7 @@ const Discover = () => {
                 }
             } catch (err) {
                 console.error('Error loading suggestions:', err);
-                setError('Không thể tải gợi ý');
+                setError(t('discover.loadError', 'Unable to load suggestions'));
             } finally {
                 setLoading(false);
             }
@@ -63,7 +67,7 @@ const Discover = () => {
             setError(null);
             try {
                 const response = await userAPI.search(input.trim(), 20);
-                if (response && response.success && Array.isArray(response.data)) {
+                    if (response && response.success && Array.isArray(response.data)) {
                     const mapped = response.data.map(u => {
                         const id = u.AccountID || u._id;
                         const backendFollow = u.is_following || u.isFollowing || u.IsFollowing || u.following || u.followed || u.followed_by_me || u.is_followed;
@@ -80,11 +84,11 @@ const Discover = () => {
                         };
                     });
                     setUsers(mapped);
-                    if (response.data.length === 0) setError('Không tìm thấy kết quả');
+                    if (response.data.length === 0) setError(t('discover.noResults', 'No results found'));
                 }
             } catch (err) {
                 console.error('Error searching:', err);
-                setError('Lỗi khi tìm kiếm');
+                setError(t('discover.searchError', 'Error searching'));
             } finally {
                 setLoading(false);
             }
@@ -96,8 +100,8 @@ const Discover = () => {
             <div className='max-w-6xl mx-auto p-6'>
                 {/* Title */}
                 <div className='mb-8'>
-                    <h1 className='text-3xl font-bold text-slate-900 mb-2'>Connections</h1>
-                    <p className='text-slate-600'>Manage your network and discover new connections</p>
+                    <h1 className='text-3xl font-bold text-slate-900 mb-2'>{t('discover.title', 'Connections')}</h1>
+                    <p className='text-slate-600'>{t('discover.subtitle', 'Manage your network and discover new connections')}</p>
                 </div>
 
                 {/* Search */}
@@ -107,7 +111,7 @@ const Discover = () => {
                             <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5' />
                             <input
                                 type="text"
-                                placeholder='Search people by name, username, bio, or location...'
+                                placeholder={t('discover.searchPlaceholder', 'Search people by name, username, bio, or location...')}
                                 className='pl-10 sm:pl-12 py-2 w-full border border-gray-300 rounded-md max-sm:text-sm'
                                 onChange={(e) => setInput(e.target.value)}
                                 value={input}

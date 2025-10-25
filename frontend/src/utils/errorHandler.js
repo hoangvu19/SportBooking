@@ -8,23 +8,23 @@ export const ERROR_TYPES = {
 
 export const ERROR_MESSAGES = {
   // Network errors
-  CONNECTION_REFUSED: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.',
-  TIMEOUT: 'Yêu cầu hết thời gian chờ. Vui lòng thử lại.',
+  CONNECTION_REFUSED: 'Cannot connect to server. Please check your network connection.',
+  TIMEOUT: 'Request timed out. Please try again.',
   
   // Auth errors  
-  INVALID_CREDENTIALS: 'Tên đăng nhập hoặc mật khẩu không đúng',
-  ACCOUNT_NOT_FOUND: 'Tài khoản không tồn tại',
-  ACCOUNT_LOCKED: 'Tài khoản đã bị khóa',
+  INVALID_CREDENTIALS: 'Invalid username or password',
+  ACCOUNT_NOT_FOUND: 'Account not found',
+  ACCOUNT_LOCKED: 'Account has been locked',
   
   // Validation errors
-  EMPTY_FIELDS: 'Vui lòng nhập đầy đủ thông tin',
-  INVALID_EMAIL: 'Email không hợp lệ', 
-  PASSWORD_TOO_SHORT: 'Mật khẩu phải có ít nhất 6 ký tự',
-  PASSWORD_NOT_MATCH: 'Mật khẩu không khớp',
+  EMPTY_FIELDS: 'Please fill in all required fields',
+  INVALID_EMAIL: 'Invalid email address', 
+  PASSWORD_TOO_SHORT: 'Password must be at least 6 characters',
+  PASSWORD_NOT_MATCH: 'Passwords do not match',
   
   // Server errors
-  SERVER_ERROR: 'Lỗi server. Vui lòng thử lại sau.',
-  UNKNOWN_ERROR: 'Có lỗi không xác định xảy ra'
+  SERVER_ERROR: 'Server error. Please try again later.',
+  UNKNOWN_ERROR: 'An unknown error occurred'
 };
 
 // Error handler class
@@ -80,11 +80,11 @@ export const validateLoginForm = (usernameOrEmail, password) => {
   const errors = [];
   
   if (!usernameOrEmail?.trim()) {
-    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Vui lòng nhập tên đăng nhập hoặc email'));
+    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Please enter username or email'));
   }
   
   if (!password?.trim()) {
-    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Vui lòng nhập mật khẩu'));
+    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Please enter password'));
   }
   
   return errors;
@@ -94,19 +94,19 @@ export const validateSignupForm = (formData) => {
   const errors = [];
   
   if (!formData.username?.trim()) {
-    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Vui lòng nhập tên đăng nhập'));
+    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Please enter a username'));
   }
   
   if (!formData.email?.trim()) {
-    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Vui lòng nhập email'));
+    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Please enter an email'));
   }
   
   if (!formData.fullName?.trim()) {
-    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Vui lòng nhập họ tên'));
+    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Please enter your full name'));
   }
   
   if (!formData.password?.trim()) {
-    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Vui lòng nhập mật khẩu'));
+    errors.push(new AuthError(ERROR_TYPES.VALIDATION, 'Please enter a password'));
   } else if (formData.password.length < 6) {
     errors.push(new AuthError(ERROR_TYPES.VALIDATION, ERROR_MESSAGES.PASSWORD_TOO_SHORT));
   }

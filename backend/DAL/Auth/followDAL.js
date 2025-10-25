@@ -42,7 +42,7 @@ class FollowDAL {
             return {
                 success: true,
                 followId: result.recordset[0].FollowID,
-                message: 'Follow thành công'
+                message: 'Followed successfully'
             };
         } catch (error) {
             console.error('❌ FollowDAL.followUser Error:', error);
@@ -70,7 +70,7 @@ class FollowDAL {
 
             return {
                 success: result.rowsAffected[0] > 0,
-                message: result.rowsAffected[0] > 0 ? 'Unfollow thành công' : 'Không tìm thấy follow'
+                message: result.rowsAffected[0] > 0 ? 'Unfollowed successfully' : 'Follow not found'
             };
         } catch (error) {
             console.error('❌ FollowDAL.unfollowUser Error:', error);

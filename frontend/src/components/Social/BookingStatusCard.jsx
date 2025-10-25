@@ -12,12 +12,14 @@ import { BadgeCheck, Heart, MessageCircle, Share2, MoreHorizontal } from 'lucide
 import { reactionAPI, commentAPI, shareAPI } from '../../utils/api';
 import ShareModal from './ShareModal';
 import PostModal from './PostModal';
+import { useI18n } from '../../i18n/hooks';
 
 const BookingStatusCard = ({ post }) => {
   const navigate = useNavigate();
 
-  // Extract booking data from post
-  const booking = post.booking || {};
+  // Extract booking data from post - handle multiple possible structures
+  // booking data can be in post.booking, post.Booking, or at top level
+  const bookingData = post.booking || post.Booking || post;
   const {
     BookingID,
     BookingStatus, // 'Pending', 'Confirmed', 'Cancelled'
@@ -29,7 +31,13 @@ const BookingStatusCard = ({ post }) => {
     TotalAmount,
     DepositPaid,
     PaymentStatus,
-  } = booking;
+  } = bookingData;
+
+  console.log('📦 BookingStatusCard received:', { 
+    postId: post._id || post.PostID, 
+    hasBookingObject: !!post.booking,
+    hasBookingData: !!(BookingID || FacilityName)
+  });
 
   // User info
   const user = post.user || {};
@@ -42,7 +50,7 @@ const BookingStatusCard = ({ post }) => {
   const formatDateTime = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleString('vi-VN', {
+    return date.toLocaleString(undefined, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -54,18 +62,20 @@ const BookingStatusCard = ({ post }) => {
   const formatTime = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleTimeString('vi-VN', {
+    return date.toLocaleTimeString(undefined, {
       hour: '2-digit',
       minute: '2-digit',
     });
   };
+
+  const { t } = useI18n();
 
   // Get status config
   const getStatusConfig = (status) => {
     switch (status) {
       case 'Pending':
         return {
-          label: 'Chờ xác nhận',
+          label: t('booking.status.Pending'),
           icon: '⏳',
           className: 'status-pending',
           bgColor: '#fff3cd',
@@ -73,7 +83,7 @@ const BookingStatusCard = ({ post }) => {
         };
       case 'Confirmed':
         return {
-          label: 'Đã xác nhận',
+          label: t('booking.status.Confirmed'),
           icon: '✅',
           className: 'status-confirmed',
           bgColor: '#d4edda',
@@ -81,7 +91,7 @@ const BookingStatusCard = ({ post }) => {
         };
       case 'Cancelled':
         return {
-          label: 'Đã hủy',
+          label: t('booking.status.Cancelled'),
           icon: '❌',
           className: 'status-cancelled',
           bgColor: '#f8d7da',
@@ -89,7 +99,7 @@ const BookingStatusCard = ({ post }) => {
         };
       default:
         return {
-          label: 'Không xác định',
+          label: t('booking.status.Unknown'),
           icon: '❓',
           className: 'status-unknown',
           bgColor: '#e2e3e5',
@@ -265,8 +275,8 @@ const BookingStatusCard = ({ post }) => {
       {/* Booking Details */}
       <div className="booking-details-container">
         <div className="booking-header">
-          <div className="sport-badge">{SportName || '⚽ Thể thao'}</div>
-          <h3 className="booking-title">Chi tiết đặt sân</h3>
+          <div className="sport-badge">{SportName || `⚽ ${t('booking.sportFallback')}`}</div>
+          <h3 className="booking-title">{t('booking.bookingDetails')}</h3>
         </div>
 
         <div className="booking-info-grid">
@@ -274,7 +284,7 @@ const BookingStatusCard = ({ post }) => {
           <div className="info-item">
             <span className="info-icon">🏟️</span>
             <div className="info-content">
-              <span className="info-label">Cơ sở</span>
+              <span className="info-label">{t('booking.facility')}</span>
               <span className="info-value">{FacilityName || 'N/A'}</span>
             </div>
           </div>
@@ -282,7 +292,7 @@ const BookingStatusCard = ({ post }) => {
           <div className="info-item">
             <span className="info-icon">🥅</span>
             <div className="info-content">
-              <span className="info-label">Sân</span>
+              <span className="info-label">{t('booking.field')}</span>
               <span className="info-value">{FieldName || 'N/A'}</span>
             </div>
           </div>
@@ -291,9 +301,9 @@ const BookingStatusCard = ({ post }) => {
           <div className="info-item">
             <span className="info-icon">📅</span>
             <div className="info-content">
-              <span className="info-label">Ngày đặt</span>
+              <span className="info-label">{t('booking.date')}</span>
               <span className="info-value">
-                {StartTime ? new Date(StartTime).toLocaleDateString('vi-VN') : 'N/A'}
+                {StartTime ? new Date(StartTime).toLocaleDateString() : 'N/A'}
               </span>
             </div>
           </div>
@@ -301,7 +311,7 @@ const BookingStatusCard = ({ post }) => {
           <div className="info-item">
             <span className="info-icon">🕐</span>
             <div className="info-content">
-              <span className="info-label">Thời gian</span>
+              <span className="info-label">{t('booking.time')}</span>
               <span className="info-value">
                 {formatTime(StartTime)} - {formatTime(EndTime)} ({duration})
               </span>
@@ -312,9 +322,9 @@ const BookingStatusCard = ({ post }) => {
           <div className="info-item full-width">
             <span className="info-icon">💰</span>
             <div className="info-content">
-              <span className="info-label">Tổng tiền</span>
+              <span className="info-label">{t('booking.total')}</span>
               <span className="info-value price">
-                {TotalAmount?.toLocaleString('vi-VN')} VNĐ
+                {TotalAmount?.toLocaleString()} VND
               </span>
             </div>
           </div>
@@ -323,9 +333,9 @@ const BookingStatusCard = ({ post }) => {
           <div className={`info-item deposit-status ${DepositPaid && DepositPaid > 0 ? 'paid' : 'unpaid'}`}>
             <span className="info-icon">💳</span>
             <div className="info-content">
-              <span className="info-label">Cọc</span>
+              <span className="info-label">{t('booking.deposit')}</span>
               <span className={`info-value ${DepositPaid && DepositPaid > 0 ? 'paid' : 'unpaid'}`}>
-                {DepositPaid && DepositPaid > 0 ? '✅ Đã thanh toán' : '⏳ Chưa thanh toán'}
+                {DepositPaid && DepositPaid > 0 ? `✅ ${t('booking.paid')}` : `⏳ ${t('booking.unpaid')}`}
               </span>
             </div>
           </div>

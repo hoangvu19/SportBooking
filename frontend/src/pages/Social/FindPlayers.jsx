@@ -1,6 +1,6 @@
 /**
  * FindPlayers Page
- * Trang tìm kiếm booking posts theo môn thể thao
+ * Search booking posts by sport
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -19,7 +19,7 @@ const FindPlayers = () => {
 
   const fetchSportTypes = async () => {
     try {
-      // TODO: Thay bằng API thực tế để lấy danh sách môn thể thao
+      // TODO: Replace with real API to fetch sports list
       // Tạm thời hardcode
       setSportTypes([
         { SportTypeID: 1, SportName: 'Bóng đá' },
@@ -60,7 +60,7 @@ const FindPlayers = () => {
       setHasMore(newPosts.length >= 20);
     } catch (err) {
       console.error('Error fetching booking posts:', err);
-      setError(err.message || 'Không thể tải bài đăng');
+  setError(err.message || 'Unable to load posts');
     } finally {
       setLoading(false);
     }
@@ -90,8 +90,8 @@ const FindPlayers = () => {
     <div className="find-players-page">
       {/* Header */}
       <div className="page-header">
-        <h1>🔍 Tìm Người Chơi</h1>
-        <p>Tìm kiếm và tham gia các trận đấu đã đặt sân</p>
+  <h1>🔍 Find Players</h1>
+  <p>Search and join booked matches</p>
       </div>
 
       {/* Sport Filter */}
@@ -100,7 +100,7 @@ const FindPlayers = () => {
           className={`sport-button ${selectedSport === 'all' ? 'active' : ''}`}
           onClick={() => handleSportChange('all')}
         >
-          🏆 Tất cả
+          🏆 All
         </button>
         {sportTypes.map((sport) => (
           <button
@@ -120,7 +120,7 @@ const FindPlayers = () => {
         <div className="error-message">
           <span className="error-icon">⚠️</span>
           <span>{error}</span>
-          <button onClick={() => fetchBookingPosts(true)}>Thử lại</button>
+          <button onClick={() => fetchBookingPosts(true)}>Retry</button>
         </div>
       )}
 
@@ -129,11 +129,11 @@ const FindPlayers = () => {
         {bookingPosts.length === 0 && !loading && (
           <div className="empty-state">
             <div className="empty-icon">🏟️</div>
-            <h3>Chưa có bài đăng nào</h3>
+            <h3>No posts yet</h3>
             <p>
               {selectedSport === 'all'
-                ? 'Hãy là người đầu tiên đặt sân và tìm người chơi!'
-                : 'Không có bài đăng nào cho môn thể thao này'}
+                ? 'Be the first to book a field and find players!'
+                : 'No posts for this sport'}
             </p>
           </div>
         )}
@@ -161,7 +161,7 @@ const FindPlayers = () => {
         {/* Load More Button */}
         {hasMore && !loading && bookingPosts.length > 0 && (
           <button className="load-more-button" onClick={handleLoadMore}>
-            Xem thêm
+            Load more
           </button>
         )}
       </div>
@@ -170,7 +170,7 @@ const FindPlayers = () => {
       <button
         className="fab"
         onClick={() => (window.location.href = '/create-booking-post')}
-        title="Tạo bài đăng tìm người chơi"
+        title="Create a booking post"
       >
         <span className="fab-icon">+</span>
       </button>

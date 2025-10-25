@@ -7,7 +7,7 @@ const notifications = require('../../lib/notifications');
 router.get('/', authenticateToken, (req, res) => {
   const userId = req.user?.AccountID || req.user?.id || req.user;
   if (!userId) {
-    return res.status(401).json({ success: false, message: 'Không xác định được người dùng' });
+    return res.status(401).json({ success: false, message: 'User not identified' });
   }
   const list = notifications[userId] || [];
   res.json({ success: true, notifications: list });
@@ -17,7 +17,7 @@ router.get('/', authenticateToken, (req, res) => {
 router.post('/read-all', authenticateToken, (req, res) => {
   const userId = req.user?.AccountID || req.user?.id || req.user;
   if (!userId) {
-    return res.status(401).json({ success: false, message: 'Không xác định được người dùng' });
+    return res.status(401).json({ success: false, message: 'User not identified' });
   }
   if (notifications[userId]) {
     notifications[userId].forEach(n => n.read = true);

@@ -34,7 +34,7 @@ async function createBookingPost(req, res) {
     const accountId = getAccountId(req);
 
     if (!accountId) {
-      return sendUnauthorized(res, 'Vui lòng đăng nhập');
+      return sendUnauthorized(res, 'Please log in');
     }
 
     const bookingCheck = ensurePositiveInteger(bookingId, 'bookingId');
@@ -43,13 +43,13 @@ async function createBookingPost(req, res) {
     }
 
     if (isBlank(content)) {
-      return sendValidationError(res, 'Nội dung bài đăng không được để trống');
+      return sendValidationError(res, 'Post content must not be empty');
     }
 
     // Kiểm tra booking đã có bài đăng chưa
     const existingPost = await BookingPost.getByBookingId(bookingCheck.value);
     if (existingPost) {
-      return sendValidationError(res, 'Booking này đã có bài đăng');
+      return sendValidationError(res, 'This booking already has a post');
     }
 
     // ✅ OPTIMIZED: Chỉ 1 method thay vì 2 bước
@@ -77,19 +77,19 @@ async function createBookingPost(req, res) {
     return sendCreated(res, {
       bookingPost: fullBookingPost,
       PostID: result.postId
-    }, 'Tạo bài đăng "đã đặt sân" thành công');
+    }, 'Booking post created successfully');
   } catch (error) {
     console.error('Create booking post error:', error);
     
     // Handle specific errors
     if (error.message.includes('not found')) {
-      return sendNotFound(res, 'Không tìm thấy booking');
+      return sendNotFound(res, 'Booking not found');
     }
     if (error.message.includes('deposit')) {
-      return sendValidationError(res, 'Chỉ được tạo bài đăng sau khi thanh toán cọc');
+      return sendValidationError(res, 'Booking post can only be created after deposit payment');
     }
     
-    return sendError(res, 'Lỗi server khi tạo bài đăng', 500, { error: error.message });
+    return sendError(res, 'Server error creating booking post', 500, { error: error.message });
   }
 }
 
@@ -103,45 +103,45 @@ async function addPlayerFromComment(req, res) {
     const accountId = getAccountId(req);
 
     if (!accountId) {
-      return sendUnauthorized(res, 'Vui lòng đăng nhập');
+      return sendUnauthorized(res, 'Please log in');
     }
 
     const postCheck = ensurePositiveInteger(postId, 'postId');
     const playerCheck = ensurePositiveInteger(playerId, 'playerId');
 
     if (!postCheck.ok || !playerCheck.ok) {
-      return sendValidationError(res, 'ID không hợp lệ');
+      return sendValidationError(res, 'Invalid ID');
     }
 
     // Kiểm tra bài đăng có phải là booking post không
     const bookingPost = await BookingPost.getByPostId(postCheck.value);
     if (!bookingPost) {
-      return sendNotFound(res, 'Không tìm thấy bài đăng "đã đặt sân"');
+      return sendNotFound(res, 'Booking post not found');
     }
 
     // Kiểm tra người thêm có phải chủ bài đăng không
     const post = await PostDAL.getById(postCheck.value);
     if (!post || post.AccountID !== accountId) {
-      return sendUnauthorized(res, 'Chỉ chủ bài đăng mới có thể thêm người chơi');
+      return sendUnauthorized(res, 'Only the post owner can add players');
     }
 
     // Kiểm tra số lượng người chơi
     if (bookingPost.CurrentPlayers >= bookingPost.MaxPlayers) {
-      return sendValidationError(res, 'Đã đủ số lượng người chơi');
+      return sendValidationError(res, 'Player limit reached');
     }
 
     // Thêm người chơi
     const result = await BookingPost.addPlayer(postCheck.value, playerCheck.value, 'Pending');
 
     if (result.success) {
-      // TODO: Gửi thông báo cho người được mời
-      return sendSuccess(res, result, 'Đã mời người chơi thành công');
+      // TODO: Send notification to invited player
+      return sendSuccess(res, result, 'Player invited successfully');
     } else {
       return sendValidationError(res, result.message);
     }
   } catch (error) {
     console.error('Add player error:', error);
-    return sendError(res, 'Lỗi server khi thêm người chơi', 500, { error });
+    return sendError(res, 'Server error adding player', 500, { error });
   }
 }
 
@@ -154,7 +154,7 @@ async function acceptInvitation(req, res) {
     const accountId = getAccountId(req);
 
     if (!accountId) {
-      return sendUnauthorized(res, 'Vui lòng đăng nhập');
+      return sendUnauthorized(res, 'Please log in');
     }
 
     const postCheck = ensurePositiveInteger(postId, 'postId');
@@ -165,13 +165,13 @@ async function acceptInvitation(req, res) {
     const result = await BookingPost.acceptInvitation(postCheck.value, accountId);
 
     if (result.success) {
-      return sendSuccess(res, result, 'Đã chấp nhận lời mời');
+      return sendSuccess(res, result, 'Invitation accepted');
     } else {
       return sendValidationError(res, result.message);
     }
   } catch (error) {
     console.error('Accept invitation error:', error);
-    return sendError(res, 'Lỗi server khi chấp nhận lời mời', 500, { error });
+    return sendError(res, 'Server error accepting invitation', 500, { error });
   }
 }
 
@@ -184,7 +184,7 @@ async function rejectInvitation(req, res) {
     const accountId = getAccountId(req);
 
     if (!accountId) {
-      return sendUnauthorized(res, 'Vui lòng đăng nhập');
+      return sendUnauthorized(res, 'Please log in');
     }
 
     const postCheck = ensurePositiveInteger(postId, 'postId');
@@ -195,13 +195,13 @@ async function rejectInvitation(req, res) {
     const result = await BookingPost.rejectInvitation(postCheck.value, accountId);
 
     if (result.success) {
-      return sendSuccess(res, result, 'Đã từ chối lời mời');
+      return sendSuccess(res, result, 'Invitation rejected');
     } else {
       return sendValidationError(res, result.message);
     }
   } catch (error) {
     console.error('Reject invitation error:', error);
-    return sendError(res, 'Lỗi server khi từ chối lời mời', 500, { error });
+    return sendError(res, 'Server error rejecting invitation', 500, { error });
   }
 }
 
@@ -219,10 +219,10 @@ async function getPlayers(req, res) {
 
     const players = await BookingPost.getPlayers(postCheck.value);
 
-    return sendSuccess(res, { players }, 'Lấy danh sách người chơi thành công');
+    return sendSuccess(res, { players }, 'Players list retrieved successfully');
   } catch (error) {
     console.error('Get players error:', error);
-    return sendError(res, 'Lỗi server khi lấy danh sách người chơi', 500, { error });
+    return sendError(res, 'Server error getting players', 500, { error });
   }
 }
 
@@ -258,10 +258,10 @@ async function getPostsBySportType(req, res) {
         limit: limitNum,
         total: posts.length
       }
-    }, 'Lấy bài đăng thành công');
+    }, 'Posts retrieved successfully');
   } catch (error) {
     console.error('Get posts by sport type error:', error);
-    return sendError(res, 'Lỗi server khi lấy bài đăng', 500, { error: error.message });
+    return sendError(res, 'Server error getting posts', 500, { error: error.message });
   }
 }
 
@@ -288,19 +288,19 @@ async function getBookingPost(req, res) {
             const post = await PostDAL.getById(postCheck.value);
             if (post) {
               // Convert post model to frontend-safe JSON if needed (controller helpers will later format)
-              return sendSuccess(res, post, 'Lấy thông tin bài đăng thành công (fallback từ PostDAL)');
+              return sendSuccess(res, post, 'Booking post details retrieved successfully (fallback from PostDAL)');
             }
           } catch (e) {
             console.debug('bookingPostController.getBookingPost: fallback to PostDAL.getById failed', e?.message || e);
           }
 
-          return sendNotFound(res, 'Không tìm thấy bài đăng "đã đặt sân"');
+          return sendNotFound(res, 'Booking post not found');
         }
 
-        return sendSuccess(res, bookingPost, 'Lấy thông tin bài đăng thành công');
+        return sendSuccess(res, bookingPost, 'Booking post details retrieved successfully');
   } catch (error) {
     console.error('Get booking post error:', error);
-    return sendError(res, 'Lỗi server khi lấy thông tin bài đăng', 500, { error: error.message });
+    return sendError(res, 'Server error getting booking post info', 500, { error: error.message });
   }
 }
 

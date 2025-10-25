@@ -119,7 +119,7 @@ class FieldCommentDAL {
         `);
       
       if (result.recordset.length === 0) {
-        return { success: false, message: 'Không tìm thấy nhận xét hoặc bạn không có quyền chỉnh sửa' };
+        return { success: false, message: 'Comment not found or you do not have permission to edit' };
       }
       
       return { success: true, data: result.recordset[0] };
@@ -147,7 +147,7 @@ class FieldCommentDAL {
       const result = await request.query(query);
       
       if (result.rowsAffected[0] === 0) {
-        return { success: false, message: 'Không tìm thấy nhận xét hoặc bạn không có quyền xóa' };
+        return { success: false, message: 'Comment not found or you do not have permission to delete' };
       }
       
       return { success: true };

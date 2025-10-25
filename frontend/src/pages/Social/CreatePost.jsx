@@ -27,7 +27,7 @@ const CreatePost = () => {
             
             // Validation
             if (!content && images.length === 0) {
-                throw new Error('Vui lòng nhập nội dung hoặc chọn ảnh');
+                throw new Error('Please enter content or choose an image');
             }
 
             // Convert images to base64
@@ -53,7 +53,7 @@ const CreatePost = () => {
                 
                 return Promise.resolve(response.data);
             } else {
-                throw new Error(response.message || 'Không thể tạo bài viết');
+                    throw new Error(response.message || 'Unable to create post');
             }
         } catch (error) {
             console.error('Create post error:', error);
@@ -70,11 +70,12 @@ const CreatePost = () => {
                 <div className='mb-8'>
                     <h1 className='text-3xl font-bold text-slate-900 mb-2'>Create Post</h1>
                     <p className='text-slate-600'>Share your thoughts with the world</p>
+                <p className='text-slate-600'>Share your thoughts with the world</p>
                 </div>
 
                 {!user ? (
                     <div className="text-center py-8">
-                        <p className="text-gray-500">Vui lòng đăng nhập để tạo bài viết</p>
+                        <p className="text-gray-500">Please log in to create a post</p>
                     </div>
                 ) : (
                 <div className='max-w-xl bg-white p-4 sm:p-8 sm:pb-3 rounded-xl shadow-md space-y-4'>
@@ -118,11 +119,11 @@ const CreatePost = () => {
                         </label>
                         <input type="file"  id="images"  accept="image/*"  hidden  multiple  onChange={((e) => setImages([...images, ...e.target.files]))} />
                         <button data-testid="publish-post-button" disabled={loading || (!content && images.length === 0)} onClick={() => toast.promise(
-                                handleSubmit(),
+                                handleSubmit(), 
                                 {
-                                    loading: 'Đang đăng...',
-                                    success: <p>Đăng bài thành công!</p>,
-                                    error: (err) => <p>{err?.message || 'Có lỗi xảy ra'}</p>
+                                    loading: 'Posting...',
+                                    success: <p>Post published!</p>,
+                                    error: (err) => <p>{err?.message || 'An error occurred'}</p>
                                 }
                         )}  className='text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition text-white font-medium px-8 py-2 rounded-md cursor-pointer'>
                             Publish Post

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { userAPI, messageAPI, authAPI } from "../../utils/api"
 import Loading from "../../components/Shared/Loading"
 import DEFAULT_AVATAR from "../../utils/defaults";
+import { useI18n } from '../../i18n/hooks';
 
 const Messages = () => {
     const navigate = useNavigate();
@@ -16,6 +17,8 @@ const Messages = () => {
     const [showPending, setShowPending] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [searchTimeout, setSearchTimeout] = useState(null);
+
+    const { t } = useI18n();
 
     // loadConnections will be called after it's declared (see useEffect below)
 
@@ -163,17 +166,17 @@ const Messages = () => {
                         username: user.Username || user.username,
                         profile_picture: user.profile_picture || user.ProfilePictureURL || user.ProfilePicture || user.ProfilePictureUrl || user.ProfilePictureURLSmall || user.ProfilePictureSmall || user.ProfilePictureThumb || user.ProfilePicture_URL || user.AvatarUrl || user.avatarUrl || DEFAULT_AVATAR
                     }));
-                    setFollowingList(fl);
+                        setFollowingList(fl);
                 }
-                setError('Không thể tải cuộc trò chuyện (vui lòng thử tải lại)');
+                    setError(t('messages.loadError', 'Unable to load conversations (please try reloading)'));
             }
         } catch (err) {
             console.error('Load connections error:', err);
-            setError('Không thể kết nối đến server');
+            setError(t('messages.connectError','Unable to connect to server'));
         } finally {
             setLoading(false);
         }
-    }, [currentUser]);
+        }, [currentUser, t]);
 
     // call loadConnections once on mount
     useEffect(() => {
@@ -311,14 +314,14 @@ const Messages = () => {
                 {/* Title */}
                 <div className='mb-8'>
                 <h1 className='text-3xl font-bold text-slate-900 mb-2'>
-                    Messages
+                    {t('messages.title','Messages')}
                 </h1>
                 <div className='w-full max-w-md'>
-                    <label htmlFor='message-search' className='sr-only'>Tìm người dùng</label>
+                    <label htmlFor='message-search' className='sr-only'>Search users</label>
                     <div className='relative'>
                         <input
                             id='message-search'
-                            placeholder='Tìm người dùng để nhắn tin...'
+                            placeholder={t('messages.searchPlaceholder','Search users to message...')}
                             className='w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-200'
                             onChange={(e) => handleSearchChange(e.target.value)}
                         />
@@ -352,8 +355,8 @@ const Messages = () => {
                 {/* Empty State */}
                 {!loading && !error && visibleConnections.length === 0 && (
                     <div className="max-w-xl text-center py-8 text-gray-500">
-                        Bạn chưa có cuộc trò chuyện nào (các tin nhắn chờ nằm ở panel bên phải)
-                    </div>
+                            {t('messages.noConversationsYet','You have no conversations yet (pending messages appear in the right panel)')}
+                        </div>
                 )}
 
                 {/* {connected users} */}
@@ -362,7 +365,7 @@ const Messages = () => {
                     <div className='flex-1'>
                         {visibleConnections.length === 0 ? (
                             <div className="max-w-xl text-center py-8 text-gray-500">
-                                Bạn chưa có cuộc trò chuyện nào
+                                {t('messages.noConversations','You have no conversations')}
                             </div>
                         ) : (
                             <div className='flex flex-col gap-3'>
@@ -384,10 +387,10 @@ const Messages = () => {
                                                 )}
                                             </p>
                                             <p className='text-slate-500'>@{user.username}</p>
-                                            <p className='text-sm text-gray-600'>{user.bio}</p>
+                                            <p className='text-sm text-gray-600'>{user.bio || t('messages.noBio','No bio yet')}</p>
                                             {user.lastMessageSnippet && (
                                                 <p className='text-sm text-gray-500 italic truncate mt-1'>
-                                                    {user.lastMessageSenderId && currentUser && Number(user.lastMessageSenderId) === Number(currentUser.AccountID) ? `Bạn: ${user.lastMessageSnippet}` : user.lastMessageSnippet}
+                                                    {user.lastMessageSenderId && currentUser && Number(user.lastMessageSenderId) === Number(currentUser.AccountID) ? `You: ${user.lastMessageSnippet}` : user.lastMessageSnippet}
                                                 </p>
                                             )}
                                         </div>
@@ -418,7 +421,7 @@ const Messages = () => {
                     <aside className='w-80 shrink-0 self-start sticky top-24'>
                         <div className='bg-white p-4 rounded shadow flex flex-col'>
                             <div className='flex items-center justify-between mb-3'>
-                                <h3 className='text-sm font-semibold'>Những người bạn đang theo dõi</h3>
+                                <h3 className='text-sm font-semibold'>{t('messages.following','Following')}</h3>
                                 <button title='Tin nhắn chờ' onClick={() => setShowPending(v => !v)} className={`relative p-2 rounded ${showPending ? 'bg-indigo-100' : 'hover:bg-slate-50'}`}>
                                     <Clock className='w-4 h-4 text-gray-700' />
                                     {pendingCount > 0 && (
@@ -429,7 +432,7 @@ const Messages = () => {
                                 </button>
                             </div>
                             {(!showPending && followingList.length === 0) && (
-                                <div className='text-sm text-gray-500'>Không có ai trong danh sách theo dõi</div>
+                                <div className='text-sm text-gray-500'>{t('messages.noOneFollowing','No one in your following list')}</div>
                             )}
                             {showPending && (
                                 <div className='flex-1 overflow-y-auto max-h-[calc(100vh-200px)] pr-2 space-y-2'>
@@ -440,7 +443,7 @@ const Messages = () => {
                                                 <div className='font-medium text-sm'>{u.full_name}</div>
                                                 <div className='text-xs text-gray-500'>@{u.username}</div>
                                             </div>
-                                            <button onClick={() => openConversation(u._id)} className='px-2 py-1 bg-indigo-600 text-white text-xs rounded'>Mở</button>
+                                            <button onClick={() => openConversation(u._id)} className='px-2 py-1 bg-indigo-600 text-white text-xs rounded'>{t('common.open','Open')}</button>
                                         </div>
                                     ))}
                                 </div>
@@ -454,7 +457,7 @@ const Messages = () => {
                                                 <div className='font-medium text-sm'>{u.full_name}</div>
                                                 <div className='text-xs text-gray-500'>@{u.username}</div>
                                             </div>
-                                            <button onClick={() => openConversation(u._id)} className='px-2 py-1 bg-indigo-600 text-white text-xs rounded'>Nhắn</button>
+                                            <button onClick={() => openConversation(u._id)} className='px-2 py-1 bg-indigo-600 text-white text-xs rounded'>{t('common.message','Message')}</button>
                                         </div>
                                     ))}
                                 </div>

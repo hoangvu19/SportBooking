@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import livestreamApi from "../../utils/livestreamApi";
 import Loading from "../../components/Shared/Loading";
+import { useI18n } from '../../i18n/hooks';
 import { useNavigate } from 'react-router-dom';
 import DEFAULT_AVATAR from '../../utils/defaults';
 import '../Livestream/livestreams.css';
@@ -9,6 +10,7 @@ export default function LiveRooms() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   useEffect(() => {
     let mounted = true;
@@ -39,13 +41,13 @@ export default function LiveRooms() {
     <div className='livestream-container p-6'>
       <div className='max-w-7xl mx-auto'>
         <h2 className='text-3xl font-bold mb-6 bg-gradient-to-r from-pink-500 to-red-500 bg-clip-text text-transparent'>
-          🔴 Live Now
+          {t('livestream.liveNow')}
         </h2>
         
         {rooms.length === 0 ? (
           <div className='no-streams'>
-            <p className='text-xl font-semibold mb-2'>Không có livestream nào</p>
-            <p className='text-sm'>Hãy là người đầu tiên bắt đầu phát sóng!</p>
+            <p className='text-xl font-semibold mb-2'>{t('livestream.noStreams')}</p>
+            <p className='text-sm'>{t('livestream.beFirst')}</p>
           </div>
         ) : (
           <div className='streams-grid grid grid-cols-1 gap-5'>
@@ -81,14 +83,14 @@ export default function LiveRooms() {
                         />
                         <div className='flex-1 min-w-0'>
                           <div className='stream-title'>{title}</div>
-                          <div className='stream-host'>{host.FullName || host.Username || 'Unknown'}</div>
+                          <div className='stream-host'>{host.FullName || host.Username || t('livestream.unknownHost')}</div>
                         </div>
                       </div>
                       <button 
                         onClick={() => navigate(`/livestreams?roomId=${r.LivestreamID || r.id}`)} 
                         className='view-btn'
                       >
-                        Xem
+                        {t('livestream.view')}
                       </button>
                     </div>
                   </div>

@@ -68,7 +68,7 @@ const AuthProvider = ({ children }) => {
             }
         } catch (error) {
             console.error('Login error:', error);
-            return { success: false, message: 'Có lỗi xảy ra khi đăng nhập' };
+            return { success: false, message: 'An error occurred during login' };
         }
     };
 
@@ -98,7 +98,7 @@ const AuthProvider = ({ children }) => {
             }
         } catch (error) {
             console.error('Signup error:', error);
-            return { success: false, message: 'Có lỗi xảy ra khi đăng ký' };
+            return { success: false, message: 'An error occurred during signup' };
         }
     };
 
@@ -121,7 +121,7 @@ const AuthProvider = ({ children }) => {
             }
         } catch (error) {
             console.error('Forgot password error:', error);
-            return { success: false, message: 'Có lỗi xảy ra khi gửi email khôi phục' };
+            return { success: false, message: 'An error occurred while sending the password reset email' };
         }
     };
 

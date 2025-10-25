@@ -8,6 +8,9 @@ import Connections from "./pages/Social/Connection";
 import Discover from "./pages/Social/Discover";
 import Profile from "./pages/Social/Profile";
 import CreatePost from "./pages/Social/CreatePost";
+import Settings from "./pages/Shared/Settings";
+import Terms from "./pages/Shared/Terms";
+import Archive from "./pages/Shared/Archive";
 const PostDetail = React.lazy(() => import("./pages/Social/PostDetail.jsx"));
 import useAuth from "./hooks/useAuth";
 import Layout from "./pages/Shared/Layout";
@@ -51,6 +54,9 @@ const App = () => {
                 <PostDetail />
               </Suspense>
             } />
+            <Route path="settings" element={<Settings />} />
+            <Route path="terms" element={<Terms />} />
+            <Route path="archive" element={<Archive />} />
             {/* Các route cho phần đặt sân bóng */}
             <Route path="sanlist" element={<SanList />} />
             <Route path="san-list" element={<SanList />} />

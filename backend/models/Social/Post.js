@@ -95,17 +95,17 @@ class Post {
 	static validate(postData) {
 		const errors = [];
     
-		if (!postData.Content || postData.Content.trim().length === 0) {
-			errors.push('Nội dung post không được để trống');
-		}
+			if (!postData.Content || postData.Content.trim().length === 0) {
+				errors.push('Post content must not be empty');
+			}
     
-		if (postData.Content && postData.Content.length > 2000) {
-			errors.push('Nội dung post không được vượt quá 2000 ký tự');
-		}
+			if (postData.Content && postData.Content.length > 2000) {
+				errors.push('Post content must not exceed 2000 characters');
+			}
     
-		if (!postData.AccountID) {
-			errors.push('AccountID là bắt buộc');
-		}
+			if (!postData.AccountID) {
+				errors.push('AccountID is required');
+			}
     
 		return {
 			isValid: errors.length === 0,

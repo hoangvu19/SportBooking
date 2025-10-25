@@ -1,9 +1,11 @@
 /**
  * CreateBookingPost Page
- * Form tạo bài đăng booking post sau khi đã thanh toán đặt sân
+ * Form to create a booking post after booking/paying a deposit
  */
 
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../../i18n/hooks';
+import toast from 'react-hot-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { bookingPostAPI } from '../../utils/bookingPostAPI';
 import './CreateBookingPost.css';
@@ -12,7 +14,7 @@ const CreateBookingPost = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Lấy booking info từ navigation state (nếu có)
+  // Get booking info from navigation state (if provided)
   const bookingInfo = location.state?.booking || null;
   
   const [formData, setFormData] = useState({
@@ -47,13 +49,13 @@ const CreateBookingPost = () => {
     if (file) {
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Kích thước ảnh không được vượt quá 5MB');
+    toast.error(t('createBooking.imageTooLarge'));
         return;
       }
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        alert('Vui lòng chọn file ảnh');
+  toast.error(t('createBooking.selectImage'));
         return;
       }
 
@@ -81,18 +83,18 @@ const CreateBookingPost = () => {
 
   const validateForm = () => {
     if (!formData.content.trim()) {
-      setError('Vui lòng nhập nội dung bài đăng');
+      setError('Please enter post content');
       return false;
     }
 
     if (formData.content.length > 1000) {
-      setError('Nội dung không được vượt quá 1000 ký tự');
+      setError('Content must not exceed 1000 characters');
       return false;
     }
 
     const maxPlayers = parseInt(formData.maxPlayers);
     if (maxPlayers < 4 || maxPlayers > 22) {
-      setError('Số người chơi phải từ 4 đến 22');
+      setError('Number of players must be between 4 and 22');
       return false;
     }
 
@@ -122,8 +124,8 @@ const CreateBookingPost = () => {
       const response = await bookingPostAPI.create(formDataToSend);
 
       // response shape may be { success: true, data: { bookingPost: {...}, PostID } }
-      const createdId = response?.data?.PostID || response?.data?.bookingPost?.PostID || response?.data?.bookingPost?.PostID || null;
-      alert('✅ Tạo bài đăng thành công!');
+        const createdId = response?.data?.PostID || response?.data?.bookingPost?.PostID || response?.data?.bookingPost?.PostID || null;
+        toast.success(t('composer.posted'));
       if (createdId) {
         navigate(`/booking-post/${createdId}`);
       } else {
@@ -131,17 +133,19 @@ const CreateBookingPost = () => {
       }
     } catch (err) {
       console.error('Error creating booking post:', err);
-      setError(err.message || 'Không thể tạo bài đăng');
+      setError(err.message || 'Unable to create post');
     } finally {
       setLoading(false);
     }
   };
 
+  const { t } = useI18n();
+
   if (loading) {
     return (
       <div className="create-booking-post-page loading">
         <div className="spinner"></div>
-        <p>Đang tạo bài đăng...</p>
+        <p>{t('common.loading')}</p>
       </div>
     );
   }
@@ -151,34 +155,34 @@ const CreateBookingPost = () => {
       {/* Header */}
       <div className="page-header">
         <button className="back-button" onClick={() => navigate(-1)}>
-          ← Quay lại
+          ← Back
         </button>
-        <h1>📝 Tạo Bài Đăng Tìm Người Chơi</h1>
-        <p>Chia sẻ thông tin sân đã đặt và tìm đồng đội</p>
+        <h1>📝 Create a 'Find Players' Post</h1>
+  <p>Share your booking and find teammates</p>
       </div>
 
       {/* Booking Info (if available) */}
       {bookingInfo && (
         <div className="booking-info-card">
-          <h3>📍 Thông tin sân đã đặt</h3>
+          <h3>📍 Booked field information</h3>
           <div className="info-row">
-            <span className="label">Cơ sở:</span>
+            <span className="label">Facility:</span>
             <span className="value">{bookingInfo.FacilityName}</span>
           </div>
           <div className="info-row">
-            <span className="label">Sân:</span>
+            <span className="label">Field:</span>
             <span className="value">{bookingInfo.FieldName}</span>
           </div>
           <div className="info-row">
-            <span className="label">Thời gian:</span>
+            <span className="label">Time:</span>
             <span className="value">
-              {new Date(bookingInfo.StartTime).toLocaleString('vi-VN')}
+              {new Date(bookingInfo.StartTime).toLocaleString()}
             </span>
           </div>
           <div className="info-row">
-            <span className="label">Giá:</span>
+            <span className="label">Price:</span>
             <span className="value price">
-              {bookingInfo.TotalAmount?.toLocaleString('vi-VN')} VNĐ
+              {bookingInfo.TotalAmount?.toLocaleString()} VNĐ
             </span>
           </div>
         </div>
@@ -189,27 +193,27 @@ const CreateBookingPost = () => {
         {/* Content */}
         <div className="form-group">
           <label htmlFor="content">
-            Nội dung bài đăng <span className="required">*</span>
+            Post content <span className="required">*</span>
           </label>
           <textarea
             id="content"
             name="content"
             value={formData.content}
             onChange={handleInputChange}
-            placeholder="Ví dụ: Mình đã đặt sân bóng đá vào thứ 7 tuần sau, còn thiếu 5 người. Ai muốn tham gia liên hệ nhé! ⚽"
+            placeholder="Example: I booked a football field next Saturday, need 5 more players. DM to join! ⚽"
             rows={6}
             maxLength={1000}
             required
           />
           <div className="char-count">
-            {formData.content.length}/1000 ký tự
+            {formData.content.length}/1000 characters
           </div>
         </div>
 
         {/* Max Players */}
         <div className="form-group">
           <label htmlFor="maxPlayers">
-            Số người chơi tối đa <span className="required">*</span>
+            Max players <span className="required">*</span>
           </label>
           <input
             type="number"
@@ -222,13 +226,13 @@ const CreateBookingPost = () => {
             required
           />
           <small className="form-hint">
-            Nhập số người chơi cần thiết cho trận đấu (4-22 người)
+            Enter number of players needed for the match (4-22)
           </small>
         </div>
 
         {/* Image Upload */}
         <div className="form-group">
-          <label>Ảnh minh họa (không bắt buộc)</label>
+          <label>Illustration image (optional)</label>
           
           {!imagePreview ? (
             <div className="image-upload-area">
@@ -241,10 +245,10 @@ const CreateBookingPost = () => {
               />
               <label htmlFor="image" className="upload-button">
                 <span className="upload-icon">📷</span>
-                <span>Chọn ảnh</span>
+                <span>Choose image</span>
               </label>
               <small className="form-hint">
-                Kích thước tối đa: 5MB. Định dạng: JPG, PNG, GIF
+                Max size: 5MB. Formats: JPG, PNG, GIF
               </small>
             </div>
           ) : (
@@ -263,7 +267,7 @@ const CreateBookingPost = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="error-message">
+            <div className="error-message">
             <span className="error-icon">⚠️</span>
             <span>{error}</span>
           </div>
@@ -276,22 +280,22 @@ const CreateBookingPost = () => {
             className="btn btn-cancel"
             onClick={() => navigate(-1)}
           >
-            Hủy
+            {t('common.cancel')}
           </button>
           <button type="submit" className="btn btn-submit" disabled={loading}>
-            {loading ? 'Đang tạo...' : '🚀 Đăng bài'}
+            {loading ? t('common.loading') : t('composer.postButton')}
           </button>
         </div>
       </form>
 
       {/* Tips */}
       <div className="tips-card">
-        <h3>💡 Mẹo viết bài đăng hiệu quả</h3>
+        <h3>💡 Tips for an effective post</h3>
         <ul>
-          <li>Nêu rõ thời gian, địa điểm, và số người cần tìm</li>
-          <li>Ghi chú trình độ mong muốn (nếu có)</li>
-          <li>Thêm ảnh sân hoặc đội hình để thu hút</li>
-          <li>Cập nhật tình trạng khi đủ người</li>
+          <li>Be clear about time, location, and number of players needed</li>
+          <li>Mention skill level if relevant</li>
+          <li>Add field or team photos to attract players</li>
+          <li>Update the post when you have enough players</li>
         </ul>
       </div>
     </div>

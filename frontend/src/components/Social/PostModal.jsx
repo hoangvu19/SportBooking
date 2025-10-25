@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useI18n } from '../../i18n/hooks';
 import { X } from 'lucide-react';
 import CommentList from './CommentList';
 import CommentForm from './CommentForm';
 import DEFAULT_AVATAR from "../../utils/defaults";
 
 const PostModal = ({ post, visible, onClose, onCommentCreated }) => {
+  const { t } = useI18n();
   const [commentsReloadTrigger, setCommentsReloadTrigger] = useState(0);
   const [lastCreatedCommentId, setLastCreatedCommentId] = useState(null);
   const commentsContainerRef = useRef(null);
@@ -55,11 +57,11 @@ const PostModal = ({ post, visible, onClose, onCommentCreated }) => {
       >
         {/* Header - Fixed với title và close button */}
         <div className="flex items-center justify-center px-4 py-3 border-b bg-white relative shrink-0">
-          <h2 className="font-semibold text-gray-900 text-base">Bài viết của {post.user?.full_name}</h2>
+          <h2 className="font-semibold text-gray-900 text-base">{t('post.postBy', 'Post by')} {post.user?.full_name}</h2>
           <button 
             onClick={onClose} 
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors focus:outline-none"
-            aria-label="Đóng"
+            aria-label="Close"
           >
             <X className="w-5 h-5 text-gray-600" />
           </button>
@@ -94,7 +96,7 @@ const PostModal = ({ post, visible, onClose, onCommentCreated }) => {
                     {post.user?.full_name || post.user?.username}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {new Date(post.createdAt).toLocaleString('vi-VN')}
+                    {new Date(post.createdAt).toLocaleString('en-US')}
                   </div>
                 </div>
               </div>
@@ -121,7 +123,7 @@ const PostModal = ({ post, visible, onClose, onCommentCreated }) => {
                         {post.shared_post.user?.full_name || post.shared_post.user?.username}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {new Date(post.shared_post.createdAt).toLocaleString('vi-VN')}
+                        {new Date(post.shared_post.createdAt).toLocaleString('en-US')}
                       </div>
                     </div>
                   </div>
@@ -140,7 +142,7 @@ const PostModal = ({ post, visible, onClose, onCommentCreated }) => {
                 </div>
               ) : post.is_shared ? (
                 <div className="mt-3 text-sm text-gray-500 italic">
-                  Bài viết gốc không còn tồn tại
+                  {t('post.originalMissing')}
                 </div>
               ) : (
                 /* Nếu không phải shared post, hiển thị content bình thường */

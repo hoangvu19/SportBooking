@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import useAuth from "../../hooks/useAuth";
 import { Pencil, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useI18n } from '../../i18n/hooks';
 import { userAPI, imageToBase64 } from "../../utils/api";
 
 const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
     const { user: authUser } = useAuth();
     // Prefer explicit propUser, then authenticated user
     const user = propUser || authUser;
+    const { t } = useI18n();
 
     const [editForm, setEditForm] = useState({
         username: user?.username || '',
@@ -68,16 +70,16 @@ const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
             const userId = user?.AccountID || user?._id || user?.userId;
             const response = await userAPI.updateProfile(userId, payload);
 
-            if (response.success) {
-                toast.success('Profile saved');
+                    if (response.success) {
+                        toast.success(t('profile.saved', 'Profile saved'));
                 if (typeof setShowEdit === 'function') setShowEdit(false);
                 if (typeof onSaved === 'function') onSaved();
             } else {
-                toast.error(response.message || 'Failed to save');
+                        toast.error(response.message || t('profile.saveFailed', 'Failed to save'));
             }
         } catch (err) {
             console.error('Save profile error:', err);
-            toast.error('Failed to save');
+                    toast.error(t('profile.saveFailed', 'Failed to save'));
         }
     };
     // If we don't have a user to edit, show a friendly message and close option
@@ -85,9 +87,9 @@ const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
         <div className="fixed inset-0 z-50 h-screen overflow-y-auto bg-black/50 flex items-center justify-center p-4">
             <div className="w-full max-w-md sm:py-6 mx-auto">
                 <div className="bg-white rounded-lg shadow p-6 text-center">
-                    <p className="text-gray-700 mb-4">Vui lòng đăng nhập để chỉnh sửa hồ sơ.</p>
+                    <p className="text-gray-700 mb-4">{t('profile.loginPrompt', 'Please log in to edit your profile.')}</p>
                     <div className="flex justify-center">
-                        <button onClick={() => typeof setShowEdit === 'function' && setShowEdit(false)} className="px-4 py-2 rounded border">Đóng</button>
+                        <button onClick={() => typeof setShowEdit === 'function' && setShowEdit(false)} className="px-4 py-2 rounded border">{t('common.cancel')}</button>
                     </div>
                 </div>
             </div>
@@ -107,14 +109,14 @@ const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
                         <X className="w-4 h-4" />
                     </button>
 
-                    <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('profile.editTitle', 'Edit Profile')}</h1>
 
                     <form className="space-y-4" onSubmit={handleSaveProfile}>
                         {/* Profile Picture */}
                         <div>
                             <label htmlFor="profile_picture" className="block text-sm font-medium text-gray-700 mb-1">
-                                Profile Picture
-                            </label>
+                                    {t('profile.profilePicture', 'Profile Picture')}
+                                </label>
                             <input
                                 ref={profileInputRef}
                                 hidden
@@ -137,7 +139,7 @@ const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
                                         profileInputRef.current && profileInputRef.current.click();
                                     }
                                 }}
-                                aria-label="Change profile picture"
+                                aria-label={t('profile.changeProfilePictureAria', 'Change profile picture')}
                             >
                                 <img
                                     src={editForm.profile_picture ? previewRef.current.profile : user.profile_picture}
@@ -152,13 +154,13 @@ const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
 
                     {/* cover photo */}
                     <div className="flex flex-col items-start gap-3">
-                        <label htmlFor="cover_photo" className="block text-sm font-medium text-gray-700 mb-1">
-                            Cover Photo
+                            <label htmlFor="cover_photo" className="block text-sm font-medium text-gray-700 mb-1">
+                            {t('profile.coverPhoto', 'Cover Photo')}
                         </label>
                         
                     </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Full name</label>
+                            <label className="block text-sm font-medium text-gray-700">{t('profile.fullName', 'Full name')}</label>
                             <input
                                 value={editForm.full_name}
                                 onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
@@ -167,7 +169,7 @@ const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Username</label>
+                            <label className="block text-sm font-medium text-gray-700">{t('profile.username', 'Username')}</label>
                             <input
                                 value={editForm.username}
                                 onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
@@ -176,21 +178,21 @@ const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Gender</label>
+                            <label className="block text-sm font-medium text-gray-700">{t('profile.gender', 'Gender')}</label>
                             <select
                                 value={editForm.gender}
                                 onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
                                 className="w-full mt-1 p-2 border rounded"
                             >
-                                <option value="">Prefer not to say</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
+                                <option value="">{t('profile.preferNotToSay', 'Prefer not to say')}</option>
+                                <option value="Male">{t('profile.male', 'Male')}</option>
+                                <option value="Female">{t('profile.female', 'Female')}</option>
+                                <option value="Other">{t('profile.other', 'Other')}</option>
                             </select>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Address</label>
+                            <label className="block text-sm font-medium text-gray-700">{t('profile.address', 'Address')}</label>
                             <input
                                 value={editForm.address}
                                 onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
@@ -199,7 +201,7 @@ const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Bio</label>
+                            <label className="block text-sm font-medium text-gray-700">{t('profile.bio', 'Bio')}</label>
                             <textarea
                                 value={editForm.bio}
                                 onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
@@ -208,8 +210,8 @@ const ProfileModal = ({ setShowEdit, user: propUser, onSaved }) => {
                         </div>
 
                         <div className="flex gap-3 justify-end">
-                            <button type="button" onClick={() => typeof setShowEdit === 'function' && setShowEdit(false)} className="px-4 py-2 rounded border">Cancel</button>
-                            <button type="submit" className="px-4 py-2 rounded bg-indigo-600 text-white">Save</button>
+                            <button type="button" onClick={() => typeof setShowEdit === 'function' && setShowEdit(false)} className="px-4 py-2 rounded border">{t('common.cancel')}</button>
+                            <button type="submit" className="px-4 py-2 rounded bg-indigo-600 text-white">{t('common.save')}</button>
                         </div>
                     </form>
                 </div>

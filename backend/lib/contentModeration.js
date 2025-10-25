@@ -49,10 +49,10 @@ class ContentModerationService {
     if (!content || content.trim().length === 0) {
       if (images.length === 0) {
         results.isClean = false;
-        results.reason = 'Nội dung trống';
+        results.reason = 'Empty content';
         return results;
       }
-      return results; // Chỉ có ảnh thì cho qua
+      return results; // Only images present - allow for now
     }
 
     // 1. Kiểm tra từ khóa nhạy cảm
@@ -63,13 +63,13 @@ class ContentModerationService {
       
       if (sensitiveCheck.confidence >= this.thresholds.auto_reject) {
         results.isClean = false;
-        results.reason = 'Nội dung chứa từ khóa nhạy cảm';
+        results.reason = 'Content contains sensitive keywords';
         return results;
       }
       
       if (sensitiveCheck.confidence >= this.thresholds.sensitive) {
         results.needsReview = true;
-        results.reason = 'Nghi ngờ nội dung nhạy cảm, cần admin duyệt';
+        results.reason = 'Suspected sensitive content, requires admin review';
       }
     }
 
@@ -81,13 +81,13 @@ class ContentModerationService {
       
       if (spamCheck.confidence >= this.thresholds.auto_reject) {
         results.isClean = false;
-        results.reason = 'Nội dung có dấu hiệu spam';
+        results.reason = 'Content appears to be spam';
         return results;
       }
       
       if (spamCheck.confidence >= this.thresholds.spam) {
         results.needsReview = true;
-        results.reason = results.reason || 'Nghi ngờ spam, cần admin duyệt';
+        results.reason = results.reason || 'Suspected spam, requires admin review';
       }
     }
 
@@ -95,7 +95,7 @@ class ContentModerationService {
     if (content.length > 2000) {
       results.flags.push('too_long');
       results.needsReview = true;
-      results.reason = results.reason || 'Nội dung quá dài, cần admin duyệt';
+  results.reason = results.reason || 'Content too long, requires admin review';
     }
 
     // 4. Kiểm tra ALL CAPS
@@ -116,13 +116,13 @@ class ContentModerationService {
     if (results.confidence < this.thresholds.sensitive) {
       results.needsReview = true;
       if (!results.reason) {
-        results.reason = 'Nội dung nghi ngờ, cần admin duyệt';
+        results.reason = 'Content suspected, requires admin review';
       }
     }
 
     if (results.confidence < 0.5) {
       results.isClean = false;
-      results.reason = 'Nội dung vi phạm nhiều quy tắc';
+      results.reason = 'Content violates multiple rules';
     }
 
     return results;
@@ -230,7 +230,7 @@ class ContentModerationService {
       if (flaggedImages.length > 0) {
         contentResult.flags.push('flagged_images');
         contentResult.needsReview = true;
-        contentResult.reason = 'Ảnh có nội dung nghi ngờ, cần admin duyệt';
+        contentResult.reason = 'Image flagged, requires admin review';
       }
     }
 

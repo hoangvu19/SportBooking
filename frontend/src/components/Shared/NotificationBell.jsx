@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
 import { notificationAPI } from "../../utils/api";
 import { useNavigate } from "react-router-dom";
+import { useI18n } from '../../i18n/hooks';
 
 const NotificationBell = () => {
   const [open, setOpen] = useState(false);
@@ -35,6 +36,7 @@ const NotificationBell = () => {
   }, [open]);
 
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const handleNotificationClick = (notif) => {
     if (notif.link) {
@@ -57,12 +59,12 @@ const NotificationBell = () => {
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg z-50 border border-gray-200">
-          <div className="p-4 border-b font-semibold text-gray-800">Thông báo</div>
+          <div className="p-4 border-b font-semibold text-gray-800">{t('notifications.title')}</div>
           <div className="max-h-96 overflow-y-auto">
             {loading ? (
-              <div className="p-4 text-center text-gray-400">Đang tải...</div>
+              <div className="p-4 text-center text-gray-400">{t('common.loading')}</div>
             ) : notifications.length === 0 ? (
-              <div className="p-4 text-center text-gray-400">Không có thông báo mới</div>
+              <div className="p-4 text-center text-gray-400">{t('notifications.noNew')}</div>
             ) : (
               <ul className="divide-y">
                 {notifications.slice(0, 20).map((n, idx) => (

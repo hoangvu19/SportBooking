@@ -19,7 +19,7 @@ const timeSlots = [
   { id: 7, start: '19:00', end: '21:00' },
   { id: 8, start: '21:00', end: '23:00' }
 ];
-export const generateScheduleForSan = (sanId) => {
+export const generateScheduleForSan = () => {
   const days = generateNextDays();
   const defaultPrice = 200000;
   return days.map(day => ({
@@ -28,6 +28,6 @@ export const generateScheduleForSan = (sanId) => {
   }));
 };
 
-export const getScheduleForSan = (sanId) => generateScheduleForSan(sanId);
+export const getScheduleForSan = () => generateScheduleForSan();
 
 export default { generateScheduleForSan, getScheduleForSan };

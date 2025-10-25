@@ -9,6 +9,8 @@ import { postAPI } from "../../utils/api";
 import DEFAULT_AVATAR from "../../utils/defaults";
 
 
+import { useI18n } from '../../i18n/hooks';
+
 const Feed = () => {
 
   const [feeds, setFeeds] = useState([]);
@@ -68,12 +70,12 @@ const Feed = () => {
         const hasMorePosts = response.data.pagination?.hasMore || false;
         console.log(`📊 hasMore: ${hasMorePosts}`);
         setHasMore(hasMorePosts);
-      } else {
-        setError(response.message || 'Không thể tải bài viết');
+        } else {
+        setError(response.message || 'Unable to load posts');
       }
     } catch (err) {
       console.error('❌ Error fetching feeds:', err);
-      setError('Không thể kết nối đến server');
+      setError('Unable to connect to server');
     } finally {
       setLoading(false);
     }
@@ -84,6 +86,8 @@ const Feed = () => {
     console.log('🚀 Initial load');
     fetchFeeds(1, false);
   }, []);
+
+  const { t } = useI18n();
 
   // Refresh feed (for new posts)
   const refreshFeed = () => {
@@ -117,7 +121,7 @@ const Feed = () => {
           <div className='p-4 space-y-6'>
             {feeds.length === 0 ? (
               <div className='text-center text-gray-500 py-8'>
-                Chưa có bài viết nào
+                {t('feed.noPosts', 'No posts yet')}
               </div>
             ) : (
               feeds.map((post) => (
@@ -133,17 +137,17 @@ const Feed = () => {
           {hasMore && !loading && (
             <div className='text-center py-4'>
               <button 
-                onClick={handleLoadMore}
-                className='px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700'
-              >
-                Xem thêm
-              </button>
+                  onClick={handleLoadMore}
+                  className='px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700'
+                >
+                  {t('common.loadMore', 'Load more')}
+                </button>
             </div>
           )}
           
           {!hasMore && feeds.length > 0 && (
             <div className='text-center py-4 text-gray-500'>
-              <p>🎉 Bạn đã xem hết tất cả bài viết</p>
+              <p>{t('feed.endMessage', "🎉 You've reached the end of the feed")}</p>
             </div>
           )}
         </div>

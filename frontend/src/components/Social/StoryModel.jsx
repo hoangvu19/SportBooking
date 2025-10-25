@@ -3,9 +3,11 @@ import React, { useState } from "react";
 import { ArrowLeft, Sparkle, TextIcon, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import { storyAPI } from "../../utils/api";
+import { useI18n } from '../../i18n/hooks';
 
 const StoryModel = ({ setShowModal, fetchStories }) => {
     const bgColors = ["#4f46e5", "#7c3aed", "#db2777", "#e11d48", "#ca8a04", "#0d9488"];
+    const { t } = useI18n();
     const [mode, setMode] = useState("text");
     const [background, setBackground] = useState(bgColors[0]);
     const [text, setText] = useState("");
@@ -24,11 +26,11 @@ const StoryModel = ({ setShowModal, fetchStories }) => {
         try {
             // Validate input
             if (mode === 'text' && !text) {
-                throw new Error('Vui lòng nhập nội dung hoặc upload ảnh/video');
+                throw new Error('Please enter content or upload an image/video');
             }
             
             if (mode !== 'text' && !media) {
-                throw new Error('Vui lòng upload ảnh hoặc video');
+                throw new Error('Please upload an image or video');
             }
 
             // Prepare FormData for file upload
@@ -51,7 +53,7 @@ const StoryModel = ({ setShowModal, fetchStories }) => {
                     setShowModal(false);
                     return true;
                 } else {
-                    throw new Error(response.message || 'Không thể tạo story');
+                    throw new Error(response.message || 'Unable to create story');
                 }
             } else {
                 // Image/Video story - upload file
@@ -69,7 +71,7 @@ const StoryModel = ({ setShowModal, fetchStories }) => {
                     setShowModal(false);
                     return true;
                 } else {
-                    throw new Error(response.message || 'Không thể tạo story');
+                    throw new Error(response.message || 'Unable to create story');
                 }
             }
         } catch (error) {
@@ -85,7 +87,7 @@ const StoryModel = ({ setShowModal, fetchStories }) => {
                     <button onClick={() => setShowModal(false)} className='text-white p-2 cursor-pointer'>
                         <ArrowLeft />
                     </button>
-                    <h2 className='text-lg font-semibold'>Create Story</h2>
+                        <h2 className='text-lg font-semibold'>{t('story.createCTA', 'Create Story')}</h2>
                     <span className="w-10"></span>
                 </div>
 
@@ -94,7 +96,7 @@ const StoryModel = ({ setShowModal, fetchStories }) => {
                         <textarea
                             data-testid="story-textarea"
                             className='bg-transparent text-white w-full h-full p-6 text-lg resize-none focus:outline-none'
-                            placeholder="What's on your mind?"
+                            placeholder={t('story.placeholder', "What's on your mind?")}
                             value={text}
                             onChange={(e) => setText(e.target.value)}
                         />
@@ -141,16 +143,16 @@ const StoryModel = ({ setShowModal, fetchStories }) => {
                             accept='image/*, video/*'
                             className='hidden'
                         />
-                        <Upload size={18} /> Photo/Video
+                        <Upload size={18} /> {t('story.modeMedia', 'Photo/Video')}
                     </label>
                 </div>  
                     <button data-testid="story-create-button" onClick={()=> toast.promise(handleCreateStory(), {
-                    loading: 'Saving story...',
-                    success: <p>Story created !</p>,
-                    error: e => <p>{e.message}</p>,
+                    loading: t('story.saving', 'Saving story...'),
+                    success: t('story.created', 'Story created!'),
+                    error: e => e && e.message ? e.message : t('story.createError','Unable to create story'),
                 })} className='flex items-center justify-center gap-2 text-white py-3 mt-4 w-full rounded bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition cursor-pointer'>
                 <Sparkle size={18} /> 
-                Create Story
+                {t('story.createButton', 'Create Story')}
                 </button>
             </div>  
         </div>

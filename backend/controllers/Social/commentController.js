@@ -40,7 +40,7 @@ const CommentController = {
         pagination: buildPaginationMeta(comments.length, limit, page)
       });
     } catch (error) {
-      return sendError(res, 'Lỗi server khi lấy comments', 500, { error });
+      return sendError(res, 'Server error fetching comments', 500, { error });
     }
   },
 
@@ -59,7 +59,7 @@ const CommentController = {
       }
 
       if (isBlank(content) && files.length === 0) {
-        return sendValidationError(res, 'PostID và Content hoặc ảnh là bắt buộc');
+        return sendValidationError(res, 'PostID and content or images are required');
       }
 
       if (!accountId) {
@@ -72,7 +72,7 @@ const CommentController = {
         
         if (!moderationResult.isClean) {
           await logModeration(null, null, content, moderationResult);
-          return sendValidationError(res, moderationResult.reason || 'Nội dung vi phạm quy định cộng đồng');
+          return sendValidationError(res, moderationResult.reason || 'Content violates community guidelines');
         }
         
         // Log if needs review (but still allow)
@@ -106,7 +106,7 @@ const CommentController = {
         if (payload.ParentCommentID) {
           // Là reply, gửi cho chủ comment cha
           const parentComment = await CommentDAL.getById(payload.ParentCommentID);
-          if (parentComment && parentComment.AccountID && parentComment.AccountID !== accountId) {
+      if (parentComment && parentComment.AccountID && parentComment.AccountID !== accountId) {
             const UserDAL = require('../../DAL/Auth/userDAL');
             const fromUser = await UserDAL.getUserById(accountId);
             if (fromUser) {
@@ -121,7 +121,7 @@ const CommentController = {
                   username: fromUser.Username,
                   avatar: fromUser.AvatarUrl
                 },
-                message: `${fromUser.FullName || fromUser.Username} đã trả lời bình luận của bạn!`,
+                message: `${fromUser.FullName || fromUser.Username} replied to your comment!`,
                 link: `/post/${payload.PostID}?comment=${payload.ParentCommentID}`,
                 createdAt: new Date(),
                 read: false
@@ -147,7 +147,7 @@ const CommentController = {
                   username: fromUser.Username,
                   avatar: fromUser.AvatarUrl
                 },
-                message: `${fromUser.FullName || fromUser.Username} đã bình luận bài viết của bạn!`,
+                message: `${fromUser.FullName || fromUser.Username} commented on your post!`,
                 link: `/post/${payload.PostID}`,
                 createdAt: new Date(),
                 read: false
@@ -159,9 +159,9 @@ const CommentController = {
         }
       } catch (e) { /* ignore */ }
       const baseUrl = buildBaseUrl(req);
-      return sendCreated(res, formatCommentForResponse(created, baseUrl), 'Tạo comment thành công');
+  return sendCreated(res, formatCommentForResponse(created, baseUrl), 'Comment created successfully');
     } catch (error) {
-      return sendError(res, 'Lỗi server khi tạo comment', 500, { error });
+      return sendError(res, 'Server error creating comment', 500, { error });
     }
   },
 
@@ -175,13 +175,13 @@ const CommentController = {
 
       const comment = await CommentDAL.getById(idCheck.value);
       if (!comment) {
-        return sendNotFound(res, 'Comment không tồn tại');
+        return sendNotFound(res, 'Comment not found');
       }
 
       const baseUrl = buildBaseUrl(req);
       return sendSuccess(res, formatCommentForResponse(comment, baseUrl));
     } catch (error) {
-      return sendError(res, 'Lỗi server khi lấy comment', 500, { error });
+  return sendError(res, 'Server error fetching comment', 500, { error });
     }
   },
 
@@ -192,7 +192,7 @@ const CommentController = {
       const accountId = getAccountId(req);
 
       if (isBlank(content)) {
-        return sendValidationError(res, 'Nội dung comment không được để trống');
+        return sendValidationError(res, 'Comment content must not be empty');
       }
 
       const idCheck = ensurePositiveInteger(commentId, 'commentId');
@@ -206,15 +206,15 @@ const CommentController = {
 
       const isOwner = await CommentDAL.isOwner(idCheck.value, accountId);
       if (!isOwner) {
-        return sendUnauthorized(res, 'Comment không tồn tại hoặc bạn không có quyền sửa');
+        return sendUnauthorized(res, 'Comment not found or you do not have permission to edit');
       }
 
       const updatedComment = await CommentDAL.update(idCheck.value, content.trim());
       const baseUrl = buildBaseUrl(req);
 
-      return sendSuccess(res, formatCommentForResponse(updatedComment, baseUrl), 'Cập nhật comment thành công');
+  return sendSuccess(res, formatCommentForResponse(updatedComment, baseUrl), 'Comment updated successfully');
     } catch (error) {
-      return sendError(res, 'Lỗi server khi cập nhật comment', 500, { error });
+      return sendError(res, 'Server error updating comment', 500, { error });
     }
   },
 
@@ -234,14 +234,14 @@ const CommentController = {
 
       const isOwner = await CommentDAL.isOwner(idCheck.value, accountId);
       if (!isOwner) {
-        return sendUnauthorized(res, 'Comment không tồn tại hoặc bạn không có quyền xóa');
+        return sendUnauthorized(res, 'Comment not found or you do not have permission to delete');
       }
 
       await CommentDAL.delete(idCheck.value);
 
-      return sendSuccess(res, null, 'Xóa comment thành công');
+  return sendSuccess(res, null, 'Comment deleted successfully');
     } catch (error) {
-      return sendError(res, 'Lỗi server khi xóa comment', 500, { error });
+      return sendError(res, 'Server error deleting comment', 500, { error });
     }
   }
 };

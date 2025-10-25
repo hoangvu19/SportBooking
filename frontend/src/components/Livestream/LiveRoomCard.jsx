@@ -1,7 +1,9 @@
 import React from 'react';
 import DEFAULT_AVATAR from '../../utils/defaults';
+import { useI18n } from '../../i18n/hooks';
 
 export default function LiveRoomCard({ room, onClick, onView }) {
+  const { t } = useI18n();
   const title = room.Title || room.title || `Live #${room.LivestreamID || room.id}`;
   const cover = room.CoverUrl || room.coverUrl || room.Thumbnail || '';
   const viewers = room.ViewerCount ?? room.viewerCount ?? 0;
@@ -11,10 +13,10 @@ export default function LiveRoomCard({ room, onClick, onView }) {
     <div className='live-room-card' onClick={onClick} style={{cursor:'pointer'}}>
       <div className='live-room-thumb' style={{backgroundImage: `url(${cover})`, backgroundSize:'cover', backgroundPosition:'center', borderRadius:10, height:160}}>
         <div style={{position:'absolute',left:12,top:12}}>
-          <div style={{background:'#ff3b5c',color:'#fff',padding:'6px 8px',borderRadius:8,fontWeight:700}}>LIVE</div>
+          <div style={{background:'#ff3b5c',color:'#fff',padding:'6px 8px',borderRadius:8,fontWeight:700}}>{t('livestream.liveBadge')}</div>
         </div>
         <div style={{position:'absolute',right:12,top:12,background:'rgba(0,0,0,0.4)',padding:'6px 8px',borderRadius:8,color:'#fff'}}>
-          👁 {viewers}
+          👁 {String(viewers)}
         </div>
       </div>
       <div style={{marginTop:8,display:'flex',alignItems:'center',gap:10,justifyContent:'space-between'}}>
@@ -27,9 +29,9 @@ export default function LiveRoomCard({ room, onClick, onView }) {
         </div>
         <div>
           {room.IsActive ? (
-            <button onClick={(e) => { e.stopPropagation(); if (onView) onView(room); }} className='px-4 py-2 bg-pink-500 text-white rounded-lg'>View</button>
+            <button onClick={(e) => { e.stopPropagation(); if (onView) onView(room); }} className='px-4 py-2 bg-pink-500 text-white rounded-lg'>{t('livestream.view')}</button>
           ) : (
-            <div style={{padding:'6px 10px',background:'#333',color:'#fff',borderRadius:8}}>Offline</div>
+            <div style={{padding:'6px 10px',background:'#333',color:'#fff',borderRadius:8}}>{t('livestream.offline')}</div>
           )}
         </div>
       </div>

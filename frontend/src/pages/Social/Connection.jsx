@@ -4,17 +4,20 @@ import { useNavigate } from "react-router-dom";
 import { userAPI } from "../../utils/api";
 import Loading from "../../components/Shared/Loading";
 import DEFAULT_AVATAR from "../../utils/defaults";
+import { useI18n } from '../../i18n/hooks';
 
 const Connections = () => {
     const navigate = useNavigate();
+    const { t } = useI18n();
 
-    const [currentTab, setCurrentTab] = useState('Followers');
+    const [currentTab, setCurrentTab] = useState(t('connections.followers','Followers'));
     const [followers, setFollowers] = useState([]);
     const [following, setFollowing] = useState([]);
     const [connections, setConnections] = useState([]);
     const [pendingConnections] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    
 
     useEffect(() => {
         fetchData();
@@ -68,7 +71,7 @@ const Connections = () => {
             }
         } catch (err) {
             console.error('Error fetching connections:', err);
-            setError('Không thể tải danh sách kết nối');
+            setError(t('connections.loadError','Unable to load connections list'));
         } finally {
             setLoading(false);
         }
@@ -89,10 +92,10 @@ const Connections = () => {
     // connections and pendingConnections are managed via state
 
     const dataArray = [
-        {label :'Followers',value: followers, icon: User},
-        {label :'Following',value: following, icon: UserPlus},
-        {label :'Pending',value: pendingConnections, icon: UserRoundPen},
-        {label :'Connections',value: connections, icon: UserCheck},
+        {label : t('connections.followers','Followers'),value: followers, icon: User},
+        {label : t('connections.following','Following'),value: following, icon: UserPlus},
+        {label : t('connections.pending','Pending'),value: pendingConnections, icon: UserRoundPen},
+        {label : t('connections.connections','Connections'),value: connections, icon: UserCheck},
     ];
 
     if (loading) {
@@ -103,8 +106,8 @@ const Connections = () => {
         <div className='min-h-screen bg-slate-50'>
             <div className='max-w-6xl mx-auto p-6'>
                 <div className='mb-8'>
-                    <h1 className='text-3xl font-bold text-slate-900 mb-2'>Connections</h1>
-                    <p className='text-slate-600'>Manage your network and discover new connections</p>
+                    <h1 className='text-3xl font-bold text-slate-900 mb-2'>{t('connections.title','Connections')}</h1>
+                    <p className='text-slate-600'>{t('connections.subtitle','Manage your network and discover new connections')}</p>
                 </div>
                 
                 {error && (
@@ -126,7 +129,7 @@ const Connections = () => {
                 {/* Tabs */}
                 <div className='inline-flex flex-wrap items-center border border-gray-200 rounded-md p-1 bg-white shadow-sm'>
                     {dataArray.map((tab) => (
-                    <button 
+                        <button 
                         onClick={() => setCurrentTab(tab.label)} 
                         key={tab.label}
                         className={`cursor-pointer flex items-center px-3 py-1 text-sm rounded-md transition-colors ${currentTab === tab.label ? 'bg-white font-medium text-black' : 'text-gray-500 hover:text-black'}`}
@@ -161,24 +164,24 @@ const Connections = () => {
                                 <button onClick={() => navigate(`/profile/${user._id}`)}
                                     className='w-full p-2 text-sm rounded bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition text-white cursor-pointer'
                                 >
-                                    View Profile
+                                    {t('common.viewProfile','View Profile')}
                                 </button>
                                 {currentTab === 'Following' && (
-                                    <button 
+                                        <button 
                                         onClick={() => handleUnfollow(user._id)}
                                         className='w-full p-2 text-sm rounded bg-slate-100 hover:bg-slate-200 text-black active:scale-95 transition cursor-pointer'>
-                                        Unfollow
+                                        {t('connections.unfollow','Unfollow')}
                                     </button>
                                 )}
                                 {currentTab === 'Pending' && (
                                     <button className='w-full p-2 text-sm rounded bg-slate-100 hover:bg-slate-200 text-black active:scale-95 transition cursor-pointer'>
-                                        Accept
+                                        {t('connections.accept','Accept')}
                                     </button>
                                 )}
                                 {currentTab === 'Connections' && (
                                     <button onClick={() => navigate(`/messages/${user._id}`)} className='w-full p-2 text-sm rounded bg-slate-100 hover:bg-slate-200 text-black active:scale-95 transition cursor-pointer'>
                                         <MessageSquare className="w-4 h-4 inline-block mr-1" />
-                                        Message
+                                        {t('common.message','Message')}
                                     </button>
                                 )}
                             </div>

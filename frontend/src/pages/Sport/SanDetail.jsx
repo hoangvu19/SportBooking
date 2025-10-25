@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import "../../App.css";
 import { facilityAPI } from "../../utils/api";
+import { useI18n } from '../../i18n/hooks';
 import DEFAULT_AVATAR from "../../utils/defaults";
 import BookingModal from "../../components/Sport/BookingModal";
 import FeedbackSection from "../../components/Sport/FeedbackSection";
@@ -16,9 +17,12 @@ export default function SanDetail() {
   const [showBooking, setShowBooking] = useState(false);
   const [bookingInitialSlots, setBookingInitialSlots] = useState([]);
   const [bookingInitialDate, setBookingInitialDate] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [san, setSan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { t } = useI18n();
 
   // generateSchedule hoisted to avoid TDZ and stable reference
   function generateSchedule(basePrice, fieldId) {
@@ -30,9 +34,9 @@ export default function SanDetail() {
       currentDate.setDate(today.getDate() + i);
       
       const dateStr = currentDate.toISOString().split('T')[0];
-      const displayStr = i === 0 ? 'Hôm nay' : 
-                        i === 1 ? 'Ngày mai' :
-                        currentDate.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric' });
+      const displayStr = i === 0 ? t('common.today','Today') : 
+        i === 1 ? t('common.tomorrow','Tomorrow') :
+        currentDate.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'numeric' });
       
       // Attempt to fetch real availability from backend for this field/day
       // We'll optimistically create a placeholder slots array and then try to patch booked state
@@ -82,22 +86,22 @@ export default function SanDetail() {
     setError(null);
     try {
       const result = await facilityAPI.getById(Number(sanId));
-      if (result.success && result.data) {
+  if (result.success && result.data) {
         const field = result.data;
         // SportField API returns data in correct format already
         const sanData = {
           SanID: field.SanID || field.FieldID,
           FieldID: field.FieldID,
           TenSan: field.TenSan || field.FieldName,
-          LoaiSan: field.LoaiSan || field.FieldType || 'Không rõ',
-          MonTheThao: field.MonTheThao || field.SportName || 'Không rõ',
+          LoaiSan: field.LoaiSan || field.FieldType || 'Unknown',
+          MonTheThao: field.MonTheThao || field.SportName || 'Unknown',
           GiaThue: field.GiaThue || field.RentalPrice || 0,
-          TrangThai: field.TrangThai || field.Status || 'Còn trống',
-          KhuVuc: field.KhuVuc || field.AreaName || 'Không rõ',
-          FieldArea: field.FieldArea || field.KhuVuc || 'Không rõ',
+          TrangThai: field.TrangThai || field.Status || 'Available',
+          KhuVuc: field.KhuVuc || field.AreaName || 'Unknown',
+          FieldArea: field.FieldArea || field.KhuVuc || 'Unknown',
           HinhAnh: field.HinhAnh || field.Image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" fill="%23E2E8F0"%3E%3Crect width="200" height="140" fill="%23E2E8F0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%23718096"%3ENo Image%3C/text%3E%3C/svg%3E',
           ChuSoHuu: field.ChuSoHuu || {
-            HoTen: field.OwnerName || 'Chưa rõ',
+            HoTen: field.OwnerName || 'Unknown',
             Avatar: field.OwnerAvatar || DEFAULT_AVATAR
           }
         };
@@ -106,11 +110,11 @@ export default function SanDetail() {
         // Generate schedule with time slots for next 7 days using real field id
         generateSchedule(sanData.GiaThue, sanData.FieldID || sanData.SanID);
       } else {
-        setError(result.message || 'Không thể tải thông tin sân');
+  setError(result.message || 'Unable to load facility details');
       }
     } catch (err) {
       console.error('Fetch facility detail error:', err);
-      setError('Lỗi khi tải thông tin sân');
+  setError('Error loading facility details');
     } finally {
       setLoading(false);
     }
@@ -119,6 +123,40 @@ export default function SanDetail() {
   React.useEffect(() => {
     fetchFacilityDetail();
   }, [fetchFacilityDetail]);
+
+  // If navigated here with state.openBooking, open the booking modal and clear the state
+  useEffect(() => {
+    try {
+      // First check navigation state
+      const st = location && location.state ? location.state : null;
+      const params = new URLSearchParams(location.search);
+      const qpOpen = params.get('openBooking');
+
+      const shouldOpenFromState = st && st.openBooking;
+      const shouldOpenFromQuery = qpOpen === '1' || qpOpen === 'true';
+
+      if (shouldOpenFromState || shouldOpenFromQuery) {
+        // If we already have san data, open immediately; otherwise wait for san fetch
+        if (san) {
+          // Prefer state-provided initial values, fall back to query-based defaults
+          setBookingInitialDate(st?.initialDate || null);
+          setBookingInitialSlots(st?.initialSlots || []);
+          setShowBooking(true);
+        } else {
+          // If san is not yet loaded, do NOT clear the navigation state or query here.
+          // Wait until san is available so the effect can open the modal on re-run.
+          return;
+        }
+
+        // Clear history state and query so refresh/back does not reopen modal --- do this only after
+        // we've successfully opened the modal (san existed and setShowBooking was called).
+        try {
+          // Remove query param by navigating to same path without search and without state
+          navigate(location.pathname, { replace: true, state: {} });
+        } catch { /* ignore */ }
+      }
+    } catch (err) { console.debug('No navigation state', err); }
+  }, [location, san, navigate]);
 
   
 
@@ -133,14 +171,14 @@ export default function SanDetail() {
             onClick={fetchFacilityDetail}
             className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           >
-            Thử lại
+            {t('common.retry','Retry')}
           </button>
         </div>
       </div>
     );
   }
 
-  if (!san) return <div className="p-6">Không tìm thấy sân!</div>;
+  if (!san) return <div className="p-6">{t('booking.facilityNotFound','Field not found!')}</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
@@ -178,8 +216,8 @@ export default function SanDetail() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium">Môn thể thao</p>
-                  <p className="text-sm font-bold text-gray-800">{san.MonTheThao}</p>
+      <p className="text-xs text-gray-500 font-medium">{t('booking.sport','Sport')}</p>
+    <p className="text-sm font-bold text-gray-800">{san.MonTheThao}</p>
                 </div>
               </div>
               
@@ -191,7 +229,7 @@ export default function SanDetail() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium">Loại sân</p>
+                  <p className="text-xs text-gray-500 font-medium">{t('booking.fieldType','Field type')}</p>
                   <p className="text-sm font-bold text-gray-800">{san.LoaiSan}</p>
                 </div>
               </div>
@@ -204,14 +242,14 @@ export default function SanDetail() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium">Giá thuê</p>
+                  <p className="text-xs text-gray-500 font-medium">{t('booking.price','Price')}</p>
                   <p className="text-lg font-bold text-green-600">{san.GiaThue.toLocaleString()}đ</p>
                 </div>
               </div>
             </div>
             
             {/* Owner Info */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
               <div className="flex items-center space-x-3">
                 <img 
                   src={san.ChuSoHuu.Avatar} 
@@ -219,7 +257,7 @@ export default function SanDetail() {
                   className="w-12 h-12 rounded-full border-2 border-indigo-500"
                 />
                 <div>
-                  <p className="text-xs text-gray-500">Chủ sân</p>
+                  <p className="text-xs text-gray-500">{t('booking.owner','Owner')}</p>
                   <p className="font-semibold text-gray-800">{san.ChuSoHuu.HoTen}</p>
                 </div>
               </div>
@@ -227,19 +265,19 @@ export default function SanDetail() {
                 onClick={() => setShowBooking(true)}
                 className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200"
               >
-                Đặt sân ngay
+                {t('booking.bookNow','Book now')}
               </button>
             </div>
           </div>
         </div>
         
-        {/* Schedule Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex items-center space-x-2 mb-6">
+  {/* Schedule Section */}
+  <div className="bg-white rounded-2xl shadow-lg p-6 mb-10">
+            <div className="flex items-center space-x-2 mb-6">
             <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <h2 className="text-2xl font-bold text-gray-800">Lịch sân còn trống</h2>
+            <h2 className="text-2xl font-bold text-gray-800">{t('booking.availableSchedule','Available schedule')}</h2>
           </div>
           
           {schedule.length > 0 ? (
@@ -264,13 +302,13 @@ export default function SanDetail() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-3 text-sm text-gray-600">
-                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-white border border-gray-300 inline-block"/> Còn trống</span>
-                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-200 inline-block"/> Đã đặt</span>
-                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-200 inline-block"/> Đã chọn</span>
+                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-white border border-gray-300 inline-block"/> {t('booking.legend.available')}</span>
+                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-200 inline-block"/> {t('booking.legend.booked')}</span>
+                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-200 inline-block"/> {t('booking.legend.selected')}</span>
                   </div>
                 </div>
                 <div>
-                  <button
+                    <button
                     className="text-indigo-600 text-sm underline"
                     onClick={() => {
                       // Quick jump: open booking modal for today
@@ -279,7 +317,7 @@ export default function SanDetail() {
                       setShowBooking(true);
                     }}
                   >
-                    Đặt nhiều khung giờ
+                    {t('booking.bookMultipleSlots','Book multiple slots')}
                   </button>
                 </div>
               </div>
@@ -322,13 +360,13 @@ export default function SanDetail() {
                           <span className={`text-[11px] ${slotState === 'past' ? 'text-gray-400' : 'text-gray-400'}`}> - {slot.end}</span>
                         </div>
                         <div className="mt-1">
-                          {slotState === 'booked' ? (
-                            <span className="text-red-600 text-[12px]">Đã được đặt</span>
-                          ) : slotState === 'past' ? (
-                            <span className="text-gray-400 text-[12px]">Quá giờ</span>
-                          ) : (
-                            <span className="text-green-700 text-sm">{slot.price.toLocaleString()}đ</span>
-                          )}
+                                  {slotState === 'booked' ? (
+                                      <span className="text-red-600 text-[12px]">{t('booking.legend.booked')}</span>
+                                    ) : slotState === 'past' ? (
+                                      <span className="text-gray-400 text-[12px]">{t('booking.past','Past')}</span>
+                                    ) : (
+                                      <span className="text-green-700 text-sm">{slot.price.toLocaleString()}đ</span>
+                                    )}
                         </div>
                       </div>
                     </div>
@@ -338,16 +376,16 @@ export default function SanDetail() {
               </div>
             </>
           ) : (
-            <div className="text-center py-12">
+                <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent mx-auto mb-4"></div>
-              <p className="text-gray-500 font-medium">Đang tải lịch sân...</p>
+                <p className="text-gray-500 font-medium">{t('booking.loadingSchedule','Loading schedule...')}</p>
             </div>
           )}
         </div>
+        <FeedbackSection targetType="Field" targetId={san.FieldID || san.SanID} />
       </div>
 
-      {/* Feedback Section */}
-      <FeedbackSection targetType="Field" targetId={san.FieldID || san.SanID} />
+    
 
       {/* Booking Modal */}
       {showBooking && (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import DEFAULT_AVATAR from "../../utils/defaults";
+import toast from 'react-hot-toast';
 import { BadgeCheck, Heart, MessageCircle, Share2, MoreHorizontal } from 'lucide-react';
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
@@ -9,9 +10,11 @@ import PostModal from './PostModal';
 import ShareModal from './ShareModal';
 import BookingStatusCard from './BookingStatusCard';
 import { bookingPostAPI } from '../../utils/bookingPostAPI';
+import { useI18n } from '../../i18n/hooks';
 
 
 const PostCard = ({post}) => {
+    const { t } = useI18n();
 
     const rawContent = post?.content || '';
     const postWithHashtags = rawContent.replace(/#(\w+)/g, '<span class="text-indigo-600 ">#$1</span>');
@@ -217,14 +220,14 @@ const PostCard = ({post}) => {
         const sp = post?.shared_post;
         if (!sp) { setEmbeddedPost(null); return; }
 
-        // Check if shared_post already has booking data (from backend enhancement)
+        // Check if shared_post already has booking data (from backend enhancement or Profile enrichment)
         const hasBooking = (obj) => !!(
             obj?.Booking ||
             obj?.booking ||
             obj?.FacilityName ||
             obj?.FieldName ||
             obj?.TotalAmount ||
-            (obj?.BookingID && (obj?.FacilityName || obj?.FieldName))
+            (obj?.BookingID && obj?.booking) // If BookingID exists and booking object is present
         );
 
         // Traverse chain to find any ancestor that already includes booking fields
@@ -239,7 +242,7 @@ const PostCard = ({post}) => {
         }
 
         if (bookingAncestor) {
-            console.debug('[PostCard] ✅ Found booking data in shared_post chain', { postId: postId });
+            console.debug('[PostCard] ✅ Found booking data in shared_post chain', { postId: postId, hasBookingObject: !!bookingAncestor.booking });
             setEmbeddedPost(bookingAncestor);
             return;
         }
@@ -281,10 +284,10 @@ const PostCard = ({post}) => {
         };
 
         attemptFetchBookingPost();
-    }, [post.shared_post, postId]);
+    }, [post.shared_post, post.shared_post?.booking, postId]);
 
     return (
-                <div className="relative bg-white rounded-lg shadow-md p-4 space-y-2 w-full">
+                <div className="relative bg-white rounded-lg shadow-md p-4 space-y-2 w-full max-w-3xl">
       {/* User into */}
             <div onClick={() => navigate(`/profile/${post.user._id}`)} className="inline-flex items-center gap-3 cursor-pointer">
         {/* User profile picture */}
@@ -297,12 +300,12 @@ const PostCard = ({post}) => {
         {/* User name and username */}
             <div>
                 <div className="flex items-center space-x-1">
-                <span>{post.user?.full_name || "Người dùng"}</span>
+                <span>{post.user?.full_name || t('post.unknownUser')}</span>
                 {/* Badge/Checkmark icon */}
                 <BadgeCheck className="w-4 h-4 text-blue-500" />
                 </div>
                 <div className="text-gray-500 text-sm">
-                @{post.user?.username || "Ẩn danh"} • {post.createdAt ? moment(post.createdAt).fromNow() : ""}
+                @{post.user?.username || t('post.anonymous')} • {post.createdAt ? moment(post.createdAt).fromNow() : ""}
                 </div>
             </div>
         </div>
@@ -312,24 +315,26 @@ const PostCard = ({post}) => {
                 <button onClick={() => setMenuOpen(v => !v)} aria-haspopup="true" aria-expanded={menuOpen} className="p-1 rounded hover:bg-gray-100">
                     <MoreHorizontal className="w-5 h-5 text-gray-600" />
                 </button>
-                {menuOpen && (
+                        {menuOpen && (
                     <div className="absolute right-0 mt-2 bg-white border rounded-md shadow z-20 w-44">
-                        <button onClick={() => { setIsEditing(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100">Chỉnh sửa bài viết</button>
+                        <button onClick={() => { setIsEditing(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100">{t('post.editPost')}</button>
                         <button onClick={async () => {
                             setMenuOpen(false);
-                            if (!window.confirm('Bạn có chắc muốn xóa bài viết này?')) return;
+                            if (!window.confirm(t('post.deleteConfirm'))) return;
                             try {
                                 const resp = await postAPI.delete(postId);
                                 if (resp && resp.success) {
-                                    window.location.reload();
+                                            toast.success(t('post.deleteSuccess'));
+                                            // reload to reflect deletion
+                                            window.location.reload();
                                 } else {
-                                    alert(resp.message || 'Xóa thất bại');
+                                            toast.error(resp.message || t('post.deleteFailed'));
                                 }
                             } catch (err) {
                                 console.error('Delete error', err);
-                                alert('Lỗi khi xóa bài viết');
+                                        toast.error(t('post.deleteError'));
                             }
-                        }} className='w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100'>Xóa bài viết</button>
+                        }} className='w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100'>{t('post.deletePost')}</button>
                     </div>
                 )}
             </div>
@@ -343,30 +348,38 @@ const PostCard = ({post}) => {
                         try {
                             const resp = await postAPI.update(postId, { content: editContent });
                             if (resp && resp.success) {
+                                toast.success(t('post.saved') || t('common.save'));
                                 window.location.reload();
                             } else {
-                                alert(resp.message || 'Cập nhật thất bại');
+                                toast.error(resp.message || t('post.updateFailed'));
                             }
                         } catch (err) {
                             console.error('Update error', err);
-                            alert('Lỗi khi cập nhật bài viết');
+                            toast.error(t('post.updateError'));
                         }
-                    }} className='px-3 py-1 bg-green-600 text-white rounded'>Lưu</button>
-                    <button onClick={()=>{ setIsEditing(false); setEditContent(post.content || ''); }} className='px-3 py-1 border rounded'>Hủy</button>
+                    }} className='px-3 py-1 bg-green-600 text-white rounded'>{t('common.save')}</button>
+                    <button onClick={()=>{ setIsEditing(false); setEditContent(post.content || ''); }} className='px-3 py-1 border rounded'>{t('common.cancel')}</button>
                 </div>
             </div>
         )}
     {/* If this is a shared post, show attribution and embedded original */}
         {post.is_shared ? (
             <div className="text-sm text-gray-700">
-                <div className="text-xs text-gray-500 mb-2">{post.user.full_name} đã chia sẻ</div>
+                <div className="text-xs text-gray-500 mb-2">{post.user.full_name} shared</div>
                 {post.shared_note && <div className="mb-2 text-gray-800 whitespace-pre-line">{post.shared_note}</div>}
                 {/* embedded original */}
                 {post.shared_post ? (
                     // If the original (shared_post) contains booking data, delegate rendering to BookingStatusCard
                     (() => {
                         const sp = embeddedPost || post.shared_post;
-                        const spIsBooking = !!(sp?.booking || sp?.BookingID || sp?.is_booking || (sp?.PostID && sp?.FieldName));
+                        // Check if this is a booking post - improved detection
+                        const spIsBooking = !!(
+                            sp?.booking?.BookingID || 
+                            sp?.Booking?.BookingID || 
+                            (sp?.BookingID && (sp?.booking || sp?.FacilityName)) || 
+                            sp?.is_booking || 
+                            (sp?.PostID && sp?.FieldName)
+                        );
                         if (spIsBooking) {
                             // Pass the shared_post into BookingStatusCard so it renders full booking details
                             return (
@@ -394,7 +407,7 @@ const PostCard = ({post}) => {
                         );
                     })()
                 ) : (
-                    <div className="text-sm text-gray-500">Bài viết gốc không còn tồn tại</div>
+                    <div className="text-sm text-gray-500">{t('post.originalMissing')}</div>
                 )}
             </div>
                 ) : (
@@ -441,7 +454,7 @@ const PostCard = ({post}) => {
 
                                                                         <div className="mt-3 flex items-center justify-between">
                                                                             <div className="players-status flex items-center gap-3">
-                                                                                <div className="text-sm">👥 {currentPlayers}/{maxPlayers} người chơi</div>
+                                                <div className="text-sm">👥 {currentPlayers}/{maxPlayers} {t('post.players')}</div>
                                                                             </div>
                                                                             <div>
                                                                                 <button
@@ -449,7 +462,7 @@ const PostCard = ({post}) => {
                                                                                     className={`px-3 py-1 rounded border ${((maxPlayers && currentPlayers) && (currentPlayers >= maxPlayers)) ? 'opacity-60 cursor-not-allowed' : 'bg-green-600 text-white'}`}
                                                                                     disabled={maxPlayers && currentPlayers && (currentPlayers >= maxPlayers)}
                                                                                 >
-                                                                                    { (maxPlayers && currentPlayers && (currentPlayers >= maxPlayers)) ? 'Đã đủ người' : 'Tham gia'}
+                                                                                    { (maxPlayers && currentPlayers && (currentPlayers >= maxPlayers)) ? t('post.full') : t('post.join')}
                                                                                 </button>
                                                                             </div>
                                                                         </div>
@@ -568,7 +581,7 @@ const PostCard = ({post}) => {
                         <span className="font-medium mr-2">{commentPreview.user?.full_name || commentPreview.FullName || commentPreview.Username}</span>
                         <span className="truncate block max-w-xl">{commentPreview.Content || commentPreview.content}</span>
                     </div>
-                    <div className="text-xs text-gray-400">Xem tất cả {commentsCount} bình luận</div>
+                    <div className="text-xs text-gray-400">{t('post.viewAllComments').replace('{count}', String(commentsCount))}</div>
                 </div>
             )}
             <PostModal post={post} visible={modalOpen} onClose={() => setModalOpen(false)} onCommentCreated={() => setCommentsCount((n) => (n || 0) + 1)} />

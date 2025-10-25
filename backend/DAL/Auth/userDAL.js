@@ -91,7 +91,7 @@ class UserDAL {
             }
 
             if (fields.length === 0) {
-                throw new Error('Không có dữ liệu để cập nhật');
+                throw new Error('No data to update');
             }
 
             // Add UpdatedAt timestamp

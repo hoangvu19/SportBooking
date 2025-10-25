@@ -83,33 +83,19 @@ class PostDAL {
 
   /**
    * Get multiple posts by IDs (preserve order of ids argument)
+   * Now uses getById to ensure booking data and shared posts are included
    */
   static async getByIds(postIds = []) {
     try {
       if (!Array.isArray(postIds) || postIds.length === 0) return [];
-      const pool = await poolPromise;
-      // Use table-valued parameter style via a temporary table approach
-      const idsCsv = postIds.map(id => parseInt(id)).filter(Boolean).join(',');
-      const result = await pool.request()
-        .query(`
-          SELECT p.*, a.Username, a.FullName, a.AvatarUrl
-          FROM Post p
-          JOIN Account a ON p.AccountID = a.AccountID
-          WHERE p.PostID IN (${idsCsv}) AND p.Status = 'Visible' AND a.Status = 'Active'
-        `);
-
-      const rowsById = {};
-      result.recordset.forEach(r => { rowsById[r.PostID] = r; });
-
-      const posts = await Promise.all(postIds.map(async (pid) => {
-        const postData = rowsById[pid];
-        if (!postData) return null;
-        const images = await PostDAL.getPostImages(pid);
-        const reactions = await PostDAL.getPostReactions(pid);
-        const commentsCount = await PostDAL.getCommentsCount(pid);
-        const sharesCount = await PostDAL.getSharesCount(pid);
-        return new Post({ ...postData, Images: images, Reactions: reactions, CommentsCount: commentsCount, SharesCount: sharesCount });
-      }));
+      
+      // Use getById for each post to get full data including booking and shared posts
+      const posts = await Promise.all(
+        postIds.map(pid => PostDAL.getById(parseInt(pid), true).catch(err => {
+          console.debug(`PostDAL.getByIds: Failed to get post ${pid}:`, err?.message);
+          return null;
+        }))
+      );
 
       return posts.filter(Boolean);
     } catch (error) {

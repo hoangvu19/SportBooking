@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { storyAPI } from "../../utils/api";
 import useAuth from "../../hooks/useAuth";
 import { toast } from 'react-hot-toast';
+import { useI18n } from '../../i18n/hooks';
 
 const STORY_DURATION = 5000; // 5 seconds for image/text stories
 const PROGRESS_INTERVAL = 100; // Update progress every 100ms
@@ -10,6 +11,7 @@ const MIN_SWIPE_DISTANCE = 50; // Minimum distance for swipe detection
 
 const StoryViewer = ({ viewStory, setViewStory, stories = [], currentIndex = 0, setCurrentIndex, onStoryDeleted }) => {
   const { user } = useAuth();
+  const { t } = useI18n();
   const isOwnStory = user && viewStory && user._id === viewStory.user?._id;
 
   // State
@@ -60,7 +62,7 @@ const StoryViewer = ({ viewStory, setViewStory, stories = [], currentIndex = 0, 
     try {
       const response = await storyAPI.delete(viewStory._id);
       if (response.success) {
-        toast.success('Story đã được xóa');
+        toast.success(t('story.deleted'));
         
         // Notify parent component about deletion to trigger refresh
         if (typeof onStoryDeleted === 'function') {
@@ -85,9 +87,9 @@ const StoryViewer = ({ viewStory, setViewStory, stories = [], currentIndex = 0, 
       }
     } catch (error) {
       console.error('Error deleting story:', error);
-      toast.error('Không thể xóa story');
+      toast.error(t('story.deleteFailed'));
     }
-  }, [isOwnStory, viewStory, stories, currentStoryIndex, setCurrentIndex, setViewStory, handleClose, onStoryDeleted]);
+  }, [isOwnStory, viewStory, stories, currentStoryIndex, setCurrentIndex, setViewStory, handleClose, onStoryDeleted, t]);
 
   // Progress management
   const startProgress = useCallback(() => {
@@ -365,7 +367,7 @@ const StoryViewer = ({ viewStory, setViewStory, stories = [], currentIndex = 0, 
       {showViewers && (
         <div className='absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[60vh] overflow-y-auto'>
           <div className='flex justify-between items-center mb-4'>
-            <h3 className='text-xl font-bold'>Người xem ({viewers.length})</h3>
+            <h3 className='text-xl font-bold'>{t('story.viewersTitle', 'Viewers')} ({viewers.length})</h3>
             <button 
               onClick={() => setShowViewers(false)} 
               className='text-gray-500 hover:text-gray-700'
@@ -387,7 +389,7 @@ const StoryViewer = ({ viewStory, setViewStory, stories = [], currentIndex = 0, 
                   <p className='text-sm text-gray-500'>@{viewer.viewer.username}</p>
                 </div>
                 <span className='text-xs text-gray-400'>
-                  {new Date(viewer.viewed_at).toLocaleTimeString('vi-VN', { 
+                  {new Date(viewer.viewed_at).toLocaleTimeString('default', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
                   })}
