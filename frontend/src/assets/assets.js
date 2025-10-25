@@ -2,7 +2,7 @@ import logo from './wws_logo.png';
 import sample_cover from './sample_cover.jpg'
 import sample_profile from './sample_profile.jpg'
 import bgImage from './image.png'
-import { Home, MessageCircle, Search, UserIcon, Users, Calendar, Video } from 'lucide-react'
+import { Home, MessageCircle, Search, UserIcon, Users, Calendar, CalendarCheck, Video } from 'lucide-react'
 import sponsored_img from './sponsored_img.png'
 
 export const assets = {
@@ -21,5 +21,5 @@ export const menuItemsData = [
     { to: '/discover', labelKey: 'menu.discover', Icon: Search },
     { to: '/profile', labelKey: 'menu.profile', Icon: UserIcon },
     { to: '/sanlist', labelKey: 'menu.bookingSports', Icon: Calendar },
-    { to: '/my-bookings', labelKey: 'menu.myBookings', Icon: Calendar }
+    { to: '/my-bookings', labelKey: 'menu.myBookings', Icon: CalendarCheck }
 ];

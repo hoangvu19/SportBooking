@@ -18,19 +18,17 @@ const Feed = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const fetchFeeds = async (pageNum, isLoadMore = false) => {
     try {
-      if (isLoadMore) {
-        setLoading(true);
-      } else {
-        setLoading(true);
-      }
       setError(null);
-      
+      if (isLoadMore) setLoadingMore(true);
+      else setLoading(true);
+
       console.log(`📥 Fetching page ${pageNum}, isLoadMore: ${isLoadMore}`);
       const response = await postAPI.getFeed(pageNum, 10);
-      
+
       if (response.success) {
         const postsArray = response.data.posts || response.data || [];
         console.log(`✅ Received ${postsArray.length} posts for page ${pageNum}`);
@@ -66,18 +64,22 @@ const Feed = () => {
           // Replace feeds for initial load
           setFeeds(transformedPosts);
         }
-        
+
         const hasMorePosts = response.data.pagination?.hasMore || false;
         console.log(`📊 hasMore: ${hasMorePosts}`);
         setHasMore(hasMorePosts);
-        } else {
+      } else {
         setError(response.message || 'Unable to load posts');
       }
     } catch (err) {
       console.error('❌ Error fetching feeds:', err);
       setError('Unable to connect to server');
     } finally {
-      setLoading(false);
+      // Use the isLoadMore parameter to decide which loading flag to clear.
+      // Relying on the state variable here could read the stale value (setState is async)
+      // and leave loadingMore stuck true. Clearing by the function param is reliable.
+      if (isLoadMore) setLoadingMore(false);
+      else setLoading(false);
     }
   };
 
@@ -85,6 +87,7 @@ const Feed = () => {
   useEffect(() => {
     console.log('🚀 Initial load');
     fetchFeeds(1, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const { t } = useI18n();
@@ -104,7 +107,10 @@ const Feed = () => {
   };
 
 
-    return !loading ? (
+  // If we're on the initial load and still loading, show the global loader.
+  if (loading && feeds.length === 0) return <Loading />;
+
+  return (
     <div className='w-full h-full overflow-y-visible no-scrollbar py-6'>
       <div className='w-full grid grid-cols-1 lg:grid-cols-3 gap-8'>
         <div className='col-span-2'>
@@ -134,13 +140,14 @@ const Feed = () => {
             )}
           </div>
           
-          {hasMore && !loading && (
+          {hasMore && (
             <div className='text-center py-4'>
               <button 
                   onClick={handleLoadMore}
-                  className='px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700'
+                  disabled={loadingMore}
+                  className='px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-60'
                 >
-                  {t('common.loadMore', 'Load more')}
+                  {loadingMore ? t('common.loading', 'Loading...') : t('common.loadMore', 'Load more')}
                 </button>
             </div>
           )}
@@ -158,7 +165,7 @@ const Feed = () => {
         </aside>
       </div>
     </div>
-  ) : <Loading />
+  );
 }
 
 export default Feed;

@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
-import Login from "./pages/Auth/login";    
+import Login from "./pages/Auth/login";
 import Feed from "./pages/Social/Feed";
 import Messages from "./pages/Social/Messages";
 import ChatBox from "./pages/Social/ChatBox";  
@@ -36,7 +36,9 @@ const App = () => {
       <Toaster position="top-center" reverseOrder={false} />
       <Routes>
         {!user ? (
-          <Route path="*" element={<Login />} />
+          <>
+            <Route path="*" element={<Login />} />
+          </>
         ) : (
           <Route path="/" element={<Layout />}>
             <Route index element={<Feed />} />

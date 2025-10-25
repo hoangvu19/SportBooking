@@ -35,6 +35,7 @@ export const TRANSLATIONS = {
       edit: 'Edit',
       delete: 'Delete',
       loading: 'Loading...',
+      loadMore: 'Load more',
       close: 'Close',
       confirmRecall: 'Are you sure you want to recall this message?',
       na: 'N/A',
@@ -52,6 +53,38 @@ export const TRANSLATIONS = {
       hoursAgo: '{n} hours ago',
       daysAgo: '{n} days ago',
       saving: 'Saving...'
+    },
+    terms: {
+      title: 'Terms & Policies',
+      print: 'Print / Save as PDF',
+      saveAsPdf: 'Save as PDF',
+      policyTitle: 'Service Usage Policy',
+      policyIntro: 'WhereWeSport is a platform that connects customers, facility owners and players. We are not responsible for real-life disputes between parties.',
+      policyExamplesHeading: 'Examples:',
+      policyExamples: {
+        a: 'The organizer collects enough players but does not show up at the field → responsibility belongs to the organizer, not the platform.',
+        b: 'A participant confirms attendance but does not come → responsibility belongs to the participant and the organizer.',
+        c: 'Sharing court fees (e.g. one person deposits 50%, others promise to pay the rest) is a private agreement. If someone fails to pay, the platform does not intervene.'
+      },
+      termsTitle: 'Terms of Use',
+      termsList: {
+        1: 'Users agree to provide accurate information (phone number, email, etc.).',
+        2: 'Posting irrelevant, offensive, violent, pornographic, or spam content is prohibited. Violations may be removed and accounts may be acted upon.',
+        3: 'Facility owners may set deposit percentages per event/booking.',
+        4: 'Admins may suspend or disable accounts violating policies.',
+        5: 'In disputes between customers and facility owners, WhereWeSport is not financially liable; the platform only provides reporting tools for the parties to resolve or bring to authorities.'
+      },
+      notesTitle: 'Additional Notes',
+      notesIntro: 'We recommend users:',
+      notesList: {
+        1: 'Always verify listing details and agreements before participating.',
+        2: 'Use the reporting tools if you encounter fraud or violations.',
+        3: 'Do not share sensitive information (passwords, OTP) on the platform.'
+      },
+      footer: {
+        updated: 'Last updated: {date}',
+        contact: 'Support contact: {email}'
+      }
     },
     chat: {
       recallConfirm: 'Are you sure you want to recall this message?',
@@ -422,6 +455,7 @@ export const TRANSLATIONS = {
       edit: 'Chỉnh sửa',
       delete: 'Xóa',
       loading: 'Đang tải...',
+      loadMore: 'Tải thêm',
       close: 'Đóng',
       confirmRecall: 'Bạn có chắc muốn thu hồi tin nhắn này?',
       na: 'N/A',
@@ -439,6 +473,38 @@ export const TRANSLATIONS = {
       hoursAgo: '{n} giờ trước',
       daysAgo: '{n} ngày trước',
       saving: 'Đang lưu...'
+    },
+    terms: {
+      title: 'Chính sách & Điều khoản',
+      print: 'In / Lưu PDF',
+      saveAsPdf: 'Lưu PDF',
+      policyTitle: 'Chính sách sử dụng dịch vụ',
+      policyIntro: 'WhereWeSport chỉ là nền tảng kết nối giữa khách hàng, chủ sân và người chơi. Chúng tôi không chịu trách nhiệm cho các tình huống phát sinh trong đời thực giữa các bên.',
+      policyExamplesHeading: 'Ví dụ minh họa:',
+      policyExamples: {
+        a: 'Người đăng bài gom đủ thành viên nhưng không đến sân → đây là trách nhiệm của người đăng, không phải của nền tảng.',
+        b: 'Người tham gia xác nhận tham gia trận đấu nhưng không đến → trách nhiệm thuộc về người tham gia và người đăng.',
+        c: 'Việc chia tiền sân (ví dụ: người đặt cọc trước 50%, người khác hứa trả phần còn lại) là thỏa thuận cá nhân. Nếu một người không trả hoặc bỏ kèo, nền tảng không can thiệp.'
+      },
+      termsTitle: 'Điều khoản sử dụng',
+      termsList: {
+        1: 'Người dùng cam kết cung cấp thông tin chính xác (số điện thoại, email, v.v.).',
+        2: 'Nghiêm cấm đăng nội dung không liên quan, phản cảm, bạo lực, khiêu dâm, hoặc spam (bao gồm cả video không phù hợp). Các nội dung vi phạm sẽ bị xóa và tài khoản có thể bị xử lý.',
+        3: 'Chủ sân có quyền tự quy định mức đặt cọc (%) cho từng sự kiện/đặt sân.',
+        4: 'Admin có quyền khóa hoặc tạm ngưng tài khoản vi phạm chính sách.',
+        5: 'Trong trường hợp tranh chấp giữa khách hàng và chủ sân, WhereWeSport không chịu trách nhiệm tài chính; nền tảng chỉ hỗ trợ bằng công cụ báo cáo để hai bên tự thỏa thuận hoặc đem tranh chấp ra cơ quan có thẩm quyền.'
+      },
+      notesTitle: 'Ghi chú thêm',
+      notesIntro: 'Chúng tôi khuyến nghị người dùng:',
+      notesList: {
+        1: 'Luôn kiểm tra kỹ thông tin bài đăng và thỏa thuận trước khi tham gia.',
+        2: 'Sử dụng công cụ báo cáo của nền tảng nếu phát hiện hành vi lừa đảo hoặc vi phạm.',
+        3: 'Không chia sẻ thông tin nhạy cảm (mật khẩu, mã OTP) trên nền tảng.'
+      },
+      footer: {
+        updated: 'Ngày cập nhật: {date}',
+        contact: 'Liên hệ hỗ trợ: {email}'
+      }
     },
     chat: {
       recallConfirm: 'Bạn có chắc muốn thu hồi tin nhắn này?',

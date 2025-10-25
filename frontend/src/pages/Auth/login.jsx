@@ -5,7 +5,7 @@ import useAuth from "../../hooks/useAuth";
 import "../../CSS/LoginStyles.css";
 
 const Login = () => {
-    const { login, signup} = useAuth();
+    const { login, signup, verifyOtp, sendLoginCode } = useAuth();
     const [currentForm, setCurrentForm] = useState('login');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -14,6 +14,7 @@ const Login = () => {
     const [formData, setFormData] = useState({
         usernameOrEmail: '',
         password: '',
+        otpCode: '',
         username: '',
         email: '',
         fullName: '',
@@ -43,12 +44,89 @@ const Login = () => {
                 formData.usernameOrEmail.trim(), 
                 formData.password
             );
-            
+
             if (!result.success) {
                 setError(result.message || 'Login failed');
+            } else if (result.otpRequired) {
+                // Move to OTP verification step
+                setCurrentForm('otp');
+                setOtpSessionId(result.otpSessionId);
             }
         } catch {
             setError('An error occurred during login');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const [otpSessionId, setOtpSessionId] = useState(null);
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError('');
+
+        try {
+            const res = await verifyOtp(otpSessionId, formData.otpCode.trim());
+            if (!res.success) {
+                setError(res.message || 'OTP verification failed');
+            }
+        } catch (err) {
+            setError('An error occurred while verifying OTP');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        // Re-use entered identifier & password to request a new OTP
+        setIsLoading(true);
+        setError('');
+        try {
+            let result;
+            // If user provided a password, use credential flow; otherwise use passwordless email flow
+            if (formData.password && formData.password.length > 0) {
+                result = await login(formData.usernameOrEmail.trim(), formData.password);
+            } else {
+                const email = formData.usernameOrEmail.trim() || formData.email.trim();
+                if (!email) throw new Error('Please enter an email to resend the code');
+                result = await sendLoginCode(email);
+            }
+
+            if (!result.success) {
+                setError(result.message || 'Unable to resend OTP');
+            } else if (result.otpRequired) {
+                setOtpSessionId(result.otpSessionId);
+                if (result.otp) setSuccessMessage(`DEV OTP: ${result.otp}`);
+            }
+        } catch (e) {
+            setError('Unable to resend OTP');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSendLoginCode = async () => {
+        setError('');
+        setSuccessMessage('');
+        const email = formData.usernameOrEmail.trim() || formData.email.trim();
+        if (!email) {
+            setError('Please enter your email address');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const result = await sendLoginCode(email);
+            if (!result.success) {
+                setError(result.message || 'Unable to send login code');
+            } else {
+                setOtpSessionId(result.otpSessionId);
+                setCurrentForm('otp');
+                if (result.otp) setSuccessMessage(`DEV OTP: ${result.otp}`);
+            }
+        } catch (err) {
+            setError('Unable to send login code');
         } finally {
             setIsLoading(false);
         }
@@ -84,7 +162,7 @@ const Login = () => {
             });
 
             if (result.success) {
-                setSuccessMessage('Registration successful! Please log in.');
+                setSuccessMessage('Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.');
                 setCurrentForm('login');
                 setFormData(prev => ({
                     ...prev,
@@ -210,6 +288,7 @@ const Login = () => {
                                     {isLoading ? 'Logging in...' : 'Login'}
                                 </button>
 
+
                                 <div className="text-center space-y-2">
                                     <button
                                         type="button"
@@ -232,6 +311,45 @@ const Login = () => {
                             </form>
                         </>
                     )}
+
+                    {currentForm === 'otp' && (
+                        <>
+                            <h2 className="text-2xl font-bold text-center mb-4">Nhập mã xác nhận</h2>
+                            <form onSubmit={handleVerifyOtp} className="space-y-4">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        name="otpCode"
+                                        value={formData.otpCode}
+                                        onChange={handleInputChange}
+                                        placeholder="Mã xác nhận (6 chữ số)"
+                                        className="w-full pl-4 pr-4 py-3 bg-white/10 border-2 border-purple-400/30 rounded-xl text-white placeholder-white/70"
+                                        required
+                                    />
+                                </div>
+
+                                {error && (
+                                    <div className="text-red-200 text-sm text-center bg-gradient-to-r from-red-500/20 to-pink-500/20 p-3 rounded-xl border border-red-400/40 backdrop-blur-sm">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full mx-auto block py-3 login-btn text-white rounded-xl transition-all duration-100 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.05] ring-2 ring-white/20"
+                                >
+                                    {isLoading ? 'Verifying...' : 'Verify'}
+                                </button>
+
+                                <div className="text-center space-y-2">
+                                    <button type="button" className="text-sm text-white/80 hover:underline" onClick={() => { setCurrentForm('login'); setOtpSessionId(null); }}>{'Quay lại đăng nhập'}</button>
+                                    <button type="button" className="text-sm text-blue-200 hover:underline" onClick={handleResendOtp} disabled={isLoading}>{isLoading ? '...' : 'Gửi lại mã'}</button>
+                                </div>
+                            </form>
+                        </>
+                    )}
+
 
                     {currentForm === 'signup' && (
                         <>

@@ -46,7 +46,8 @@ const AuthProvider = ({ children }) => {
 
     const login = async (identifier, password) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            // New OTP request flow: ask server to validate credentials and send OTP to email
+            const response = await fetch(`${API_BASE_URL}/auth/login-otp-request`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -57,12 +58,8 @@ const AuthProvider = ({ children }) => {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                localStorage.setItem('authToken', data.data.token);
-                localStorage.setItem('userData', JSON.stringify(data.data.user));
-                setUser(data.data.user);
-                
-                navigate('/feed');
-                return { success: true, user: data.data.user };
+                // Server will return an otpSessionId which the frontend should use to verify the code
+                return { success: true, otpRequired: true, otpSessionId: data.data.otpSessionId, message: data.message };
             } else {
                 return { success: false, message: data.message };
             }
@@ -72,11 +69,61 @@ const AuthProvider = ({ children }) => {
         }
     };
 
+    // Passwordless: request a login code to be sent to email (no password required)
+    const sendLoginCode = async (email) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/send-login-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success) {
+                // Server will give otpSessionId and in dev may return the OTP when DEV_SHOW_OTP=true
+                return { success: true, otpRequired: true, otpSessionId: data.data.otpSessionId, otp: data.data.otp };
+            } else {
+                return { success: false, message: data.message };
+            }
+        } catch (error) {
+            console.error('sendLoginCode error:', error);
+            return { success: false, message: 'An error occurred while requesting the login code' };
+        }
+    };
+
+    // Verify OTP and finalize login
+    const verifyOtp = async (otpSessionId, code) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ otpSessionId, code })
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success) {
+                localStorage.setItem('authToken', data.data.token);
+                localStorage.setItem('userData', JSON.stringify(data.data.user));
+                setUser(data.data.user);
+                navigate('/feed');
+                return { success: true, user: data.data.user };
+            } else {
+                return { success: false, message: data.message };
+            }
+        } catch (error) {
+            console.error('Verify OTP error:', error);
+            return { success: false, message: 'An error occurred while verifying OTP' };
+        }
+    };
+
+        // account activation via token has been removed from this app (registrations create account immediately)
+
     const logout = () => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
         setUser(null);
-        navigate('/');
+        // Keep previous behavior: navigate to home page after logout
+        try { navigate('/'); } catch { /* ignore */ }
     };
 
     const signup = async (userData) => {
@@ -98,6 +145,10 @@ const AuthProvider = ({ children }) => {
             }
         } catch (error) {
             console.error('Signup error:', error);
+            // More helpful message for network failures (e.g., backend not running)
+            if (error && (error.message === 'Failed to fetch' || error.message.includes('NetworkError') || error.message.includes('connect'))) {
+                return { success: false, message: `Không thể kết nối tới API (${API_BASE_URL}). Hãy đảm bảo backend đang chạy.` };
+            }
             return { success: false, message: 'An error occurred during signup' };
         }
     };
@@ -129,6 +180,8 @@ const AuthProvider = ({ children }) => {
         user,
         isLoading,
         login,
+        verifyOtp,
+        sendLoginCode,
         logout,
         signup,
         forgotPassword

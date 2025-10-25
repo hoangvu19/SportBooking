@@ -115,10 +115,28 @@ const apiCall = async (endpoint, options = {}) => {
         }
 
         console.log(`🌐 API Call: ${method} ${endpoint}`);
+
+        // Support a request timeout so UI doesn't hang indefinitely when backend is slow/unreachable.
+        const controller = new AbortController();
+        const timeoutMs = options.timeout || 10000; // default 10s
+        config.signal = controller.signal;
+
         const fetchPromise = fetch(url, config);
+        // Track in-flight GET requests so duplicate requests reuse the same promise
         if (method === 'GET') inflightRequests.set(cacheKey, fetchPromise);
-        const response = await fetchPromise;
-        if (method === 'GET') inflightRequests.delete(cacheKey);
+
+        // Abort the request after timeoutMs to avoid hanging
+        const timeoutId = setTimeout(() => {
+            try { controller.abort(); } catch (e) { /* ignore */ }
+        }, timeoutMs);
+
+        let response;
+        try {
+            response = await fetchPromise;
+        } finally {
+            clearTimeout(timeoutId);
+            if (method === 'GET') inflightRequests.delete(cacheKey);
+        }
         // Attempt to parse JSON (safe-guard: if no JSON, set to null)
         let data = null;
         try {
@@ -145,6 +163,11 @@ const apiCall = async (endpoint, options = {}) => {
         }
         return data;
     } catch (error) {
+        // Normalize abort/timeout errors to a friendly message
+        if ((error && error.name === 'AbortError') || /timeout/i.test(String(error && error.message))) {
+            error = new Error('Request timed out');
+            error.status = 408;
+        }
         console.error(`❌ API Error: ${endpoint}`, error);
 
         // Centralized handling for authentication expiry / unauthorized responses
@@ -682,6 +705,12 @@ export const storyAPI = {
      */
     getViewCount: async (storyId) => {
         return apiCall(`/stories/${storyId}/views/count`);
+    },
+    /**
+     * Get archived stories
+     */
+    getArchived: async () => {
+        return apiCall('/stories/archived');
     },
 };
 

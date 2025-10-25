@@ -7,15 +7,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { bookingPostAPI } from '../../utils/bookingPostAPI';
 import PostCard from '../../components/Social/PostCard';
 import './FindPlayers.css';
+import { useI18n } from '../../i18n/hooks';
 
 const FindPlayers = () => {
   const [sportTypes, setSportTypes] = useState([]);
   const [selectedSport, setSelectedSport] = useState('all');
   const [bookingPosts, setBookingPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const { t } = useI18n();
 
   const fetchSportTypes = async () => {
     try {
@@ -33,15 +36,21 @@ const FindPlayers = () => {
     }
   };
 
-  const fetchBookingPosts = useCallback(async (reset = false) => {
-    if (loading) return;
+  // Fetch booking posts for a specific page. If `reset` is true it replaces the list,
+  // otherwise it appends the page results to the existing list.
+  const fetchBookingPosts = useCallback(async (pageParam = 1, reset = false) => {
+    if (loading || loadingMore) return;
 
-    setLoading(true);
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
     setError(null);
 
     try {
       let response;
-      const params = { page, limit: 20 };
+      const params = { page: pageParam, limit: 20 };
 
       if (selectedSport === 'all') {
         response = await bookingPostAPI.getAll(params);
@@ -60,21 +69,24 @@ const FindPlayers = () => {
       setHasMore(newPosts.length >= 20);
     } catch (err) {
       console.error('Error fetching booking posts:', err);
-  setError(err.message || 'Unable to load posts');
+      setError(err.message || 'Unable to load posts');
     } finally {
-      setLoading(false);
+      if (reset) setLoading(false);
+      else setLoadingMore(false);
     }
-  }, [selectedSport, page, loading]);
+  }, [selectedSport, loading]);
 
   // Fetch sport types on mount
   useEffect(() => {
     fetchSportTypes();
   }, []);
 
-  // Fetch booking posts when dependencies change
+  // Initial load and reload when selected sport changes
   useEffect(() => {
-    fetchBookingPosts(true);
-  }, [fetchBookingPosts]);
+    setPage(1);
+    fetchBookingPosts(1, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSport]);
 
   const handleSportChange = (sportId) => {
     setSelectedSport(sportId);
@@ -83,16 +95,18 @@ const FindPlayers = () => {
   };
 
   const handleLoadMore = () => {
-    setPage((prev) => prev + 1);
+    const next = page + 1;
+    setPage(next);
+    fetchBookingPosts(next, false);
   };
 
   return (
     <div className="find-players-page">
       {/* Header */}
-      <div className="page-header">
-  <h1>🔍 Find Players</h1>
-  <p>Search and join booked matches</p>
-      </div>
+    <div className="page-header">
+  <h1>🔍 {t('findPlayers.title', 'Find Players')}</h1>
+  <p>{t('findPlayers.subtitle', 'Search and join booked matches')}</p>
+    </div>
 
       {/* Sport Filter */}
       <div className="sport-filter">
@@ -120,7 +134,7 @@ const FindPlayers = () => {
         <div className="error-message">
           <span className="error-icon">⚠️</span>
           <span>{error}</span>
-          <button onClick={() => fetchBookingPosts(true)}>Retry</button>
+          <button onClick={() => fetchBookingPosts(1, true)}>{t('common.retry', 'Retry')}</button>
         </div>
       )}
 
@@ -129,11 +143,11 @@ const FindPlayers = () => {
         {bookingPosts.length === 0 && !loading && (
           <div className="empty-state">
             <div className="empty-icon">🏟️</div>
-            <h3>No posts yet</h3>
+            <h3>{t('feed.noPosts', 'No posts yet')}</h3>
             <p>
               {selectedSport === 'all'
-                ? 'Be the first to book a field and find players!'
-                : 'No posts for this sport'}
+                ? t('findPlayers.emptyAll', 'Be the first to book a field and find players!')
+                : t('findPlayers.emptySport', 'No posts for this sport')}
             </p>
           </div>
         )}
@@ -143,7 +157,7 @@ const FindPlayers = () => {
         ))}
 
         {/* Loading Skeleton */}
-        {loading && (
+        {loading && bookingPosts.length === 0 && (
           <div className="loading-container">
             {[1, 2, 3].map((i) => (
               <div key={i} className="skeleton-card">
@@ -159,9 +173,9 @@ const FindPlayers = () => {
         )}
 
         {/* Load More Button */}
-        {hasMore && !loading && bookingPosts.length > 0 && (
-          <button className="load-more-button" onClick={handleLoadMore}>
-            Load more
+        {hasMore && bookingPosts.length > 0 && (
+          <button className="load-more-button" onClick={handleLoadMore} disabled={loadingMore}>
+            {loadingMore ? t('common.loading', 'Loading...') : t('common.loadMore', 'Load more')}
           </button>
         )}
       </div>

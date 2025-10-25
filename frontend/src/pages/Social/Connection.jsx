@@ -59,8 +59,6 @@ const Connections = () => {
                 }));
                 setFollowing(followingList);
             }
-
-            // Compute mutual connections: users who are both in followers and following
             try {
                 const followingIds = new Set(followingList.map(u => String(u._id)));
                 const mutuals = followersList.filter(u => followingIds.has(String(u._id)));

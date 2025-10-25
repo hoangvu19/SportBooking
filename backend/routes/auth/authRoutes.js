@@ -6,6 +6,9 @@ const router = express.Router();
 const { 
   register, 
   login, 
+  requestLoginOtp,
+  sendLoginCode,
+  verifyLoginOtp,
   getCurrentUser, 
   updateProfile, 
   changePassword, 
@@ -50,10 +53,29 @@ router.post('/login', (req, res, next) => {
   next();
 }, login);
 
+// OTP-based login (two-step)
+router.post('/login-otp-request', (req, res, next) => {
+  console.log('🚀 Login OTP request endpoint hit:', req.body && { identifier: req.body.identifier });
+  next();
+}, requestLoginOtp);
+
+// Passwordless OTP: send login code to email only
+router.post('/send-login-code', (req, res, next) => {
+  console.log('🚀 Send login code endpoint hit:', req.body && { email: req.body.email });
+  next();
+}, sendLoginCode);
+
+router.post('/verify-otp', (req, res, next) => {
+  console.log('🚀 Verify OTP endpoint hit');
+  next();
+}, verifyLoginOtp);
+
 router.post('/forgot-password', (req, res, next) => {
   console.log('🚀 Forgot password endpoint hit:', req.body);
   next();
 }, forgotPassword);
+
+// Activation endpoints removed (registrations create user immediately)
 
 // Test endpoint
 router.get('/test', (req, res) => {

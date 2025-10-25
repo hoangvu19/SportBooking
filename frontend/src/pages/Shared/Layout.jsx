@@ -9,8 +9,6 @@ import NotificationBell from "../../components/Shared/NotificationBell";
 const Layout = () => {
     const { user, isLoading } = useAuth();
     const [sidebarOpen, setSidebarOpen] = React.useState(false);
-
-    // While auth is initializing, show loading to avoid flashing dummy data
     if (isLoading) return <Loading />;
 
     return user ? (
@@ -36,5 +34,4 @@ const Layout = () => {
         <Loading/>
     )
 }
-
 export default Layout;
