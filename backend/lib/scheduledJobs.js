@@ -4,6 +4,7 @@
  */
 const cron = require('node-cron');
 const BookingPost = require('../models/Social/BookingPost');
+const StoryDAL = require('../DAL/Social/StoryDAL');
 
 class ScheduledJobs {
   /**
@@ -25,6 +26,17 @@ class ScheduledJobs {
 
     // Có thể thêm các jobs khác ở đây
     // Ví dụ: Dọn dẹp thông báo cũ, backup data, etc.
+
+    // Tự động chuyển các story đã hết hạn vào kho lưu trữ mỗi 15 phút
+    cron.schedule('*/15 * * * *', async () => {
+      try {
+        console.log('🔄 Running archive expired stories job...');
+        const count = await StoryDAL.archiveExpiredStories();
+        console.log(`✅ Archived ${count} expired stories`);
+      } catch (error) {
+        console.error('❌ Error in archive expired stories job:', error);
+      }
+    });
 
     console.log('✅ Scheduled jobs started successfully');
   }

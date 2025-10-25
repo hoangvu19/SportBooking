@@ -17,7 +17,6 @@ const MenuItems = ({setSidebarOpen}) => {
   return (
     <div className='px-6 text-gray-600 space-y-1 font-medium'>
       {menuItemsData.map((item) => {
-        // Hiển thị tất cả các menu cùng một cấp
         const label = item.labelKey ? t(item.labelKey) : item.label || '';
         return (
           <NavLink

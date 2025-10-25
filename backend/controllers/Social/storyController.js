@@ -254,6 +254,29 @@ async function getStoryViewCount(req, res) {
   }
 }
 
+/**
+ * Get archived stories (stories moved to archive)
+ */
+async function getArchivedStories(req, res) {
+  try {
+    const stories = await StoryDAL.getArchivedStories();
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const formattedStories = stories.map((story) => {
+      const formatted = story.toFrontendFormat();
+      if (formatted.media_url) {
+        formatted.media_url = toAbsoluteUrl(baseUrl, formatted.media_url);
+      }
+      return formatted;
+    });
+
+    return sendSuccess(res, { stories: formattedStories });
+  } catch (error) {
+    console.error('Get archived stories error:', error);
+    return sendError(res, 'Lỗi server khi lấy stories kho lưu trữ', 500, { error });
+  }
+}
+
 module.exports = {
   createStory,
   getActiveStories,
@@ -261,5 +284,6 @@ module.exports = {
   deleteStory,
   viewStory,
   getStoryViewers,
-  getStoryViewCount
-};
+  getStoryViewCount,
+  getArchivedStories
+}; // No-op placeholder to satisfy apply_patch format

@@ -6,6 +6,7 @@ const {
   getUserStories,
   deleteStory,
   viewStory,
+  getArchivedStories,
   getStoryViewers,
   getStoryViewCount
 } = require('../../controllers/Social/storyController');
@@ -20,6 +21,9 @@ router.get('/', getActiveStories);
 
 // Get stories by user
 router.get('/user/:userId', getUserStories);
+
+// Get archived stories
+router.get('/archived', getArchivedStories);
 
 // Record story view (authenticated)
 router.post('/:storyId/view', authenticateToken, viewStory);
