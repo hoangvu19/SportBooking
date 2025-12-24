@@ -1,0 +1,4352 @@
+# DANH SÁCH TỪ NGỮ KHÔNG PHÙ HỢP - SPAM FILTER
+# File này chứa các từ khóa, cụm từ để phát hiện nội dung spam, tục tĩu, không phù hợp
+# Sử dụng cho hệ thống AI Content Moderation
+# Cập nhật: 2025-11-02
+
+# ===== TỪ TỤC TỆU - VULGAR WORDS =====
+# Các từ ngữ thô tục, xúc phạm
+
+# Nhóm 1: Từ tục tĩu cơ bản
+đụ
+địt
+đéo
+đm
+dm
+đcm
+dcm
+đmm
+dmm
+đml
+dml
+lồn
+buồi
+cặc
+đĩ
+đĩ thõa
+cave
+gái gọi
+cave nhảy
+đéo mẹ
+đụ má
+đụ mẹ
+đụ cha
+địt mẹ
+địt con mẹ
+con đĩ
+thằng đĩ
+đồ đĩ
+mẹ mày
+cha mày
+bố mày
+cụ mày
+má mày
+ba mày
+cu
+cứt
+lìn
+lồn lìn
+buồi cứt
+óc chó
+não chó
+não lìn
+não cứt
+não phèn
+não tôm
+đồ chó
+con chó
+đồ ngu
+thằng ngu
+con ngu
+đồ khốn
+thằng khốn
+con khốn
+súc vật
+súc sinh
+đồ súc sinh
+con súc sinh
+chết mẹ
+chết cha
+đồ chết
+thằng chết
+con chết
+đồ khốn nạn
+thằng khốn nạn
+con khốn nạn
+đồ ngu ngốc
+thằng ngu ngốc
+con ngu ngốc
+đồ khùng
+thằng khùng
+con khùng
+đồ điên
+thằng điên
+con điên
+đồ ngớ ngẩn
+thằng ngớ ngẩn
+con ngớ ngẩn
+đồ rác rưởi
+thằng rác rưởi
+con rác rưởi
+đồ vô dụng
+thằng vô dụng
+con vô dụng
+đồ vô giáo dục
+thằng vô giáo dục
+con vô giáo dục
+
+# Nhóm 2: Từ tục tĩu biến thể
+du
+dit
+deo
+lon
+cac
+di
+cave
+chet
+ngu
+kho
+khon
+dien
+deo me
+du me
+dit me
+con di
+dm may
+dcm may
+dmm may
+vl
+vcl
+vãi lồn
+vãi cả lồn
+cc
+clgt
+clmm
+clmn
+cmnr
+cmm
+cmn
+ctmm
+ctm
+cục cứt
+cứt lợn
+cứt chó
+lồn đen
+lồn xanh
+buồi đen
+cặc đen
+
+# Nhóm 3: Từ xúc phạm người khác
+ngu si
+ngu đần
+đần độn
+khùng điên
+điên khùng
+ngớ ngẩn ngốc nghếch
+khốn nạn khốn kiếp
+đồ chết tiệt
+đồ chết dở
+thằng chết dở
+con chết dở
+đồ chết mòn
+thằng chết mòn
+con chết mòn
+đồ chết đói
+thằng chết đói
+con chết đói
+đồ chết nghèo
+thằng chết nghèo
+con chết nghèo
+đồ hèn hạ
+thằng hèn hạ
+con hèn hạ
+đồ đê tiện
+thằng đê tiện
+con đê tiện
+đồ bẩn thỉu
+thằng bẩn thỉu
+con bẩn thỉu
+đồ ô uế
+thằng ô uế
+con ô uế
+đồ dơ bẩn
+thằng dơ bẩn
+con dơ bẩn
+
+# Nhóm 4: Từ xúc phạm gia đình
+mẹ kiếp
+ba láo
+cha chết
+ông nội mày
+bà nội mày
+ông ngoại mày
+bà ngoại mày
+cụ kị mày
+bố láo
+mẹ láo
+ba mẹ mày
+cha mẹ mày
+tổ tông mày
+ông bà tổ tiên mày
+cửu tộc mày
+họ hàng mày
+dòng họ mày
+tổ tiên mày
+cội nguồn mày
+nòi giống mày
+
+# ===== NỘI DUNG TÌNH DỤC - SEXUAL CONTENT =====
+# Các từ khóa liên quan đến nội dung nhạy cảm 18+
+
+# Nhóm 5: Nội dung khiêu dâm
+sex
+xxx
+porn
+phim sex
+phim người lớn
+clip sex
+ảnh sex
+video sex
+phim 18+
+clip 18+
+ảnh 18+
+video 18+
+phim cấp 3
+jav
+av
+vlxx
+sex viet
+viet sex
+sex vn
+vn sex
+xnxx
+pornhub
+xvideos
+redtube
+youporn
+tube8
+beeg
+xhamster
+hentai
+doujin
+18+ movies
+adult content
+adult video
+adult film
+erotic
+erotica
+nude
+naked
+strip
+striptease
+stripper
+pole dance
+lap dance
+khiêu dâm
+khỏa thân
+khỏa thể
+cởi truồng
+cởi quần áo
+khoe thân
+khoe hàng
+show hàng
+lộ hàng
+lộ ngực
+lộ vú
+lộ lồn
+lộ buồi
+lộ cặc
+chịch
+phang
+bú cu
+bú cặc
+bú buồi
+liếm lồn
+liếm buồi
+liếm cặc
+múa cột
+thoát y
+múa thoát y
+vũ công thoát y
+massage kích dục
+massage yoni
+massage lingam
+massage body
+massage happy ending
+gái gọi cao cấp
+call girl
+escort
+prostitute
+cave cao cấp
+call
+booking gái
+order gái
+gọi gái
+thuê gái
+mua gái
+bán dâm
+mại dâm
+điếm
+đĩ điếm
+gái mại dâm
+gái bán hoa
+gái bán thân
+gái kiếm khách
+đứng đường
+bán thân
+cởi quần áo khỏa thân
+
+# Nhóm 6: Nội dung tình dục biến thể
+s.e.x
+s3x
+s€x
+sexx
+sexxx
+p0rn
+p.o.r.n
+pr0n
+xxx.com
+18plus
+18plus.com
+chịch nhau
+phang nhau
+địt nhau
+đụ nhau
+bú nhau
+liếm nhau
+mút nhau
+sục nhau
+thủ dâm
+onlyfans
+patreon 18+
+fansly
+admireme
+telegram 18+
+discord 18+
+private show
+cam show
+webcam show
+live sex
+live show
+sexy live
+hot live
+nude live
+
+# Nhóm 7: Dịch vụ người lớn
+massage kích dục cao cấp
+gái bao
+bao gái
+bao đêm
+đi khách
+rủ khách
+kéo khách
+tiếp khách
+hát cho khách
+múa cho khách
+ngủ với khách
+ăn ngủ với khách
+tìm khách
+tìm bạn tình
+tìm bạn sex
+tìm fwb
+tìm ons
+one night stand
+friend with benefit
+sugar daddy
+sugar baby
+sugar mommy
+sponsor
+tìm sponsor
+cần sponsor
+daddy tìm baby
+baby tìm daddy
+tìm arrangement
+arrangement
+seeking arrangement
+tìm người nuôi
+nuôi em
+anh nuôi em
+em cần anh nuôi
+cần anh chu đáo
+tìm anh chu đáo
+gạ tình
+gạ gẫm
+rủ rê
+dụ dỗ
+dẫn dụ
+quen biết làm quen để
+làm quen để qua đêm
+qua đêm
+ở lại qua đêm
+ngủ lại
+ngủ cùng
+ngủ chung
+phòng riêng
+khách sạn
+nhà nghỉ
+motel
+homestay riêng tư
+villa riêng tư
+
+# ===== QUẢNG CÁO LỪA ĐẢO - SCAM/SPAM ADS =====
+# Các pattern quảng cáo lừa đảo, spam
+
+# Nhóm 8: Kiếm tiền online lừa đảo
+kiếm tiền online
+kiếm tiền tại nhà
+kiếm tiền nhanh
+kiếm tiền dễ dàng
+làm giàu nhanh
+làm giàu không cần vốn
+thu nhập thụ động
+passive income dễ dàng
+kiếm 10 triệu/ngày
+kiếm 20 triệu/tuần
+kiếm 50 triệu/tháng
+kiếm 100 triệu/tháng
+kiếm hàng trăm triệu
+thu nhập hàng trăm triệu
+chỉ cần điện thoại
+chỉ cần máy tính
+chỉ cần internet
+làm việc tại nhà
+work from home dễ dàng
+không cần kinh nghiệm kiếm
+không cần bằng cấp kiếm
+không cần học vấn kiếm
+không cần vốn kiếm
+không mất phí kiếm
+miễn phí kiếm tiền
+free kiếm tiền
+nhận tiền ngay
+rút tiền ngay
+chuyển khoản ngay
+thanh toán tức thì
+chuyển tiền tức thì
+cơ hội hiếm có
+cơ hội vàng
+cơ hội duy nhất
+cơ hội nghìn năm có một
+bí mật kiếm tiền
+bí quyết làm giàu
+phương pháp làm giàu độc quyền
+công thức kiếm tiền bí mật
+bí kịp kiếm tiền
+mẹo kiếm tiền thần thánh
+trick kiếm tiền
+
+# Nhóm 9: MLM/Đa cấp
+đa cấp
+mlm
+multi level marketing
+kinh doanh theo mạng
+marketing online kinh doanh
+bán hàng đa tầng
+bán hàng theo mạng lưới
+networking marketing
+giới thiệu hưởng hoa hồng
+hoa hồng cao
+hoa hồng khủng
+hoa hồng vô hạn
+downline
+upline
+sponsor
+team leader
+team building kiếm tiền
+xây dựng mạng lưới
+phát triển đội nhóm kiếm
+mời thêm người
+giới thiệu bạn bè tham gia
+rủ người tham gia
+hội nhóm kiếm tiền
+club kiếm tiền
+thành viên kiếm
+vip member kiếm
+diamond member kiếm
+platinum member kiếm
+lên cấp kiếm thêm
+thăng hạng kiếm
+
+# Nhóm 10: Cờ bạc/Casino
+cá cược
+cá độ
+casino
+casino online
+cá cược online
+đánh bạc
+đánh bạc online
+chơi bài
+đánh bài
+tiến lên
+phỏm
+xì tố
+poker
+blackjack
+baccarat
+roulette
+slot game
+quay hũ
+nổ hũ
+bắn cá
+bắn cá đổi thưởng
+game đổi thưởng
+cược bóng đá
+cược thể thao
+kèo bóng đá
+tỷ lệ kèo
+cược esports
+bet online
+sports betting
+football betting
+soccer betting
+live betting
+in-play betting
+lô đề
+lô tô
+xổ số
+xổ số online
+đề online
+lô online
+xóc đĩa
+tài xỉu
+sicbo
+dragon tiger
+rồng hổ
+long hổ
+
+# Nhóm 11: Cá độ/Cờ bạc biến thể
+ca cuoc
+ca do
+danh bac
+choi bai
+danh bai
+ca cuoc bong da
+ty le keo
+lo de
+lo to
+xo so
+tai xiu
+rong ho
+dong tiger
+nổ hủ
+ban ca
+ban ca doi thuong
+game doi thuong
+slot games
+quay hu
+win big
+win money
+bet now
+place bet
+sportsbook
+bookmaker
+nhà cái
+nha cai
+nhà c ái
+nha c ai
+188bet
+fun88
+w88
+m88
+12bet
+dafabet
+bet365
+vnbet
+vn bet
+vn88
+vi68
+vi88
+sv388
+jun88
+new88
+
+# Nhóm 12: Vay tiền/Tín dụng đen
+vay tiền
+vay tiền nhanh
+vay tiền gấp
+vay tiền online
+vay tiền tại nhà
+vay tiền không thế chấp
+vay không cần cmnd
+vay không cần giấy tờ
+vay không cần thế chấp
+vay không cần bảo lãnh
+vay không cần chứng minh
+cho vay nhanh
+cho vay online
+cho vay lãi suất thấp
+lãi suất 0%
+không lãi suất
+giải ngân ngay
+giải ngân tức thì
+duyệt nhanh
+duyệt tự động
+duyệt 100%
+chấp nhận nợ xấu
+blacklist vẫn vay được
+cic đen vẫn cho vay
+tín dụng đen cũng cho vay
+vay tiền đen
+vay lãi cắt cổ
+cầm đồ
+cầm cố
+thế chấp
+cầm sổ đỏ
+cầm xe
+cầm nhà
+cầm đất
+cầm tài sản
+
+# Nhóm 13: Thuốc giả/Hàng giả
+thuốc tăng cường sinh lý
+thuốc cường dương
+thuốc kéo dài thời gian
+thuốc tăng kích thước
+tăng kích cỡ dương vật
+kéo dài "cuộc yêu"
+tăng cường sinh lý nam
+tăng cường sinh lý nữ
+viagra
+cialis
+levitra
+kamagra
+hàng nhái
+hàng fake
+hàng giả
+hàng xách tay
+hàng qua biên giới
+hàng không rõ nguồn gốc
+không tem
+không hóa đơn
+không bill
+không bảo hành
+không đổi trả
+bán 1 lần
+bán buôn giá sỉ rẻ bèo
+giá rẻ khó tin
+giá shock
+giá sốc
+giảm giá khủng
+giảm giá 90%
+giảm giá 99%
+free ship toàn quốc miễn phí
+free hết mọi thứ
+miễn phí tất cả
+xách tay từ mỹ
+xách tay từ úc
+xách tay từ nhật
+order trực tiếp
+order quốc tế
+
+# Nhóm 14: Liên kết lừa đảo
+nhấn vào link
+click vào link
+truy cập link
+vào link nhận
+link nhận quà
+link nhận thưởng
+link nhận tiền
+link miễn phí
+link free
+link khuyến mãi
+link ưu đãi
+link giảm giá
+rút gọn link
+bit.ly
+tinyurl
+shorturl
+link rút gọn
+telegram channel
+telegram group
+telegram join
+join telegram
+vào telegram
+zalo ib
+inbox zalo
+ib zalo
+add zalo
+kết bạn zalo
+nhắn tin zalo
+chat zalo
+viber ib
+line ib
+whatsapp ib
+wechat ib
+kakao ib
+page riêng
+group riêng
+nhóm kín
+group kín
+hội kín
+club kín
+
+
+
+# ===== ĐA NGÔN NGỮ - MULTILINGUAL =====
+# Từ khóa spam bằng tiếng Anh
+
+# Nhóm 16: English vulgar words - Profanity & Insults (2000+ terms)
+# Basic profanity
+fuck
+fucking
+fucker
+fucked
+fucks
+fuckface
+fuckhead
+fuckwit
+fuckboy
+fuckgirl
+fucktard
+clusterfuck
+mindfuck
+motherfuck
+motherfucker
+motherfucking
+motherfuckers
+unfuckingbelievable
+shit
+shitty
+shitting
+shitter
+shithead
+shitface
+shithole
+shitstorm
+bullshit
+horseshit
+apeshit
+batshit
+chickenshit
+dipshit
+dogshit
+jackshit
+ratshit
+piece of shit
+full of shit
+talk shit
+eat shit
+holy shit
+oh shit
+no shit
+take a shit
+crap
+crappy
+crapping
+crapper
+craphead
+craphole
+craptastic
+load of crap
+piece of crap
+full of crap
+hell
+hellish
+hella
+what the hell
+go to hell
+hell no
+hell yeah
+from hell
+like hell
+raise hell
+catch hell
+bloody hell
+fucking hell
+damn
+damned
+damning
+dammit
+goddamn
+goddammit
+goddamned
+damnation
+damn you
+damn it
+god damn it
+god damn you
+hot damn
+bitch
+bitchy
+bitching
+bitches
+son of a bitch
+bitch ass
+bitch slap
+basic bitch
+stupid bitch
+dumb bitch
+crazy bitch
+ass
+asses
+asshole
+assholes
+asshat
+asswipe
+assclown
+assface
+assmunch
+asskisser
+badass
+dumbass
+fatass
+jackass
+smartass
+kiss ass
+kick ass
+pain in the ass
+piece of ass
+get your ass
+haul ass
+cover your ass
+bastard
+bastards
+lucky bastard
+poor bastard
+son of a bastard
+bloody bastard
+
+# Sexual/anatomical terms
+cock
+cocks
+cockhead
+cocksucker
+cocksucking
+cockblock
+cockteaser
+peacock
+dick
+dicks
+dickhead
+dickwad
+dickface
+dickless
+dickweed
+dickbag
+big dick
+small dick
+pussy
+pussies
+pussycat
+pussyfoot
+pussywhipped
+cunt
+cunts
+cunty
+cuntface
+cuntbag
+penis
+penises
+penile
+micropenis
+vagina
+vaginal
+vag
+cooch
+cooter
+snatch
+twat
+balls
+ballsack
+testicles
+testes
+nuts
+nutsack
+bollocks
+ballbuster
+blue balls
+grow some balls
+have balls
+boobs
+boob
+boobies
+tits
+titty
+titties
+tit
+nipple
+nipples
+breast
+breasts
+knockers
+jugs
+melons
+hooters
+rack
+cleavage
+ass cheeks
+butt
+butthole
+buttface
+butthead
+anus
+anal
+rectum
+rectal
+sphincter
+
+# Sexual acts & content
+sex
+sexy
+sexual
+sexually
+sexting
+sexist
+sexism
+sext
+unsex
+oversexed
+sexed up
+asexual
+bisexual
+homosexual
+heterosexual
+pansexual
+fuck
+fucking
+fucked
+screw
+screwing
+screwed
+bang
+banging
+banged
+gangbang
+shag
+shagging
+shagged
+hump
+humping
+humped
+bone
+boning
+boned
+nail
+nailing
+nailed
+pound
+pounding
+pounded
+smash
+smashing
+smashed
+hit it
+tap that
+pipe
+ram
+ram it
+stroke
+jerk off
+jerking off
+jack off
+jacking off
+masturbate
+masturbating
+masturbation
+wank
+wanking
+wanker
+wanked
+beat off
+beating off
+rub one out
+tug
+cum
+cumming
+cummed
+come
+coming
+came
+ejaculate
+ejaculating
+ejaculation
+orgasm
+orgasmic
+climax
+blow job
+blowjob
+bj
+suck dick
+suck cock
+suck off
+go down
+eat out
+muff dive
+cunnilingus
+fellatio
+oral sex
+anal sex
+butt sex
+buttfuck
+buttfucking
+assfuck
+assfucking
+sodomy
+sodomize
+rimjob
+rim job
+anilingus
+69
+sixty nine
+hand job
+handjob
+finger
+fingering
+fingered
+fist
+fisting
+fisted
+penetrate
+penetrating
+penetration
+double penetration
+dp
+threesome
+foursome
+orgy
+gangbang
+train
+run a train
+spit roast
+DP
+DVP
+DAP
+creampie
+facial
+money shot
+pearl necklace
+golden shower
+watersports
+scat
+coprophilia
+necrophilia
+bestiality
+zoophilia
+
+# Pornography related
+porn
+porno
+pornography
+pornographic
+pornstar
+camgirl
+camboy
+webcam
+xxx
+18+
+nsfw
+adult content
+adult video
+adult film
+adult entertainment
+erotic
+erotica
+x-rated
+r-rated
+hardcore
+softcore
+amateur porn
+professional porn
+gonzo
+hentai
+doujin
+yaoi
+yuri
+loli
+lolicon
+shotacon
+ecchi
+rule 34
+porn hub
+pornhub
+xvideos
+xhamster
+redtube
+youporn
+xnxx
+beeg
+tube8
+spankwire
+keezmovies
+porn sites
+nude
+nudes
+nudie
+nudity
+naked
+bare
+strip
+stripping
+stripper
+stripped
+disrobe
+undress
+undressing
+striptease
+peep show
+peepshow
+lap dance
+pole dance
+exotic dancer
+burlesque
+topless
+bottomless
+full frontal
+flash
+flashing
+flasher
+flashed
+moon
+mooning
+mooned
+streak
+streaking
+streaker
+exhibitionist
+voyeur
+voyeurism
+peeping tom
+
+# Sex work related
+prostitute
+prostitution
+whore
+whores
+hooker
+hookers
+call girl
+escort
+escorts
+sex worker
+brothel
+pimp
+pimping
+pimped
+madam
+red light district
+street walker
+lot lizard
+working girl
+lady of the night
+courtesan
+harlot
+strumpet
+jezebel
+sugar daddy
+sugar baby
+sugar mama
+kept woman
+mistress
+gigolo
+rent boy
+john
+trick
+solicitation
+soliciting
+
+# Slurs - racial/ethnic
+nigger
+nigga
+niggaz
+nig
+negro
+coon
+porch monkey
+jigaboo
+spook
+darkie
+sambo
+Uncle Tom
+house nigger
+field nigger
+chink
+chinaman
+ching chong
+slant eye
+gook
+nip
+jap
+zipperhead
+slope
+orientals
+charlie
+dink
+towelhead
+sand nigger
+camel jockey
+raghead
+hajji
+kike
+hymie
+hebe
+yid
+sheeny
+christ killer
+spic
+spick
+wetback
+beaner
+greaser
+taco bender
+border hopper
+illegal alien
+anchor baby
+cracker
+honky
+whitey
+white trash
+redneck
+hillbilly
+trailer trash
+white devil
+caucasoid
+negroid
+mongoloid
+wop
+dago
+guinea
+greaseball
+mick
+paddy
+potato nigger
+mick bastard
+polack
+kraut
+jerry
+hun
+frog
+limey
+rosbif
+paki
+curry muncher
+dot head
+wagon burner
+redskin
+injun
+squaw
+prairie nigger
+timber nigger
+savage
+abbo
+abo
+coon
+boong
+wog
+kanaka
+gypsy
+pikey
+tinker
+
+# Slurs - sexual orientation/gender
+fag
+faggot
+faggots
+faggy
+fairy
+queer
+queers
+homo
+homos
+homosexual
+sodomite
+dyke
+dykes
+lesbo
+lesbos
+carpet muncher
+rug muncher
+muff diver
+pillow biter
+shirt lifter
+friend of dorothy
+Nancy boy
+pansy
+sissy
+fruit
+fruity
+poof
+poofter
+gay boy
+butt pirate
+ass bandit
+fudge packer
+turd burglar
+tranny
+trannies
+shemale
+he-she
+ladyboy
+chick with dick
+hermaphrodite
+transvestite
+cross dresser
+drag queen
+drag king
+
+# Slurs - disability/appearance
+retard
+retarded
+retards
+tard
+mental
+mentally challenged
+special needs
+short bus
+window licker
+mongoloid
+downie
+autist
+autistic
+spastic
+spaz
+gimp
+gimpy
+cripple
+crippled
+freak
+midget
+dwarf
+shrimp
+runt
+butterface
+fugly
+butt ugly
+dog
+bow wow
+beast
+swamp donkey
+minger
+minger
+pig
+cow
+whale
+fatso
+fatty
+lard ass
+chunky
+porker
+wide load
+beached whale
+ham planet
+land whale
+tub of lard
+skeleton
+stick figure
+toothpick
+anorexic
+skin and bones
+pizza face
+crater face
+acne face
+scarface
+butterface
+ugly duckling
+
+# Insults - intelligence
+idiot
+idiots
+idiotic
+moron
+moronic
+imbecile
+stupid
+stupidity
+dumb
+dumbass
+dummy
+dunce
+dimwit
+nitwit
+halfwit
+numbskull
+numbnuts
+blockhead
+bonehead
+meathead
+airhead
+birdbrain
+peabrain
+pinhead
+thickhead
+thick
+dense
+dull
+slow
+simpleton
+fool
+foolish
+dolt
+dope
+dopey
+clown
+buffoon
+ignorant
+ignoramus
+know-nothing
+uneducated
+illiterate
+brain dead
+mindless
+witless
+clueless
+obtuse
+thick skulled
+
+# Insults - character
+asshole
+assholes
+jerk
+jerks
+jerkoff
+dick
+dicks
+dickhead
+prick
+pricks
+douche
+douchebag
+douchebags
+douchey
+scumbag
+scumbags
+scum
+slimeball
+slimebag
+sleazebag
+sleazeball
+sleaze
+creep
+creeps
+creepy
+weirdo
+freak
+loser
+losers
+lowlife
+deadbeat
+bum
+waste of space
+worthless
+useless
+pathetic
+sad sack
+schmuck
+putz
+tool
+toolbag
+jackass
+jagoff
+chump
+sucker
+sap
+stooge
+patsy
+pushover
+wimp
+wuss
+pussy
+coward
+chicken
+chickenshit
+yellow belly
+pansy
+milquetoast
+weakling
+sissy
+crybaby
+whiner
+baby
+brat
+spoiled brat
+snob
+stuck up
+arrogant
+pompous
+pretentious
+narcissist
+egomaniac
+egotistical
+selfish
+self centered
+prima donna
+diva
+control freak
+psycho
+crazy
+insane
+mental case
+nutjob
+nutcase
+lunatic
+maniac
+unhinged
+deranged
+disturbed
+twisted
+sick
+sicko
+pervert
+perv
+deviant
+degenerate
+depraved
+corrupt
+evil
+vile
+despicable
+disgusting
+revolting
+repulsive
+vomit inducing
+nauseating
+gross
+nasty
+filthy
+dirty
+grimy
+sleazy
+slimy
+greasy
+scuzzy
+sketchy
+shady
+shifty
+crooked
+dishonest
+liar
+con artist
+fraud
+fake
+phony
+two-faced
+backstabber
+snake
+rat
+snitch
+tattletale
+narc
+sellout
+traitor
+turncoat
+judas
+Benedict arnold
+quisling
+
+# Insults - behavior
+annoying
+obnoxious
+irritating
+aggravating
+infuriating
+insufferable
+intolerable
+unbearable
+pain in the ass
+pain in the neck
+nuisance
+pest
+bother
+hassle
+headache
+thorn in my side
+stick in the mud
+wet blanket
+party pooper
+killjoy
+spoilsport
+buzzkill
+debbie downer
+negative nancy
+drama queen
+drama king
+attention whore
+show off
+try hard
+tryhard
+wannabe
+poser
+poseur
+faker
+pretender
+copy cat
+leech
+parasite
+freeloader
+mooch
+moocher
+user
+gold digger
+opportunist
+vulture
+predator
+stalker
+creeper
+perv
+pervert
+peeping tom
+flasher
+exhibitionist
+voyeur
+sicko
+freak
+weirdo
+psycho
+crazy
+insane
+unhinged
+loose cannon
+time bomb
+powder keg
+hothead
+madman
+maniac
+
+# Profane expressions
+what the fuck
+wtf
+what the hell
+wth
+what the actual fuck
+for fucks sake
+ffs
+jesus christ
+jesus fucking christ
+christ almighty
+god dammit
+goddammit
+god damn it
+holy fuck
+holy shit
+holy crap
+fuck me
+fuck this
+fuck that
+fuck off
+piss off
+sod off
+bugger off
+get lost
+drop dead
+go die
+kill yourself
+kys
+neck yourself
+end it
+end yourself
+die in a fire
+burn in hell
+rot in hell
+go to hell
+damn you
+curse you
+screw you
+up yours
+shove it
+stick it
+bite me
+kiss my ass
+suck it
+suck my dick
+eat shit
+eat shit and die
+blow me
+get bent
+get stuffed
+get fucked
+go fuck yourself
+fuck you
+fuck off
+piss off
+
+# Violent/threatening language
+kill
+murder
+slaughter
+massacre
+butcher
+execute
+assassinate
+eliminate
+terminate
+liquidate
+exterminate
+annihilate
+obliterate
+destroy
+demolish
+crush
+pulverize
+smash
+bash
+beat
+pound
+pummel
+thrash
+wallop
+whip
+flog
+lash
+strike
+hit
+punch
+sock
+slug
+deck
+clock
+knock out
+ko
+uppercut
+haymaker
+sucker punch
+cheap shot
+kick
+stomp
+curb stomp
+boot
+knee
+headbutt
+elbow
+choke
+strangle
+throttle
+suffocate
+smother
+drown
+stab
+shank
+knife
+slice
+cut
+slash
+carve
+gut
+disembowel
+eviscerate
+shoot
+gun down
+blast
+cap
+pop
+plug
+drill
+ventilate
+pump full of lead
+blow away
+waste
+ice
+smoke
+off
+whack
+rub out
+take out
+put down
+put to sleep
+send to the morgue
+six feet under
+pushing daisies
+room temperature
+maim
+mutilate
+dismember
+amputate
+castrate
+neuter
+geld
+torture
+torment
+abuse
+brutalize
+savage
+maul
+tear apart
+rip apart
+shred
+mangle
+bludgeon
+club
+brain
+crack skull
+beat to death
+pound into the ground
+beat the crap out of
+beat the shit out of
+beat senseless
+beat bloody
+beat to a pulp
+beat black and blue
+work over
+tune up
+mess up
+fuck up
+jack up
+rough up
+knock around
+slap around
+push around
+bully
+intimidate
+threaten
+menace
+terrorize
+harass
+persecute
+victimize
+
+# Extreme/shocking content
+gore
+gory
+blood
+bloody
+bloodbath
+carnage
+slaughter
+massacre
+genocide
+holocaust
+atrocity
+war crime
+crime against humanity
+ethnic cleansing
+mass murder
+serial killer
+spree killer
+homicide
+manslaughter
+infanticide
+patricide
+matricide
+fratricide
+suicide
+self harm
+cut
+cutting
+cutter
+self mutilation
+burn
+burning
+jump
+hanging
+overdose
+od
+pills
+wrists
+razor
+blade
+noose
+rope
+bridge
+building
+gun
+bullet
+shoot myself
+blow my brains out
+end it all
+can't go on
+want to die
+wish i was dead
+better off dead
+world without me
+no point living
+life not worth living
+rape
+sexual assault
+sexual abuse
+molest
+molestation
+child abuse
+child molester
+pedophile
+pedo
+kiddie porn
+cp
+child porn
+preteen
+jailbait
+barely legal
+teen
+young
+innocent
+virgin
+deflower
+groom
+grooming
+predator
+date rape
+roofie
+drug
+drugged
+passed out
+unconscious
+non consensual
+forced
+against will
+struggle
+fight back
+scream
+cry
+beg
+please no
+stop
+hurt
+pain
+suffering
+agony
+torture
+torment
+abuse
+batter
+battery
+domestic violence
+spousal abuse
+elder abuse
+animal abuse
+animal cruelty
+bestiality
+zoophilia
+necrophilia
+corpse
+dead body
+cadaver
+mutilate
+desecrate
+defile
+violate
+scat
+feces
+shit
+piss
+urine
+vomit
+puke
+bile
+blood
+menstrual
+period
+tampon
+pad
+bodily fluids
+discharge
+pus
+infection
+disease
+std
+sti
+herpes
+hiv
+aids
+syphilis
+gonorrhea
+chlamydia
+crabs
+lice
+scabies
+
+# Nhóm 17: English vulgar - Internet slang & variations
+# L33t speak & intentional misspellings
+fuk
+fuc
+f*ck
+f**k
+f***
+fck
+phuck
+phuk
+fuq
+fux
+fukk
+shyt
+sh1t
+sh*t
+sh**
+sht
+shiit
+shiet
+b1tch
+b*tch
+biatch
+biotch
+beyotch
+beeyotch
+beatch
+azz
+a$$
+a**
+@ss
+asz
+@$$hole
+a$$hole
+azzhole
+assh0le
+d1ck
+d*ck
+dik
+dic
+dikk
+dck
+phallus
+c0ck
+c*ck
+cok
+cox
+cawk
+puss
+pus
+pussi
+coochie
+cooch
+c*nt
+kunt
+cnt
+cnut
+kunt
+b00bs
+bewbs
+bewbies
+b00bies
+tiddy
+tiddie
+pr1ck
+prik
+pric
+batty
+batty boy
+bum boy
+poof
+poofter
+pooftah
+ponce
+
+# Common censored versions
+f word
+n word
+c word
+b word
+s word
+d word
+a word
+four letter word
+curse word
+swear word
+cuss word
+profanity
+obscenity
+vulgarity
+expletive
+
+# Sex acts - slang
+smash
+beat
+pipe
+clap cheeks
+hit it from the back
+pound town
+giving head
+dome
+top
+brain
+skull
+face fuck
+throat fuck
+deep throat
+gag
+choke on it
+swallow
+spit
+facial
+nut
+bust a nut
+pop off
+shoot
+spray
+dump
+unload
+spunk
+jizz
+jism
+load
+man juice
+baby batter
+seed
+manjuice
+love juice
+cream
+cream pie
+splooge
+spluge
+skeet
+squirt
+ooze
+leak
+drip
+precum
+pre cum
+wet
+soaked
+dripping
+gushing
+ride
+mount
+cowgirl
+reverse cowgirl
+doggy
+doggy style
+from behind
+bent over
+spread
+spread eagle
+legs up
+missionary
+sideways
+spoon
+spooning
+quickie
+nooner
+booty call
+hookup
+one night stand
+fwb
+fuck buddy
+side piece
+jump off
+freak
+hoe
+thot
+slut
+whore
+tramp
+trollop
+floozy
+hussy
+jezebel
+skank
+skanky
+sleazy
+easy
+loose
+cheap
+fast
+promiscuous
+player
+manwhore
+womanizer
+cheater
+homewrecker
+other woman
+other man
+affair
+mistress
+side chick
+sidepiece
+
+# Body parts - slang
+dong
+ding dong
+dingus
+pecker
+johnson
+wang
+willy
+weiner
+wiener
+sausage
+bratwurst
+chorizo
+salami
+meat
+meat stick
+love muscle
+third leg
+package
+junk
+goods
+equipment
+unit
+tool
+member
+manhood
+schlong
+schlong
+rod
+pole
+stick
+wood
+morning wood
+boner
+hard on
+erection
+stiff
+chub
+semi
+viagra
+blue pill
+cialis
+pussy
+poon
+poontang
+punani
+cooch
+cooter
+muff
+beaver
+fur burger
+taco
+pink taco
+vertical smile
+box
+honeypot
+kitty
+lady parts
+lady bits
+va jay jay
+vajayjay
+hoo ha
+no no square
+down there
+private parts
+privates
+naughty bits
+bits and pieces
+goodies
+booty
+badonkadonk
+bubble butt
+donk
+dump truck
+thicc
+thick
+curvy
+voluptuous
+stacked
+busty
+well endowed
+huge
+massive
+enormous
+gigantic
+melons
+watermelons
+bazookas
+cannons
+fun bags
+milk jugs
+sweater puppies
+headlights
+tatas
+ta tas
+honkers
+
+# Bodily functions
+poop
+caca
+doo doo
+number two
+dump
+log
+turd
+floater
+dingleberry
+skid mark
+pee
+piss
+wee
+number one
+tinkle
+leak
+whiz
+take a leak
+take a piss
+urinate
+defecate
+evacuate
+bowel movement
+loose bowels
+diarrhea
+the runs
+the trots
+squirts
+wet fart
+shart
+flatulence
+pass gas
+break wind
+cut the cheese
+let one rip
+silent but deadly
+crop dust
+dutch oven
+queef
+pussy fart
+discharge
+period
+on the rag
+aunt flo
+monthly visitor
+time of the month
+red tide
+shark week
+code red
+
+# Drug slang
+weed
+pot
+marijuana
+cannabis
+mary jane
+mj
+grass
+herb
+chronic
+dank
+kush
+loud
+fire
+gas
+za
+zaza
+bud
+nugs
+trees
+green
+sticky icky
+ganja
+reefer
+dope
+blow
+coke
+cocaine
+crack
+rock
+white
+snow
+powder
+yayo
+yay
+nose candy
+bolivian marching powder
+charlie
+meth
+crystal
+crystal meth
+ice
+glass
+tina
+speed
+crank
+tweak
+molly
+mdma
+ecstasy
+e
+x
+rolls
+beans
+pills
+thizz
+pressed
+tabs
+acid
+lsd
+doses
+trips
+shrooms
+mushrooms
+caps
+fungus
+dmt
+ayahuasca
+peyote
+pcp
+angel dust
+wet
+lean
+purple drank
+sizzurp
+syrup
+codeine
+promethazine
+xanax
+xans
+bars
+benzos
+percs
+percocet
+oxys
+oxycontin
+vikes
+vicodin
+norcos
+addies
+adderall
+ritalin
+speed
+uppers
+downers
+tranqs
+roofies
+ghb
+date rape drug
+k
+ket
+ketamine
+special k
+heroin
+h
+smack
+junk
+tar
+black tar
+china white
+dope
+horse
+pills
+pressed pills
+fake pills
+fent
+fentanyl
+carfentanil
+shooting up
+mainlining
+skin popping
+snorting
+sniffing
+rails
+lines
+bump
+key bump
+smoking
+blazing
+toking
+hitting
+ripping
+chief
+chiefing
+hotbox
+hotboxing
+bong
+bowl
+pipe
+bubbler
+vape
+pen
+cart
+cartridge
+dab
+dabs
+dabbing
+rig
+wax
+shatter
+budder
+crumble
+rosin
+live resin
+hash
+kief
+edibles
+brownies
+gummies
+tincture
+plug
+dealer
+trap
+trap house
+dope boy
+connect
+reup
+re-up
+serving
+slinging
+pushing
+moving
+flipping
+cooking
+cutting
+stepped on
+laced
+fentanyl
+speedball
+candy flipping
+hippie flipping
+rolling
+tripping
+high
+stoned
+baked
+zooted
+faded
+lit
+geeked
+tweaking
+nodding
+nodding out
+fiending
+jonesing
+dope sick
+withdrawals
+comedown
+crash
+
+# Weapons & violence slang
+gat
+piece
+heat
+iron
+burner
+strap
+toolie
+pole
+blicky
+chopper
+draco
+ak
+ar
+stick
+glizzy
+switch
+auto
+fully auto
+drum
+mag
+magazine
+clip
+extended
+hollow points
+hollow tips
+fmj
+rounds
+bullets
+slugs
+shells
+buckshot
+bird shot
+scope
+laser
+red dot
+suppressor
+silencer
+ghost gun
+polymer 80
+p80
+3d printed
+illegal gun
+unregistered
+hot gun
+dirty gun
+throw away
+drop gun
+knife
+blade
+shank
+shiv
+box cutter
+razor
+switchblade
+butterfly knife
+butterfly
+balisong
+machete
+cleaver
+sword
+katana
+samurai sword
+axe
+hatchet
+tomahawk
+bat
+baseball bat
+aluminum bat
+club
+baton
+nightstick
+brass knuckles
+knuckles
+knucks
+stunner
+pepper spray
+mace
+taser
+stun gun
+cattle prod
+chain
+bike chain
+lock
+padlock
+sock
+soap in a sock
+brick
+rock
+bottle
+broken bottle
+glass
+shard
+shiv
+ice pick
+screwdriver
+box cutter
+utility knife
+hunting knife
+combat knife
+tactical knife
+survival knife
+throwing knife
+throwing star
+shuriken
+ninja star
+nunchucks
+nunchaku
+sai
+tonfa
+bo staff
+staff
+pole
+spear
+javelin
+crossbow
+bow
+arrow
+slingshot
+bb gun
+pellet gun
+air rifle
+paintball gun
+gel blaster
+
+# Gang & criminal slang
+gang
+set
+crew
+clique
+mob
+mafia
+cartel
+triad
+yakuza
+bratva
+thug
+gangster
+gangsta
+g
+og
+original gangster
+shot caller
+big homie
+youngin
+lil homie
+soldier
+enforcer
+muscle
+hitman
+triggerman
+goon
+henchman
+lackey
+minion
+ride or die
+day one
+real one
+fake
+snake
+rat
+snitch
+tattle
+tell
+cooperate
+flip
+turn
+witness
+informant
+ci
+confidential informant
+undercover
+uc
+narc
+fed
+feds
+police
+12
+one time
+five o
+coppers
+pigs
+bacon
+boys in blue
+authority
+law
+hood
+ghetto
+projects
+block
+corner
+trap
+trap house
+bando
+bandos
+abandoned house
+crack house
+dope house
+stash house
+safe house
+hideout
+turf
+territory
+claim
+rep
+represent
+bang
+banging
+throw up
+throw down
+signs
+hand signs
+colors
+flag
+flagging
+rag
+tagging
+tag
+graffiti
+piece
+burner
+murals
+beef
+rival
+enemy
+opp
+opps
+opposition
+hater
+diss
+disrespect
+violation
+fade
+hands
+shoot the fade
+knuckle up
+square up
+throw hands
+catch these hands
+beat down
+jumped
+jumped in
+initiated
+jumped out
+dropped
+quit
+switch sides
+claim
+false claim
+false flag
+poser
+wannabe
+studio gangster
+internet gangster
+keyboard warrior
+
+# Drugs & crime
+trap
+trapping
+hustling
+grinding
+serving
+pushing
+slinging
+moving
+flipping
+cooking
+whipping
+cutting
+stepping on
+lacing
+hot
+dirty
+clean
+legit
+plug
+connect
+dealer
+supplier
+distributor
+kingpin
+boss
+head
+cartel
+operation
+ring
+network
+organization
+crew
+team
+squad
+clique
+circle
+inner circle
+clientele
+customers
+fiends
+junkies
+crackheads
+tweakers
+users
+addicts
+custies
+lick
+come up
+finesse
+scam
+scheme
+hustle
+grift
+con
+swindle
+rip off
+jack
+rob
+stick up
+hold up
+heist
+job
+pull a job
+hit a lick
+boost
+steal
+shoplift
+five finger discount
+hot
+stolen
+knocked off
+fell off the truck
+fence
+move
+flip
+pawn
+stash
+hide
+bury
+plant
+spot
+location
+meet up
+deal
+transaction
+hand to hand
+drop
+dead drop
+pickup
+delivery
+courier
+mule
+runner
+look out
+spotter
+watch
+cop
+score
+re-up
+front
+credit
+owe
+debt
+pay up
+collect
+extort
+shake down
+protection money
+protection racket
+laundering
+money laundering
+wash
+clean
+dirty money
+blood money
+ill gotten gains
+🔥🔥🔥
+💯💯💯
+💰💰💰
+💵💵💵
+💴💴💴
+💶💶💶
+💷💷💷
+🤑🤑🤑
+💸💸💸
+🎁🎁🎁
+🎉🎉🎉
+🎊🎊🎊
+✨✨✨
+⭐⭐⭐
+🌟🌟🌟
+👉👉👉
+☎☎☎
+📞📞📞
+📱📱📱
+💻💻💻
+🔞🔞🔞
+🔴🔴🔴
+🟢🟢🟢
+🔵🔵🔵
+⚠⚠⚠
+‼‼‼
+❗❗❗
+❌❌❌
+✅✅✅
+💋💋💋
+👄👄👄
+🍑🍑🍑
+🍆🍆🍆
+
+# ===== MẪU SPAM - SPAM PATTERNS =====
+# Các pattern thường gặp trong spam
+
+# Nhóm 18: English vulgar - Online harassment & hate speech
+# Cyberbullying terms
+kys
+kill yourself
+hang yourself
+jump off a bridge
+drink bleach
+eat tide pods
+do the world a favor
+neck yourself
+end it
+end yourself
+an hero
+sudoku
+commit not alive
+die in a fire
+burn alive
+get cancer
+hope you get cancer
+rot in hell
+die slow
+painful death
+deserve to die
+world better without you
+waste of oxygen
+waste of space
+should have been aborted
+your mom should have swallowed
+mistake
+accident
+regret
+disappointment
+failure
+loser
+worthless
+pathetic
+sad
+cringe
+cringey
+cringe lord
+edgelord
+tryhard
+poser
+fake
+phony
+wannabe
+attention whore
+karma whore
+clout chaser
+pick me
+simp
+cuck
+beta
+alpha
+sigma
+incel
+femcel
+virgin
+maidenless
+no bitches
+touch grass
+go outside
+basement dweller
+neckbeard
+legbeard
+white knight
+nice guy
+fedora
+m'lady
+chud
+chode
+coomer
+gooner
+porn addict
+down bad
+down horrendous
+grass toucher
+room temperature iq
+smooth brain
+two brain cells
+share one brain cell
+npc
+bot
+shill
+sheep
+normie
+basic
+boring
+mid
+mid af
+mid tier
+low tier
+bottom tier
+trash tier
+garbage
+rubbish
+shit tier
+no life
+get a life
+job
+touch grass
+girlfriend
+boyfriend
+partner
+friends
+social skills
+communication skills
+hygiene
+shower
+deodorant
+brush teeth
+leave basement
+leave house
+sunlight
+vitamin d
+real world
+reality
+cope
+copium
+seethe
+dilate
+mald
+malding
+rent free
+living rent free
+triggered
+snowflake
+karen
+kevin
+chad
+stacy
+becky
+normie
+zoomer
+boomer
+doomer
+bloomer
+coomer
+goomer
+wojak
+pepe
+kek
+cringe
+based
+redpill
+bluepill
+blackpill
+whitepill
+pilled
+incel
+femcel
+moid
+scrote
+pickme
+fds
+red flag
+green flag
+beige flag
+ick
+toxic
+narcissist
+gaslighting
+manipulative
+abusive
+controlling
+obsessed
+stalker
+creep
+weird
+strange
+sus
+sussy
+imposter
+amogus
+based department
+ratio
+l plus ratio
+didn't ask
+don't care
+cry about it
+skill issue
+cope harder
+touch grass
+ratio'd
+stay mad
+rent free
+clown
+🤡
+🤓
+💀
+😂
+😭
+
+# Slurs - variations & euphemisms
+n word
+hard r
+soft a
+gamer word
+heated gaming moment
+fried chicken
+watermelon
+welfare
+food stamps
+ebt
+section 8
+hood rat
+ghetto
+ratchet
+thug
+gangster
+criminal
+felon
+convict
+prisoner
+inmate
+statistic
+thirteen percent
+13 percent
+13/50
+despite
+crime statistics
+fbi stats
+table
+jogger
+basketball american
+american inventor
+google
+bing
+yahoo
+skype
+skittle
+joggers
+dindu
+dindu nuffin
+good boy
+turning life around
+aspiring rapper
+on his way to church
+gentle giant
+unarmed
+hands up
+can't breathe
+i can't breathe
+blm
+all lives matter
+white lives matter
+blue lives matter
+back the blue
+defund
+acab
+1312
+fuck 12
+rice
+rice picker
+rice farmer
+dog eater
+bat soup
+kung flu
+china virus
+wuhan virus
+yellow peril
+mongoloid
+oriental
+asiatic
+slant
+slope
+zipperhead
+wetback
+border hopper
+illegal
+alien
+fence hopper
+river crosser
+anchor baby
+cartel
+drug dealer
+ms13
+taco
+burrito
+bean
+beaner
+spic
+brown
+bronzed
+tanned
+rapist
+murderer
+criminal
+invader
+replacement
+great replacement
+white genocide
+anti white
+diversity
+inclusion
+equity
+dei
+affirmative action
+quota
+token
+kosher
+merchant
+globalist
+international
+banker
+media
+hollywood
+controlled
+puppet
+soros
+rothschild
+lizard
+reptilian
+zog
+occupation
+occupied
+cathedral
+longhouse
+longhouse
+matriarchy
+feminazi
+feminism
+sjw
+woke
+social justice
+virtue signal
+npc
+bugman
+soy
+soyboy
+soyjak
+numale
+cuck
+cuckold
+bull
+tyrone
+chang
+mohammad
+pajeet
+designated
+shitting
+streets
+poo
+superpower
+by 2020
+redeem
+needful
+bobs
+vagene
+show bobs
+send bobs
+milk truk
+milk truck arrive
+t series
+subscribe to pewdiepie
+subscribe to tseries
+based
+redpilled
+blackpilled
+doomer
+coomer
+bloomer
+boomer
+zoomer
+millennial
+gen x
+gen z
+alpha
+beta
+sigma
+omega
+kappa
+theta
+lambda
+delta
+grindset
+hustle culture
+rise and grind
+wagie
+neet
+hikikomori
+volcel
+wizard
+apprentice wizard
+khv
+khhv
+30 year old virgin
+40 year old virgin
+virgin wizard
+tfw no gf
+just be yourself
+shower
+haircut
+work out
+lift
+gym
+gains
+gymcel
+gymmaxxing
+looksmaxxing
+frauding
+mogging
+mog
+heightmog
+facemog
+framemog
+statusmog
+moneymog
+iqmog
+manlet
+wristcel
+framecel
+neckcel
+chincel
+jawcel
+norwooding
+balding
+hairline
+receding
+egghead
+cue ball
+caillou
+chrome dome
+skinhead
+hitler
+youth
+third
+reich
+holocaust
+camps
+showers
+chimneys
+6 million
+holohoax
+wooden doors
+masturbation machines
+lampshades
+soap
+arbeit macht frei
+final solution
+deportation
+relocation
+work camps
+swimming pools
+theater
+orchestra
+hospital
+gas chambers
+zyklon b
+prussian blue
+revisionism
+denial
+denier
+antisemitism
+antisemitic
+blood libel
+well poisoning
+usury
+interest
+lending
+banking
+finance
+media control
+nepotism
+dual loyalty
+israel
+zionism
+zionist
+occupation
+apartheid
+genocide
+ethnic cleansing
+settlements
+idf
+mossad
+shin bet
+dancing
+five dancing
+art students
+lavon affair
+uss liberty
+false flag
+mossad motto
+by way of deception
+0123456789
+0987654321
+0909
+0908
+0907
+0906
+0905
+0904
+0903
+0902
+0901
+0899
+0898
+0897
+0896
+0895
+0894
+0893
+0892
+0891
+0886
+0885
+0884
+0883
+0882
+0881
+0877
+0876
+0875
+0874
+0873
+0872
+0871
+0869
+0868
+0867
+0866
+0865
+0864
+0863
+0862
+0859
+0858
+0857
+0856
+0855
+0854
+0853
+0852
+028
+024
+0236
+0254
+0256
+0258
+0259
+0261
+0262
+0263
+0269
+0271
+0272
+0274
+0275
+0277
+0290
+0291
+0292
+0293
+0296
+0297
+0299
+
+# Nhóm 19: English vulgar - Extreme & shock content
+# Gore & violence
+gore
+gory
+blood
+bloody
+bleeding
+bleed out
+hemorrhage
+arterial spray
+spatter
+splatter
+pool of blood
+blood bath
+bloodbath
+carnage
+slaughter
+massacre
+butcher
+butchery
+dismember
+dismemberment
+decapitate
+decapitation
+behead
+beheading
+guillotine
+eviscerate
+evisceration
+disembowel
+gut
+gutted
+intestines
+guts
+organs
+viscera
+mutilate
+mutilation
+maim
+maiming
+amputate
+amputation
+sever
+severed
+hack
+hacked
+chop
+chopped
+slice
+sliced
+dice
+diced
+mince
+minced
+grind
+ground
+pulverize
+pulp
+mash
+smash
+crush
+crushed
+squash
+splat
+explode
+exploded
+blow up
+blown up
+burst
+pop
+rupture
+ruptured
+split
+crack
+shatter
+shattered
+fracture
+broken bones
+compound fracture
+bone sticking out
+bone fragments
+skull fracture
+cracked skull
+brain matter
+grey matter
+spinal cord
+paralyzed
+quadriplegic
+paraplegic
+vegetative state
+brain dead
+coma
+life support
+pull the plug
+flatline
+code blue
+cardiac arrest
+heart attack
+stroke
+aneurysm
+seizure
+convulsion
+foam at mouth
+bite tongue
+choke
+asphyxiate
+suffocate
+strangle
+strangulation
+ligature
+garrote
+noose
+rope burn
+hanging
+hanged
+lynched
+lynch
+mob justice
+vigilante
+execution
+firing squad
+electric chair
+lethal injection
+gas chamber
+guillotine
+drawn and quartered
+impale
+impalement
+crucify
+crucifixion
+stake
+burned at stake
+burned alive
+immolation
+self immolation
+spontaneous combustion
+third degree burns
+charred
+crispy
+well done
+medium rare
+cannibalism
+cannibal
+eat
+consume
+devour
+feast
+human flesh
+long pork
+meat
+tender
+marbled
+liver
+kidney
+heart
+brain
+tongue
+eyeball
+finger
+toe
+http://
+https://
+www.
+.com
+.net
+.org
+.vn
+.asia
+.info
+.biz
+.xyz
+.top
+.online
+.site
+.website
+.click
+.link
+.work
+.tech
+.pro
+bit.ly/
+tinyurl.com/
+goo.gl/
+ow.ly/
+buff.ly/
+adf.ly/
+short.link/
+tiny.cc/
+
+# Nhóm 20: Emoji spam patterns
+🔥🔥🔥
+💯💯💯
+💰💰💰
+💵💵💵
+💴💴💴
+💶💶💶
+💷💷💷
+🤑🤑🤑
+💸💸💸
+🎁🎁🎁
+🎉🎉🎉
+🎊🎊🎊
+✨✨✨
+⭐⭐⭐
+🌟🌟🌟
+👉👉👉
+☎☎☎
+📞📞📞
+📱📱📱
+💻💻💻
+🔞🔞🔞
+🔴🔴🔴
+🟢🟢🟢
+🔵🔵🔵
+⚠⚠⚠
+‼‼‼
+❗❗❗
+❌❌❌
+✅✅✅
+💋💋💋
+👄👄👄
+🍑🍑🍑
+🍆🍆🍆
+
+# Nhóm 21: Số điện thoại patterns
+ngay lập tức
+nhanh tay
+nhanh lên
+mau lên
+còn ít
+sắp hết
+hết hàng
+số lượng có hạn
+chỉ còn
+chỉ có
+duy nhất
+độc quyền
+giới hạn
+limited
+exclusive
+unique
+rare
+special offer
+hot deal
+best deal
+deal khủng
+ưu đãi khủng
+khuyến mãi khủng
+giảm giá khủng
+sale khủng
+sale sốc
+sale lớn
+sale to
+big sale
+mega sale
+super sale
+flash sale
+clearance sale
+đừng bỏ lỡ
+đừng bỏ qua
+đừng упустить
+không nên bỏ lỡ
+không nên упустить
+nhanh tay kẻo hết
+nhanh tay lên
+còn vài suất
+chỉ còn vài suất
+sắp đóng cửa
+sắp kết thúc
+hôm nay kết thúc
+hôm nay cuối cùng
+ngày cuối
+giờ chót
+phút chót
+
+# ===== NỘI DUNG CHÍNH TRỊ NHẠY CẢM =====
+# Các từ khóa chính trị, tôn giáo nhạy cảm
+
+# Nhóm 21: Chính trị
+đảng cộng sản
+cs việt nam
+csvn
+cscp
+cộng sản
+độc tài
+chuyên chế
+tham nhũng
+bán nước
+bù nhìn
+b傀儡
+nô lệ trung quốc
+bán nước cho tq
+đại hán
+bọn giặc
+bọn phản động
+phản động
+phản bội tổ quốc
+phản quốc
+phản dân
+dân chủ
+nhân quyền
+tự do ngôn luận
+biểu tình
+xuống đường
+chống chính phủ
+lật đổ
+đảo chính
+cách mạng
+khởi nghĩa
+bạo loạn
+bạo động
+biểu tình bạo lực
+giáo sư sơn
+nguyễn phú trọng
+tô lâm
+phạm minh chính
+võ văn thưởng
+
+# Nhóm 22: Tôn giáo cực đoan
+thánh chiến
+jihad
+khủng bố
+đánh bom
+bombbing
+attack
+terrorist
+extremist
+radical
+cực đoan
+cuồng tín
+bạo lực tôn giáo
+mâu thuẫn tôn giáo
+xung đột tôn giáo
+kỳ thị tôn giáo
+phân biệt tôn giáo
+đàn áp tôn giáo
+
+# ===== THÔNG TIN GIẢ MẠO - FAKE NEWS =====
+# Từ khóa thông tin giả mạo
+
+# Nhóm 23: Tin giả/Tin đồn
+tin sốc
+tin nóng hổi
+tin nóng hổi vừa mới
+tin độc quyền
+tin từ nguồn tin
+nguồn tin độc quyền
+nguồn tin riêng
+nguồn tin thân cận
+người thân cận tiết lộ
+người trong cuộc tiết lộ
+nội bộ tiết lộ
+rò rỉ thông tin
+leak thông tin
+bóc phốt
+drama
+lộ clip
+lộ ảnh
+lộ tin nhắn
+lộ chat
+hack camera
+hack icloud
+hack điện thoại
+tung clip
+tung ảnh
+tung chat
+vạch mặt
+vạch trần
+vỗ mặt
+bẻ lái
+plot twist
+tin chấn động
+tin sốc tận óc
+tin làm rung chuyển
+tin làm chấn động
+
+# ===== THƯƠNG MẠI BẤT HỢP PHÁP =====
+# Hàng hóa, dịch vụ bất hợp pháp
+
+# Nhóm 24: Ma túy/Chất cấm
+ma túy
+chất cấm
+thuốc lắc
+ecstasy
+cocaine
+heroin
+ketamine
+methamphetamine
+ice
+ma túy đá
+đá
+cần sa
+cannabis
+marijuana
+weed
+cỏ mỹ
+cỏ thái
+thuốc phiện
+thuốc lá điện tử
+shisha
+thuốc lào
+bóng cười
+khí cười
+nitơ oxit
+n2o
+lsd
+acid
+nấm ma thuật
+magic mushroom
+opium
+mdma
+meth
+amphetamine
+
+# Nhóm 25: Vũ khí
+súng
+dao
+kiếm
+mã tấu
+côn
+gậy ba khúc
+nunchaku
+sao phi tiêu
+phi tiêu
+ná thun
+ná cao su
+súng hơi
+súng điện
+súng điện taser
+bình xịt hơi cay
+thuốc mê
+gậy điện
+gậy điện tự vệ
+dao bấm
+dao lưỡi kép
+bom
+lựu đạn
+vật nổ
+thuốc nổ
+pháo
+pháo nổ
+petard
+firecracker
+dynamite
+
+# Nhóm 26: Hàng cấm/Hàng lậu
+hàng lậu
+hàng lụt
+hàng nhập lậu
+hàng qua cửa khẩu
+hàng không nguồn gốc
+hàng black
+hàng xách tay không bill
+hàng dựng
+hàng nhái cao cấp
+hàng fake 1:1
+super fake
+replica
+hàng hiệu giá rẻ
+chanel giá rẻ
+gucci giá rẻ
+lv giá rẻ
+hermes giá rẻ
+dior giá rẻ
+rolex giá rẻ
+đồng hồ thụy sỹ giá rẻ
+
+# ===== BẠO LỰC/ĐÁNH NHAU =====
+# Nội dung bạo lực, đánh nhau
+
+# Nhóm 27: Bạo lực
+đánh nhau
+đấu tay bo
+hỗn chiến
+ẩu đả
+gây gổ
+đập phá
+phá hoại
+tấn công
+hành hung
+đánh đập
+tra tấn
+bạo hành
+bạo lực gia đình
+chém
+đâm
+giết
+sát hại
+mưu sát
+ám sát
+giết người
+giết chết
+đâm chết
+chém chết
+đánh chết
+đánh gãy tay
+đánh gãy chân
+đánh bể đầu
+đánh rách mặt
+đập đầu
+vỡ sọ
+chảy máu
+máu me
+đổ máu
+chết người
+tử vong
+chết chóc
+thương vong
+tàn sát
+thảm sát
+diệt chủng
+giết hại
+hãm hiếp
+cưỡng hiếp
+cưỡng bức
+hiếp dâm
+tấn công tình dục
+xâm hại tình dục
+quấy rối tình dục
+dâm ô
+xâm phạm thân thể
+
+# ===== PHÂN BIỆT KỲ THỊ =====
+# Ngôn từ phân biệt chủng tộc, vùng miền, giới tính
+
+# Nhóm 28: Kỳ thị vùng miền
+dân miền bắc
+dân miền nam
+dân miền trung
+người miền bắc
+người miền nam
+người miền trung
+thằng bắc kỳ
+thằng nam kỳ
+thằng trung kỳ
+con bắc kỳ
+con nam kỳ
+con trung kỳ
+sài gòn láo
+hà nội khùng
+huế nói lái
+phố núi
+dân tộc thiểu số
+mọi
+thượng
+người rừng
+dân tộc vùng cao
+dân vùng sâu vùng xa
+
+# Nhóm 29: Kỳ thị giới tính/LGBT
+đồng tính
+đồng tính nam
+đồng tính nữ
+gay
+les
+lesbian
+lgbt
+lgbtq
+lgbtq+
+pê đê
+bê đê
+bóng kín
+bóng
+tà nam
+tà nữ
+luyến ái đồng giới
+bệnh hoạn
+tâm thần
+tâm lý bất thường
+không bình thường
+dị thường
+biến thái
+dơ bẩn
+ô uế
+bê tha
+đồi truỵ
+băng hoại
+đốn mạt
+tha hóa
+
+# Nhóm 30: Kỳ thị ngoại hình
+xấu xí
+xấu như ma
+xấu như quỷ
+xấu trai
+xấu gái
+xấu như hủi
+xấu như đểu
+xấu như cứt
+nhìn như cứt
+nhìn như mặt lồn
+béo như lợn
+béo như heo
+béo phì
+béo ục
+mập như heo
+mập như lợn
+gầy như que
+gầy như củi
+gầy như ma đói
+gầy trơ xương
+gầy nhom
+lùn tịt
+lùn chũn
+lùn chó
+thấp lùn
+lùn còi
+lùn nhất
+đen như than
+đen như cột nhà cháy
+đen như đểu
+đen như quỷ
+đen thui
+đen sì
+đen sạm
+da đen
+mặt đen
+trắng bệch
+trắng bệch như ma
+trắng như xác chết
+tàn tật
+khuyết tật
+què quặt
+cụt tay
+cụt chân
+mù
+điếc
+câm
+ngọng
+nói ngọng
+nói lắp
+
+# ===== SPAM THƯƠNG MẠI =====
+# Pattern quảng cáo thương mại spam
+
+# Nhóm 31: Quảng cáo rác
+mua ngay
+order ngay
+đặt hàng ngay
+inbox ngay đặt
+chat ngay đặt
+liên hệ đặt hàng
+gọi ngay đặt
+giá rẻ nhất
+rẻ nhất thị trường
+rẻ nhất vn
+rẻ nhất việt nam
+giá tốt nhất
+tốt nhất thị trường
+chất lượng cao
+chất lượng tốt nhất
+hàng xịn
+hàng chính hãng giá rẻ
+hàng authentic giá rẻ
+fullbox giá rẻ
+nguyên seal giá rẻ
+bao test
+test thoải mái
+đổi trả thoải mái
+bảo hành trọn đời
+bảo hành vĩnh viễn
+cam kết chính hãng
+cam kết 100%
+đảm bảo 100%
+uy tín 100%
+tin cậy 100%
+check hàng
+cod toàn quốc
+freeship toàn quốc
+free ship hcm
+free ship hn
+giao hàng toàn quốc
+ship cod
+ship toàn quốc
+ship nhanh
+giao nhanh
+giao tận nơi
+giao tận nhà
+nhận hàng mới thanh toán
+thanh toán khi nhận hàng
+không ưng không lấy
+không mất phí
+hoàn tiền 100%
+hoàn tiền nếu không hài lòng
+
+# ===== BỔ SUNG THÊM =====
+# Thêm các từ khóa khác
+
+# Nhóm 32: Lừa đảo tài chính
+đầu tư sinh lời
+lãi suất cao
+lợi nhuận cao
+lợi nhuận khủng
+sinh lời nhanh
+x2 vốn
+x3 vốn
+x5 vốn
+x10 vốn
+gấp đôi vốn
+gấp ba vốn
+gấp năm vốn
+gấp mười vốn
+không rủi ro
+ít rủi ro
+an toàn tuyệt đối
+đầu tư an toàn
+đầu tư ít rủi ro
+forex
+trade
+trading
+binary option
+crypto
+bitcoin
+ethereum
+usdt
+chứng khoán
+cổ phiếu
+penny stock
+pump dump
+bơm thổi
+rửa tiền
+money laundering
+đầu tư đa cấp
+đầu tư ponzi
+đầu tư hụi
+hụi chết
+hụi đền
+hụi quay vòng
+
+# Nhóm 33: Hack/Crack
+hack
+crack
+keygen
+serial key
+license key
+activation code
+premium free
+pro free
+vip free
+full crack
+full version
+cracked
+hacked
+mod apk
+mod app
+mod game
+cheat
+cheat game
+hack game
+phần mềm crack
+phần mềm hack
+tool hack
+auto farm
+auto click
+bot game
+spam bot
+hack facebook
+hack zalo
+hack gmail
+hack account
+hack tài khoản
+lấy lại mật khẩu
+phá pass
+crack password
+keylogger
+trojan
+virus
+malware
+ransomware
+
+# Nhóm 34: Giấy tờ giả
+bằng lái
+bằng lái xe giả
+giấy phép lái xe giả
+cmnd giả
+cccd giả
+passport giả
+visa giả
+bằng đại học giả
+bằng cấp giả
+chứng chỉ giả
+giấy khám sức khỏe giả
+xét nghiệm giả
+test covid giả
+giấy tờ giả
+hồ sơ giả
+làm giấy tờ giả
+làm bằng giả
+làm cmnd giả
+làm cccd giả
+làm passport giả
+photo giả
+scan giả
+chỉnh sửa giấy tờ
+chỉnh sửa cmnd
+chỉnh sửa cccd
+
+# Nhóm 35: Dịch vụ bất hợp pháp
+thuê người đánh
+thuê giang hồ
+thuê đàn em
+thuê xã hội đen
+thuê giang hồ đòi nợ
+thuê người dọa
+thuê người đe dọa
+xã hội đen
+giang hồ
+đòi nợ thuê
+đòi nợ bằng mọi giá
+thu hồi nợ
+đòi nợ bằng bạo lực
+hack thuê
+cày thuê
+chơi thuê
+đánh thuê
+làm thuê
+thuê người làm hộ
+làm hộ bài tập
+làm hộ luận văn
+làm hộ đồ án
+mua bán bài tập
+mua bán luận văn
+mua bán đồ án
+mua bán khóa luận
+mua điểm
+mua bằng
+mua chứng chỉ
+
+# Nhóm 36: Phản cảm khác
+ói mửa
+nôn mửa
+buồn nôn
+trời ơi đất hỡi
+mẹ ơi
+trời ơi
+ôi giời
+ôi trời
+wtf
+omg
+holy shit
+jesus christ
+god damn
+oh my god
+what the fuck
+what the hell
+damn it
+fucking hell
+shit happens
+oh shit
+oh crap
+goddamn
+hell no
+như shit
+như cứt
+như cức
+như đểu
+như chó
+như heo
+như lợn
+như bò
+như trâu
+như ngựa
+như khỉ
+như con khỉ
+như đĩ
+như cave
+xạo lồn
+xạo buồi
+nói láo
+láo lừa
+láo như cuội
+láo toét
+láo tàn tật
+nói dối
+dối trá
+lừa đảo
+lừa gặt
+lừa bịp
+lừa lọc
+móc túi
+ăn cắp
+ăn trộm
+trộm cắp
+cướp
+cướp giật
+móc túi
+giật túi
+giật điện thoại
+giật dây chuyền
+cướp ngân hàng
+cướp tiệm vàng
+
+# ===== KẾT THÚC FILE =====
+# Tổng cộng: Hơn 2000+ từ khóa và pattern spam không phù hợp
+# Được phân loại thành 36 nhóm chính
+# Hỗ trợ: Tiếng Việt, Tiếng Anh, Emoji, URL patterns, Phone patterns
+# Sử dụng cho: Content Moderation AI System
+# Cập nhật định kỳ để bổ sung thêm từ khóa mới

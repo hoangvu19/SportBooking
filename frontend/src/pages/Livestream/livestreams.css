@@ -1,0 +1,232 @@
+/* TikTok-like livestream layout styles */
+:root{
+  --bg:#05060a;
+  --panel:#071021;
+  --muted:#9aa3b2;
+  --accent:#6366f1;
+  --live:#ef4444;
+}
+.livestream-wrap{
+  display:flex;
+  gap:16px;
+  padding:20px;
+  background:linear-gradient(180deg,var(--bg),#02030a);
+  min-height:80vh;
+  color:#e6eef8;
+}
+.ls-center{flex:1;display:flex;justify-content:center}
+.ls-video-panel{width:720px;max-width:78vw;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:12px;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,0.03)}
+.ls-video{width:100%;height:420px;object-fit:cover;background:#000;display:block}
+.ls-overlay-top{position:absolute;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;align-items:flex-start;z-index:30}
+.streamer-name{font-weight:700;margin-left:6px}
+.viewer-pill{background:rgba(0,0,0,0.35);padding:6px 10px;border-radius:999px;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+.gifts-bar{position:absolute;left:12px;right:12px;bottom:12px;display:flex;align-items:center;gap:12px;z-index:30}
+.gift-item{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:10px;color:#fff;font-size:13px}
+.right-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ls-right{width:360px;max-width:36vw}
+.comments-list{background:var(--panel);padding:12px;border-radius:10px;height:520px;overflow:auto;border:1px solid rgba(255,255,255,0.03)}
+.comment-item{display:flex;gap:10px;padding:8px 6px;border-bottom:1px solid rgba(255,255,255,0.02)}
+.comment-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover}
+.comment-author{font-weight:700}
+.comment-bubble{background:rgba(255,255,255,0.03);padding:8px;border-radius:8px;color:#e6eef8}
+.comment-input{display:flex;gap:8px;align-items:center;margin-top:10px}
+.comment-input input{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted)}
+.emoji-picker{position:absolute;right:40px;bottom:68px;background:var(--panel);padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+.emoji-btn{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:8px}
+.new-comments-pill{position:fixed;right:420px;bottom:40px;background:var(--accent);color:#fff;padding:8px 12px;border-radius:999px;cursor:pointer}
+.gift-fly{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);animation:flyUp 1.6s ease-in-out;z-index:200}
+.gift-blob{background:linear-gradient(135deg,#ff8a00,#ff3d81);padding:16px;border-radius:50%;color:#fff;font-weight:800}
+@keyframes flyUp{0%{transform:translate(-50%,20%) scale(0.8);opacity:0}30%{opacity:1}100%{transform:translate(-50%,-180%) scale(1.2);opacity:0}}
+
+/* Livestream TikTok-style Grid UI */
+.livestream-container {
+  background: #000;
+  min-height: 100vh;
+  color: #fff;
+}
+
+.live-badge {
+  background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(255, 8, 68, 0.3);
+}
+
+.stream-card {
+  background: #18181b;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.stream-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(255, 8, 68, 0.2);
+}
+
+.stream-thumbnail {
+  position: relative;
+  padding-bottom: 133%; /* 3:4 aspect ratio like TikTok */
+  background: linear-gradient(180deg, #1a1a1d 0%, #0d0d0f 100%);
+}
+
+.stream-thumbnail-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.viewer-count {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stream-info {
+  padding: 12px;
+  background: #18181b;
+}
+
+.stream-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #ff0844;
+  object-fit: cover;
+}
+
+.stream-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.stream-host {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.view-btn {
+  background: linear-gradient(135deg, #ff0844 0%, #ff4d6d 100%);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 8, 68, 0.3);
+}
+
+.view-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(255, 8, 68, 0.4);
+}
+
+.create-stream-form {
+  background: #18181b;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #27272a;
+}
+
+.create-stream-form h3 {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.create-stream-form input {
+  width: 100%;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
+  padding: 12px;
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.create-stream-form input:focus {
+  outline: none;
+  border-color: #ff0844;
+}
+
+.create-stream-form button[type="submit"] {
+  width: 100%;
+  background: linear-gradient(135deg, #ff0844 0%, #ff4d6d 100%);
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.create-stream-form button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 8, 68, 0.4);
+}
+
+.no-streams {
+  text-align: center;
+  padding: 60px 20px;
+  color: #71717a;
+}
+
+.no-streams p {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+/* Grid responsive */
+@media (min-width: 640px) {
+  .streams-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .streams-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .streams-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .streams-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

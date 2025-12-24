@@ -1,0 +1,275 @@
+const CommentDAL = require('../../DAL/Social/CommentDAL');
+const moderationService = require('../../lib/contentModeration');
+const { createNotification } = require('../Notification/notificationController');
+const {
+  sendSuccess,
+  sendCreated,
+  sendError,
+  sendValidationError,
+  sendNotFound,
+  sendUnauthorized
+} = require('../../utils/responseHelper');
+const {
+  isBlank,
+  getAccountId,
+  ensurePositiveInteger,
+  normalizePagination
+} = require('../../utils/requestUtils');
+const {
+  buildBaseUrl,
+  buildPaginationMeta,
+  formatCommentForResponse
+} = require('../../utils/controllerHelpers');
+
+const CommentController = {
+  async getCommentsByPost(req, res) {
+    try {
+      const { postId } = req.params;
+      const idCheck = ensurePositiveInteger(postId, 'postId');
+      if (!idCheck.ok) {
+        return sendValidationError(res, idCheck.message);
+      }
+
+      const { page, limit } = normalizePagination(req.query, { page: 1, limit: 20 });
+      const baseUrl = buildBaseUrl(req);
+
+      const comments = await CommentDAL.getByPostId(idCheck.value, page, limit);
+      const formatted = comments.map((comment) => formatCommentForResponse(comment, baseUrl));
+
+      return sendSuccess(res, {
+        comments: formatted,
+        pagination: buildPaginationMeta(comments.length, limit, page)
+      });
+    } catch (error) {
+      return sendError(res, 'Server error fetching comments', 500, { error });
+    }
+  },
+
+  /**
+   * Create new comment
+   */
+  async createComment(req, res) {
+    try {
+      const { postId, content, parentCommentId } = req.body || {};
+      const accountId = getAccountId(req);
+      const files = req.files || [];
+
+      const postCheck = ensurePositiveInteger(postId, 'postId');
+      if (!postCheck.ok) {
+        return sendValidationError(res, postCheck.message);
+      }
+
+      if (isBlank(content) && files.length === 0) {
+        return sendValidationError(res, 'PostID and content or images are required');
+      }
+
+      if (!accountId) {
+        return sendUnauthorized(res);
+      }
+
+      // AI Content Moderation for comments
+      if (!isBlank(content)) {
+        const moderationResult = await moderationService.moderateContent(content.trim());
+        
+        if (!moderationResult.isClean) {
+          await logModeration(null, null, content, moderationResult);
+          return sendValidationError(res, moderationResult.reason || 'Content violates community guidelines');
+        }
+        
+        // Log if needs review (but still allow)
+        if (moderationResult.needsReview) {
+          await logModeration(null, null, content, moderationResult);
+        }
+      }
+
+      if (!isBlank(parentCommentId)) {
+        const parentCheck = ensurePositiveInteger(parentCommentId, 'parentCommentId');
+        if (!parentCheck.ok) {
+          return sendValidationError(res, parentCheck.message);
+        }
+      }
+
+      const payload = {
+        PostID: postCheck.value,
+        AccountID: accountId,
+        Content: isBlank(content) ? '' : content.trim()
+      };
+
+      if (!isBlank(parentCommentId)) {
+        payload.ParentCommentID = parseInt(parentCommentId, 10);
+      }
+
+      const created = await CommentDAL.createWithImages(payload, files);
+      
+      // Send notifications for comments and replies
+      try {
+        const PostDAL = require('../../DAL/Social/PostDAL');
+        const UserDAL = require('../../DAL/Auth/userDAL');
+        const fromUser = await UserDAL.getUserById(accountId);
+        
+        if (fromUser) {
+          if (payload.ParentCommentID) {
+            // Reply to comment - notify parent comment owner
+            const parentComment = await CommentDAL.getById(payload.ParentCommentID);
+            if (parentComment && parentComment.AccountID && parentComment.AccountID !== accountId) {
+              await createNotification({
+                recipientId: parentComment.AccountID,
+                senderId: accountId,
+                type: 'comment',
+                contentId: payload.PostID, // Use PostID for navigation
+                content: `${fromUser.FullName || fromUser.Username} replied to your comment!`
+              });
+            }
+          } else {
+            // New comment - notify post owner
+            const post = await PostDAL.getById(payload.PostID);
+            if (post && post.AccountID && post.AccountID !== accountId) {
+              await createNotification({
+                recipientId: post.AccountID,
+                senderId: accountId,
+                type: 'comment',
+                contentId: payload.PostID, // Use PostID for navigation
+                content: `${fromUser.FullName || fromUser.Username} commented on your post!`
+              });
+            }
+          }
+        }
+      } catch (e) { /* ignore */ }
+      
+      const baseUrl = buildBaseUrl(req);
+      const formattedComment = formatCommentForResponse(created, baseUrl);
+      try {
+        const emitter = require('../../lib/realtimeEmitter');
+        emitter.emitEvent('comment:created', null, { comment: formattedComment });
+      } catch (e) { console.debug('comment:created emit failed', e && e.message); }
+
+      return sendCreated(res, formattedComment, 'Comment created successfully');
+    } catch (error) {
+      return sendError(res, 'Server error creating comment', 500, { error });
+    }
+  },
+
+  async getCommentById(req, res) {
+    try {
+      const { commentId } = req.params;
+      const idCheck = ensurePositiveInteger(commentId, 'commentId');
+      if (!idCheck.ok) {
+        return sendValidationError(res, idCheck.message);
+      }
+
+      const comment = await CommentDAL.getById(idCheck.value);
+      if (!comment) {
+        return sendNotFound(res, 'Comment not found');
+      }
+
+      const baseUrl = buildBaseUrl(req);
+      return sendSuccess(res, formatCommentForResponse(comment, baseUrl));
+    } catch (error) {
+  return sendError(res, 'Server error fetching comment', 500, { error });
+    }
+  },
+
+  async getCommentsCount(req, res) {
+    try {
+      const { postId } = req.params;
+      const idCheck = ensurePositiveInteger(postId, 'postId');
+      if (!idCheck.ok) {
+        return sendValidationError(res, idCheck.message);
+      }
+
+      const count = await CommentDAL.getCountByPostId(idCheck.value);
+      return sendSuccess(res, { count });
+    } catch (error) {
+      return sendError(res, 'Server error fetching comment count', 500, { error });
+    }
+  },
+
+  async updateComment(req, res) {
+    try {
+      const { commentId } = req.params;
+      const { content } = req.body || {};
+      const accountId = getAccountId(req);
+
+      if (isBlank(content)) {
+        return sendValidationError(res, 'Comment content must not be empty');
+      }
+
+      const idCheck = ensurePositiveInteger(commentId, 'commentId');
+      if (!idCheck.ok) {
+        return sendValidationError(res, idCheck.message);
+      }
+
+      if (!accountId) {
+        return sendUnauthorized(res);
+      }
+
+      const isOwner = await CommentDAL.isOwner(idCheck.value, accountId);
+      if (!isOwner) {
+        return sendUnauthorized(res, 'Comment not found or you do not have permission to edit');
+      }
+
+      const updatedComment = await CommentDAL.update(idCheck.value, content.trim());
+      const baseUrl = buildBaseUrl(req);
+
+  return sendSuccess(res, formatCommentForResponse(updatedComment, baseUrl), 'Comment updated successfully');
+    } catch (error) {
+      return sendError(res, 'Server error updating comment', 500, { error });
+    }
+  },
+
+  async deleteComment(req, res) {
+    try {
+      const { commentId } = req.params;
+      const accountId = getAccountId(req);
+
+      const idCheck = ensurePositiveInteger(commentId, 'commentId');
+      if (!idCheck.ok) {
+        return sendValidationError(res, idCheck.message);
+      }
+
+      if (!accountId) {
+        return sendUnauthorized(res);
+      }
+
+      const isOwner = await CommentDAL.isOwner(idCheck.value, accountId);
+      if (!isOwner) {
+        return sendUnauthorized(res, 'Comment not found or you do not have permission to delete');
+      }
+
+      await CommentDAL.delete(idCheck.value);
+
+  return sendSuccess(res, null, 'Comment deleted successfully');
+    } catch (error) {
+      return sendError(res, 'Server error deleting comment', 500, { error });
+    }
+  }
+};
+
+/**
+ * Helper: Log moderation result
+ */
+async function logModeration(postId, commentId, content, moderationResult) {
+  try {
+    const { poolPromise, sql } = require('../../config/db');
+    const pool = await poolPromise;
+    
+    await pool.request()
+      .input('PostID', sql.Int, postId)
+      .input('CommentID', sql.Int, commentId)
+      .input('Content', sql.NVarChar, content)
+      .input('IsClean', sql.Bit, moderationResult.isClean)
+      .input('Confidence', sql.Decimal(3, 2), moderationResult.confidence)
+      .input('Reason', sql.NVarChar, moderationResult.reason)
+      .input('NeedsReview', sql.Bit, moderationResult.needsReview)
+      .input('Flags', sql.NVarChar, JSON.stringify(moderationResult.flags))
+      .query(`
+        INSERT INTO ContentModerationLog 
+        (PostID, CommentID, Content, IsClean, Confidence, Reason, NeedsReview, Flags)
+        VALUES (@PostID, @CommentID, @Content, @IsClean, @Confidence, @Reason, @NeedsReview, @Flags)
+      `);
+  } catch (error) {
+    console.error('Error logging moderation:', error);
+  }
+}
+
+module.exports = CommentController;

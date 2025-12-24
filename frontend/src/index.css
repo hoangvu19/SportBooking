@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import "tailwindcss";
+
+
+*{
+  font-family: "Outfit", sans-serif;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+  Force white borders on elements with white background to avoid visible dark outlines
+  (Fix for components that render a black border in some environments).
+  This is intentionally broad; if you'd like narrower scope we can restrict to
+  specific component classes instead.
+*/
+.bg-white.border,
+.bg-white[class*="border-"] {
+  border-color: #ffffff !important;
+}

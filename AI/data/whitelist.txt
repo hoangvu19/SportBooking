@@ -1,0 +1,594 @@
+# WHITELIST - DANH SÁCH TỪ HỢP LỆ
+# File này chứa các từ hợp lệ để tránh false positive
+# Các từ này sẽ KHÔNG bị coi là spam
+
+# ===== THỂ THAO - SPORTS =====
+bóng
+bóng đá
+bóng rổ
+bóng chuyền
+bóng bàn
+cầu lông
+cầu lông
+tennis
+quần vợt
+bơi lội
+chạy bộ
+gym
+fitness
+yoga
+võ thuật
+boxing
+võ boxing
+karate
+taekwondo
+judo
+wrestling
+đá cầu
+cầu mây
+bida
+bowling
+golf
+marathon
+triathlon
+cycling
+đạp xe
+leo núi
+dù lượn
+bắn cung
+bóng ném
+khúc côn cầu
+bóng bầu dục
+rugby
+cricket
+baseball
+basketball
+volleyball
+badminton
+table tennis
+ping pong
+swimming
+running
+ket
+ball
+basket
+play
+sport
+team
+game
+field
+jogging
+aerobics
+zumba
+pilates
+crossfit
+muay thai
+kickboxing
+mma
+martial arts
+skateboard
+parkour
+rock climbing
+surfing
+diving
+sailing
+rowing
+kayaking
+canoeing
+skating
+hockey
+water polo
+polo
+horse riding
+archery
+shooting
+fencing
+esports
+game thể thao
+
+# ===== ĐỊA ĐIỂM SÂN THỂ THAO =====
+sân bóng
+sân bóng đá
+sân cỏ
+sân cỏ nhân tạo
+sân 5
+sân 7
+sân 11
+sân mini
+sân thi đấu
+sân vận động
+sân tennis
+sân cầu lông
+sân bóng rổ
+sân bóng chuyền
+phòng gym
+hồ bơi
+bể bơi
+trung tâm thể thao
+trung tâm thể dục
+câu lạc bộ
+club thể thao
+fitness center
+sports center
+stadium
+arena
+court
+field
+pitch
+ground
+playground
+sports complex
+recreation center
+
+# ===== HOẠT ĐỘNG BÌNH THƯỜNG =====
+tìm
+tìm người
+tìm bạn
+tìm đối
+tìm đối thủ
+tìm team
+tìm nhóm
+tìm cặp
+tìm sân
+đặt sân
+book sân
+thuê sân
+kèo
+kèo bóng
+kèo giao hữu
+giao hữu
+đá giao hữu
+chơi giao hữu
+tập luyện
+luyện tập
+rèn luyện
+tập đá
+tập bóng
+thi đấu
+tranh tài
+giải đấu
+tournament
+league
+competition
+match
+game
+play
+practice
+training
+workout
+exercise
+warm up
+cool down
+stretching
+
+# ===== THUẬT NGỮ THỂ THAO =====
+đội
+đội bóng
+team
+squad
+lineup
+formation
+tactics
+strategy
+technique
+skill
+ability
+performance
+score
+goal
+point
+foul
+penalty
+offside
+corner
+throw in
+free kick
+kick off
+half time
+full time
+overtime
+injury time
+referee
+coach
+player
+goalkeeper
+defender
+midfielder
+forward
+striker
+captain
+substitute
+bench
+fan
+supporter
+cheerleader
+audience
+spectator
+
+# ===== THIẾT BỊ THỂ THAO =====
+bóng đá
+bóng rổ
+bóng chuyền
+bóng bàn
+vợt
+cầu lông
+lưới
+khung thành
+cột cờ
+áo đấu
+quần đùi
+giày đá bóng
+giày thể thao
+găng tay
+bảo hộ
+ống đồng
+băng bảo vệ
+mũ bảo hộ
+nón
+kính bơi
+mũ bơi
+áo phao
+phao bơi
+thảm tập
+tạ
+đòn tạ
+dây kéo
+dây nhảy
+xe đạp
+máy chạy bộ
+máy tập
+dụng cụ tập
+
+# ===== THỜI GIAN =====
+sáng
+sáng mai
+sáng nay
+sáng thứ 2
+sáng chủ nhật
+chiều
+chiều mai
+chiều nay
+tối
+tối mai
+tối nay
+tối thứ 7
+cuối tuần
+tuần này
+tuần sau
+tháng này
+tháng sau
+hôm nay
+ngày mai
+ngày kia
+thứ 2
+thứ 3
+thứ 4
+thứ 5
+thứ 6
+thứ 7
+chủ nhật
+monday
+tuesday
+wednesday
+thursday
+friday
+saturday
+sunday
+morning
+afternoon
+evening
+night
+today
+tomorrow
+weekend
+week
+month
+
+# ===== VỊ TRÍ - ĐỊA ĐIỂM =====
+hà nội
+sài gòn
+hồ chí minh
+đà nẵng
+hải phòng
+cần thơ
+nha trang
+đà lạt
+vũng tàu
+huế
+quảng ninh
+nghệ an
+thanh hóa
+thái nguyên
+bắc ninh
+bắc giang
+hưng yên
+hải dương
+nam định
+ninh bình
+thái bình
+vĩnh phúc
+phú thọ
+hoà bình
+sơn la
+lai châu
+điện biên
+lào cai
+yên bái
+tuyên quang
+hà giang
+cao bằng
+bắc kạn
+lạng sơn
+quảng bình
+quảng trị
+thừa thiên huế
+quảng nam
+quảng ngãi
+bình định
+phú yên
+khánh hòa
+ninh thuận
+bình thuận
+kon tum
+gia lai
+đắk lắk
+đắk nông
+lâm đồng
+bình phước
+tây ninh
+bình dương
+đồng nai
+bà rịa vũng tàu
+long an
+tiền giang
+bến tre
+trà vinh
+vĩnh long
+đồng tháp
+an giang
+kiên giang
+cà mau
+bạc liêu
+sóc trăng
+hậu giang
+
+# Tên quận huyện phổ biến
+quận 1
+quận 2
+quận 3
+quận 4
+quận 5
+quận 6
+quận 7
+quận 8
+quận 9
+quận 10
+quận 11
+quận 12
+quận tân bình
+quận bình thạnh
+quận phú nhuận
+quận gò vấp
+quận thủ đức
+ba đình
+hoàn kiếm
+tây hồ
+long biên
+cầu giấy
+đống đa
+hai bà trưng
+hoàng mai
+thanh xuân
+hà đông
+nam từ liêm
+bắc từ liêm
+mỹ đình
+cầu giấy
+láng hạ
+kim mã
+giảng võ
+hồ tây
+trúc bạch
+thành công
+thành công
+nguyễn trãi
+khương đình
+khương mai
+định công
+giáp bát
+hoàng văn thụ
+lê duẩn
+nguyễn chí thanh
+xã đàn
+ô chợ dừa
+thái hà
+chùa bộc
+phố huế
+
+# Tên sân phổ biến
+sân vận động mỹ đình
+sân mỹ đình
+mỹ đình
+sân quốc gia
+sân hàng đẫy
+hàng đẫy
+sân thống nhất
+thống nhất
+sân cẩm phả
+sân thiên trường
+sân lạch tray
+sân pleiku
+sân gò đậu
+sân thể thao hà nội
+sân thủ đức
+sân rạch chiếc
+sân phú thọ
+
+# ===== GIAO TIẾP BÌNH THƯỜNG =====
+chào
+xin chào
+hello
+hi
+hey
+nhé
+nha
+ạ
+à
+ừ
+ok
+okay
+okie
+được
+được rồi
+có
+không
+không sao
+cảm ơn
+thanks
+thank you
+xin lỗi
+sorry
+excuse me
+please
+vui lòng
+cho hỏi
+cho mình hỏi
+em muốn
+anh muốn
+chị muốn
+có ai
+ai biết
+ai rảnh
+mọi người
+các bạn
+bạn nào
+ace nào
+
+# ===== ENGLISH COMMON WORDS =====
+# Common English words that might be substrings of vulgar words
+ice
+eat
+nice
+weather
+today
+heat
+beat
+piece
+peace
+dice
+rice
+price
+twice
+spice
+slice
+advice
+device
+office
+practice
+service
+notice
+choice
+voice
+justice
+police
+license
+medicine
+exercise
+sacrifice
+prejudice
+apprentice
+accomplice
+theater
+feature
+creature
+teacher
+preacher
+eating
+heating
+beating
+treating
+cheating
+seating
+repeating
+defeating
+creating
+meat
+wheat
+seat
+feat
+treat
+cheat
+repeat
+defeat
+retreat
+athlete
+complete
+compete
+delete
+concrete
+discreet
+sheet
+sweet
+fleet
+greet
+street
+tweet
+meet
+beet
+feet
+neat
+peat
+teat
+mincemeat
+heartbeat
+backbeat
+upbeat
+downbeat
+offbeat
+drumbeat
+overeat
+undereat
+unseat
+reseat
+backseat
+car seat
+love seat
+hot seat
+bucket seat
+toilet seat
+window seat
+aisle seat
+ace
+face
+place
+race
+space
+trace
+grace
+brace
+embrace
+replace
+disgrace
+fireplace
+workplace
+marketplace
+case
+base
+vase
+chase
+erase
+database
+lowercase
+uppercase
+briefcase
+suitcase
+bookcase
+showcase
+staircase
+ace
+lace
+mace
+pace
+dace
+
+# ===== KẾT THÚC WHITELIST =====
