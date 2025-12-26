@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Users, Zap, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { API_BASE_URL } from '../../config/apiConfig';
@@ -9,7 +9,6 @@ import 'date-fns/locale/vi';
 
 const fetchBookings = async ({ region = null, status = null, month = null, page = 1, limit = 20 } = {}) => {
   try {
-    const token = localStorage.getItem('authToken');
     const params = new URLSearchParams();
     if (region && region !== 'All') params.set('region', region);
     if (status && status !== 'all') params.set('status', status);
@@ -134,14 +133,11 @@ const ManageBookings = () => {
   }, [filterRegion, filterStatus, currentPage, filterMonth, searchQuery]);
 
   const changeBookingStatus = async (bookingId, newStatus, invoiceId) => {
-    const token = localStorage.getItem('authToken');
     try {
       setSavingStatus(s => ({ ...s, [bookingId]: true }));
-      // Use admin endpoint for status changes so admin permissions are applied
       const apiResp = await apiClient.put(`/admin/bookings/${bookingId}/status`, { status: newStatus, invoiceId });
       const json = apiResp && apiResp.data ? apiResp.data : apiResp;
       if (json && json.success) {
-      // reload current page of bookings (preserve month filter)
       const res = await fetchBookings({ region: filterRegion, status: filterStatus, month: filterMonth, page: currentPage, limit: itemsPerPage });
         if (res && res.success) {
           const mapped = (res.data || []).map(b => {
@@ -213,11 +209,8 @@ const ManageBookings = () => {
     return statusMatch && searchMatch;
   });
 
-  // Update total results and pages based on filtered data when searching
   const displayResults = searchQuery && searchQuery.trim() !== '' ? filtered.length : totalResults;
   const displayPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
-  
-  // totalPages is maintained from server pagination when available
   const startIdx = (currentPage - 1) * itemsPerPage;
   const pageItems = (searchQuery && searchQuery.trim() !== '') ? filtered.slice(startIdx, startIdx + itemsPerPage) : (isServerPaged ? bookings : filtered.slice(startIdx, startIdx + itemsPerPage));
 
@@ -268,7 +261,6 @@ const ManageBookings = () => {
               <option value="all">{t('admin.manageBookings.allStatus', 'All')}</option>
               <option value="pending">{t('admin.manageBookings.pending', 'Pending')}</option>
               <option value="confirmed">{t('admin.manageBookings.confirmed', 'Confirmed')}</option>
-              <option value="completed">{t('admin.manageBookings.completed', 'Completed')}</option>
               <option value="cancelled">{t('admin.manageBookings.cancelled', 'Cancelled')}</option>
             </select>
           </div>

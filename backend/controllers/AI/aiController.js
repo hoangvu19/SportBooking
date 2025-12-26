@@ -39,9 +39,6 @@ async function getPostRecommendations(req, res) {
     }
 
     const limit = parseInt(req.query.limit) || 30;
-
-    // TODO: Implement khi có đủ DAL methods
-    // Hiện tại return mock data
     const recommendations = [];
 
     return sendSuccess(res, {
@@ -68,7 +65,6 @@ async function getFacilityRecommendations(req, res) {
 
     const limit = parseInt(req.query.limit) || 20;
 
-    // TODO: Implement khi có đủ DAL methods
     const recommendations = [];
 
     return sendSuccess(res, {
@@ -83,9 +79,6 @@ async function getFacilityRecommendations(req, res) {
   }
 }
 
-/**
- * Clear recommendation cache for user
- */
 async function clearCache(req, res) {
   try {
     const accountId = getAccountId(req);

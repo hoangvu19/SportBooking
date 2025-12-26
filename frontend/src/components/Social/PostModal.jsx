@@ -202,7 +202,8 @@ const PostModal = ({ post, visible, onClose, onCommentCreated }) => {
                           {TotalAmount ? `${Number(TotalAmount).toLocaleString()} VND` : 'N/A'}
                         </span>
                       </div>
-                      {DepositPaid && DepositPaid > 0 ? (
+                      {/* Hiển thị trạng thái thanh toán dựa vào BookingStatus */}
+                      {BookingStatus === 'Confirmed' ? (
                         <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border-2 border-green-200">
                           ✓ Paid
                         </span>

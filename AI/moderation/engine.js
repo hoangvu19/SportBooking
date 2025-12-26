@@ -100,23 +100,73 @@ class ModerationEngine {
 
       // Layer 1.5: Transformer-based text model (optional)
       if (this.config.modelServer && this.config.modelServer.enabled && text) {
+        const fetch = require('node-fetch');
         try {
-          const fetch = require('node-fetch');
+          logger.debug && logger.debug(this.MODULE_NAME, 'Calling model server', { url: this.config.modelServer.url });
           const resp = await fetch(this.config.modelServer.url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text })
+            body: JSON.stringify({ text }),
+            timeout: this.config.modelServer.timeout
           });
 
           if (resp.ok) {
             const mdata = await resp.json();
-            // Expecting { labels: [{label,score}], scores: {label:score}, aggregate: <0-1 confidence> }
+            // If model returns label scores that indicate toxicity (e.g. labels: {hate,violence,spam}),
+            // convert to a safety aggregate where higher == safer.
+            if (mdata && mdata.scores) {
+              // detect toxic-ish labels
+              const toxicKeys = ['toxic','hate','violence','sexual','spam','scam','abuse','insult','negative'];
+              let toxicProb = 0;
+              for (const k of Object.keys(mdata.scores)) {
+                const lk = k.toLowerCase();
+                if (toxicKeys.includes(lk) || toxicKeys.some(t => lk.includes(t))) {
+                  toxicProb = Math.max(toxicProb, parseFloat(mdata.scores[k]) || 0);
+                }
+              }
+              if (toxicProb > 0) {
+                // safety aggregate = 1 - toxicProb
+                mdata.aggregate = 1 - toxicProb;
+              }
+            }
             result.details.model = mdata;
+            // If aggregate missing or invalid, attempt sentiment fallback below
           } else {
             logger.warn(this.MODULE_NAME, 'Model server returned non-OK', { status: resp.status });
           }
         } catch (err) {
-          logger.warn(this.MODULE_NAME, 'Model server call failed', err.message);
+          logger.warn(this.MODULE_NAME, 'Model server call failed', err && err.message);
+        }
+
+        // If model did not return a usable aggregate, try sentiment endpoint as a fallback
+        try {
+          const hasAggregate = result.details.model && typeof result.details.model.aggregate === 'number';
+          if (!hasAggregate) {
+            const sentimentUrl = (this.config.modelServer.url || '').replace(/\/?predict\/?$/i, '') + '/sentiment';
+            logger.debug && logger.debug(this.MODULE_NAME, 'Attempting sentiment fallback', { url: sentimentUrl });
+            const sresp = await fetch(sentimentUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text }),
+              timeout: this.config.modelServer.timeout
+            });
+            if (sresp && sresp.ok) {
+              const sdata = await sresp.json();
+              // sdata expected { negative_score: 0-1, action }
+              const neg = parseFloat(sdata.negative_score || 0);
+              const safetyAggregate = Math.max(0, Math.min(1, 1 - neg));
+              result.details.model = result.details.model || {};
+              result.details.model.sentiment = sdata;
+              // if model.aggregate missing, set it from sentiment safety
+              if (!result.details.model.aggregate) {
+                result.details.model.aggregate = safetyAggregate;
+              }
+            } else {
+              logger.debug && logger.debug(this.MODULE_NAME, 'Sentiment fallback not available', { status: sresp && sresp.status });
+            }
+          }
+        } catch (e2) {
+          logger.debug && logger.debug(this.MODULE_NAME, 'Sentiment fallback failed', e2 && e2.message);
         }
       }
 

@@ -132,7 +132,6 @@ const Terms = () => {
               </section>
             </div>
 
-            {/* Footer moved to the end of the article to appear after the notes */}
             <div className="px-4 pb-8">
                 <div className="mt-6 border-t pt-6 text-center text-sm text-gray-600">
                   <p className="mb-2">{localT('terms.footer.updated', `Last updated: ${updated}`).replace('{date}', updated)}</p>

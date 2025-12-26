@@ -568,7 +568,8 @@ const BookingStatusCard = ({ post }) => {
                     </div>
                     <div className="info-row">
                         <span className="info-text">💰 {TotalAmount ? `${Number(TotalAmount).toLocaleString()} VND` : 'N/A'}</span>
-                        {DepositPaid && DepositPaid > 0 ? (
+                        {/* Hiển thị trạng thái thanh toán dựa vào BookingStatus */}
+                        {BookingStatus === 'Confirmed' ? (
                             <span className="deposit-badge paid">✓ {t('booking.paid')}</span>
                         ) : (
                             <span className="deposit-badge unpaid">⏳ {t('booking.unpaid')}</span>

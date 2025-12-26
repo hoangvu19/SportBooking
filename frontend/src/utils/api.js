@@ -63,6 +63,16 @@ export const notificationAPI = {
             body: JSON.stringify(payload),
         });
     },
+    /**
+     * Admin: send notification to a single user
+     * body: { recipientId, type, contentId, content }
+     */
+    send: async (payload) => {
+        return apiCall('/notifications/send', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    },
 };
 /**
  * Centralized API Handler

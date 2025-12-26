@@ -172,6 +172,7 @@
     position: relative;
     width: 100%;
     overflow: hidden;
+    z-index: 0; /* ensure wrapper creates containing block for absolutely positioned children */
 }
 
 .facility-image {
@@ -197,7 +198,10 @@
     display: block;
 }
 .facility-image-wrapper .status-overlay {
-    position: absolute;
+    /* Force absolute positioning inside the image wrapper so it never becomes
+       sticky/fixed relative to the viewport. The !important is defensive to
+       override accidental utility classes or inline styles. */
+    position: absolute !important;
     top: 12px;
     left: 12px;
     z-index: 30;
@@ -206,6 +210,8 @@
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+    will-change: transform, top, left;
+    pointer-events: auto;
 }
 
 @media (max-width: 640px) {
@@ -534,4 +540,47 @@
 .rounded-b-xl {
     border-bottom-left-radius: 0.75rem;
     border-bottom-right-radius: 0.75rem;
+}
+/* 1. Thêm position: relative cho thẻ bao ngoài cùng */
+.booking-status-card {
+    position: relative; /* QUAN TRỌNG: Giữ tất cả con cháu ở trong khung */
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+    z-index: 1; /* Đảm bảo không bị các thành phần khác đè lên */
+}
+
+/* 2. Đảm bảo wrapper ảnh cũng phải relative */
+.facility-image-wrapper {
+    position: relative; /* Đã có, nhưng hãy giữ nguyên */
+    width: 100%;
+    overflow: hidden;
+    z-index: 0;
+}
+
+/* 3. Sửa lại Overlay (nơi chứa chữ Đã xác nhận/Confirmed) */
+/* Tìm class .facility-image-wrapper .status-overlay và thay bằng đoạn này */
+.facility-image-wrapper .status-overlay {
+    position: absolute !important; /* Bắt buộc absolute theo thẻ cha, không được fixed */
+    top: 12px;
+    left: 12px;
+    bottom: auto !important; /* Ngăn chặn việc dính xuống đáy màn hình */
+    right: auto !important;
+    z-index: 10;
+    padding: 6px 12px;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    pointer-events: none; /* Tránh việc bấm nhầm vào nút này che mất ảnh */
+}
+
+/* 4. (Mới) Thêm class này để chặn bất kỳ nút badge nào bị fixed */
+.booking-status-card .status-badge,
+.booking-status-card .deposit-badge {
+    position: static !important; /* Luôn nằm yên trong dòng chảy văn bản */
+    transform: none !important;
 }

@@ -36,13 +36,22 @@ const OwnerBookings = () => {
 
   const normalizeStatus = (s) => {
     const raw = (s || '').toString().toLowerCase().trim();
-    const map = {
-      'chờ xác nhận': 'pending',
-      'đã xác nhận': 'confirmed',
-      'đã hủy': 'cancelled',
-      'hoàn thành': 'completed'
-    };
-    return map[raw] || raw;
+    // No hardcoded mapping needed anymore - just return normalized raw value
+    return raw || 'pending';
+  };
+
+  // Helper function: Kiểm tra xem có thể hủy booking không
+  // Không cho phép hủy nếu đã xác nhận và còn dưới 30 phút trước giờ bắt đầu
+  const canCancelBooking = (booking) => {
+    if (booking.Status === 'Confirmed') {
+      const now = new Date();
+      const startTime = new Date(booking.StartTime);
+      const minutesUntilStart = (startTime - now) / (1000 * 60);
+      // Nếu còn dưới 30 phút thì không cho hủy
+      return minutesUntilStart > 30;
+    }
+    // Các trạng thái khác (Pending) vẫn cho phép hủy
+    return true;
   };
 
   const loadBookings = useCallback(async (bypassCache = false) => {
@@ -284,7 +293,6 @@ const OwnerBookings = () => {
             <option value="Pending">{t('owner.bookings.stats.pending') || 'Pending'}</option>
             <option value="Confirmed">{t('owner.bookings.stats.confirmed') || 'Confirmed'}</option>
             <option value="Cancelled">{t('owner.bookings.stats.cancelled') || 'Cancelled'}</option>
-            <option value="Completed">{t('booking.status.Completed') || 'Completed'}</option>
           </select>
         </div>
       </div>
@@ -375,7 +383,12 @@ const OwnerBookings = () => {
                         {(booking.Status === 'Pending' || booking.Status === 'Confirmed') && (
                           <button
                             onClick={() => handleCancelBooking(booking.BookingID)}
-                            className="text-red-600 hover:text-red-800"
+                            disabled={!canCancelBooking(booking)}
+                            className={!canCancelBooking(booking) 
+                              ? 'text-gray-400 cursor-not-allowed' 
+                              : 'text-red-600 hover:text-red-800'
+                            }
+                            title={!canCancelBooking(booking) && booking.Status === 'Confirmed' ? 'Không thể hủy sân đã xác nhận trước 30 phút giờ bắt đầu' : ''}
                             >
                               {t('owner.bookings.actions.cancel') || 'Cancel'}
                             </button>

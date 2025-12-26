@@ -31,20 +31,47 @@ const CreatePost = () => {
             if (!content && images.length === 0) {
                 throw new Error(t('createPost.emptyError'));
             }
+
+            // --- CALL AI SENTIMENT CHECK FIRST ---
+            let shouldPending = false;
+            try {
+                const aiRes = await fetch('http://localhost:8000/sentiment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: content || '' })
+                });
+                if (aiRes.ok) {
+                    const aiData = await aiRes.json();
+                    if (aiData.action === 'delete') {
+                        // Suppress showing a visible toast for AI-blocked posts.
+                        // Return a rejected promise with a code so the toast.promise
+                        // wrapper can choose to hide the notification.
+                        const err = new Error('AI blocked');
+                        err.code = 'AI_BLOCKED';
+                        return Promise.reject(err);
+                    }
+                    if (aiData.action === 'review') {
+                        shouldPending = true;
+                        toast((t('createPost.aiPending', 'Your post will be submitted for review')),{icon: '⚠️'});
+                    }
+                }
+            } catch (e) {
+                console.warn('AI check failed, falling back to allow post (mark pending):', e);
+                shouldPending = true;
+            }
             const imageUrls = await Promise.all(
                 Array.from(images).map(img => imageToBase64(img))
             );
-            const response = await postAPI.create({
+            const payload = {
                 content: content,
                 imageUrls: imageUrls
-            });
+            };
+            if (typeof shouldPending !== 'undefined' && shouldPending) payload.status = 'PENDING';
+            const response = await postAPI.create(payload);
             
             if (response.success) {
-                // Clear form
                 setContent("");
                 setImages([]);
-                
-                // Redirect to feed after 1 second
                 setTimeout(() => {
                     navigate('/feed');
                 }, 1000);
@@ -120,7 +147,11 @@ const CreatePost = () => {
                                 {
                                     loading: t('createPost.posting'),
                                     success: <p>{t('createPost.posted')}</p>,
-                                    error: (err) => <p>{err?.message || t('createPost.createError')}</p>
+                                    error: (err) => {
+                                        // Hide toast for AI_BLOCKED to keep moderation message off UI
+                                        if (err && err.code === 'AI_BLOCKED') return null;
+                                        return <p>{err?.message || t('createPost.createError')}</p>
+                                    }
                                 }
                         )}  className='text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition text-white font-medium px-8 py-2 rounded-md cursor-pointer'>
                             {t('composer.postButton')}

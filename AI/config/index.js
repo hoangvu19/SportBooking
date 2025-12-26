@@ -22,7 +22,8 @@ module.exports = {
       sensitiveKeywords: 0.35,  // Từ khóa nhạy cảm
       spamPatterns: 0.2,       // Pattern spam
       textQuality: 0.1,        // Chất lượng văn bản
-      textModel: 0.0,          // Kết quả mô hình text (mặc định 0 -> disabled)
+      // textModel weight can be set via env TEXT_MODEL_WEIGHT or defaults to 0.25 in dev, 0.0 in prod
+      textModel: Number(process.env.TEXT_MODEL_WEIGHT || (process.env.NODE_ENV === 'development' ? 0.25 : 0.0)),
       imageContent: 0.35       // Nội dung hình ảnh (tăng để ảnh có tác động lớn hơn)
     },
     
@@ -52,7 +53,8 @@ module.exports = {
 
     // Model server for text moderation (local transformer inference service)
     modelServer: {
-      enabled: process.env.MODERATION_MODEL_SERVER === 'true',
+      // Enable model server if explicitly enabled OR when running in development
+      enabled: (process.env.MODERATION_MODEL_SERVER === 'true') || (process.env.NODE_ENV === 'development'),
       // Full URL to the predict endpoint, e.g. http://localhost:8000/predict
       url: process.env.MODERATION_MODEL_SERVER_URL || 'http://127.0.0.1:8000/predict',
       timeout: 4000

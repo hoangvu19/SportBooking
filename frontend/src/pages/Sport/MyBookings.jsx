@@ -36,16 +36,16 @@ export default function MyBookings() {
 
       if (status) {
         if (status === 'success') {
-          toast.success('Thanh toán thành công');
+          toast.success(t('booking.payment.success'));
           // Refresh bookings to pick up updated status
           fetchBookings();
         } else if (status === 'failed') {
-          toast.error('Thanh toán thất bại');
+          toast.error(t('booking.payment.failed'));
           fetchBookings();
         } else if (status === 'error') {
-          toast.error('Lỗi thanh toán: ' + (msg || 'unknown'));
+          toast.error(t('booking.payment.error', { msg: msg || 'unknown' }));
         } else if (status === 'cancel') {
-          toast('Thanh toán bị hủy');
+          toast(t('booking.payment.cancelled'));
         }
 
         // Remove query params so toast won't reappear on refresh
@@ -54,6 +54,7 @@ export default function MyBookings() {
     } catch (e) {
       console.error('Payment return handling error', e);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Listen for realtime booking events
@@ -147,11 +148,24 @@ export default function MyBookings() {
   // Status filters: merge Pending + AwaitingPayment into one group 'Chờ xác nhận'
   const statusFilters = [
     { key: 'all', label: t('booking.all'), predicate: () => true },
-    { key: 'pending_awaiting', label: 'Chờ xác nhận', predicate: b => b.Status === 'Pending' || b.Status === 'AwaitingPayment' },
+    { key: 'pending_awaiting', label: t('booking.pendingConfirm'), predicate: b => b.Status === 'Pending' || b.Status === 'AwaitingPayment' },
     { key: 'Confirmed', label: t('booking.status.Confirmed'), predicate: b => b.Status === 'Confirmed' },
-    { key: 'Cancelled', label: t('booking.status.Cancelled'), predicate: b => b.Status === 'Cancelled' },
-    { key: 'Completed', label: t('booking.status.Completed'), predicate: b => b.Status === 'Completed' }
+    { key: 'Cancelled', label: t('booking.status.Cancelled'), predicate: b => b.Status === 'Cancelled' }
   ];
+
+  // Helper function: Kiểm tra xem có thể hủy booking không
+  // Không cho phép hủy nếu đã xác nhận và còn dưới 30 phút trước giờ bắt đầu
+  const canCancelBooking = (booking) => {
+    if (booking.Status === 'Confirmed') {
+      const now = new Date();
+      const startTime = new Date(booking.StartTime);
+      const minutesUntilStart = (startTime - now) / (1000 * 60);
+      // Nếu còn dưới 30 phút thì không cho hủy
+      return minutesUntilStart > 30;
+    }
+    // Các trạng thái khác (Pending, AwaitingPayment) vẫn cho phép hủy
+    return true;
+  };
 
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm(t('booking.cancelConfirm'))) {
@@ -199,11 +213,11 @@ export default function MyBookings() {
         if (response.data && response.data.paymentUrl) {
             window.location.href = response.data.paymentUrl;
         } else {
-            toast.error("Không lấy được link thanh toán");
+            toast.error(t('booking.payment.urlFailed'));
         }
     } catch (error) {
         console.error("Payment error:", error);
-        toast.error("Lỗi khi tạo thanh toán: " + (error.response?.data?.msg || error.message));
+        toast.error(t('booking.payment.createError', { msg: error.response?.data?.msg || error.message }));
     } finally {
         setProcessingPayment(null);
     }
@@ -378,7 +392,13 @@ export default function MyBookings() {
                 {(booking.Status === 'Pending' || booking.Status === 'Confirmed' || booking.Status === 'AwaitingPayment') ? (
                   <button
                     onClick={() => handleCancelBooking(booking.BookingID)}
-                    className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+                    disabled={!canCancelBooking(booking)}
+                    className={`px-4 py-2 rounded transition ${
+                      !canCancelBooking(booking) 
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                    }`}
+                    title={!canCancelBooking(booking) && booking.Status === 'Confirmed' ? t('booking.cannotCancelConfirmed') : ''}
                   >
                     🚫 {t('booking.cancelBooking','Cancel booking')}
                   </button>

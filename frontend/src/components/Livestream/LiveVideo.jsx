@@ -25,7 +25,7 @@ export default function LiveVideo({ localVideoRef, remoteVideoRef, user, isBroad
       <div className="ls-overlay-top">
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           <div className="live-badge">{t('livestream.liveBadge')}</div>
-          <div className='streamer-name'>{user?.FullName || user?.Username || t('livestream.you')}</div>
+          <div className='streamer-name'>{user?.fullName || user?.username || user?.FullName || user?.Username || t('livestream.you')}</div>
         </div>
         <div style={{marginTop:6,fontSize:12,color: socketConnected ? '#b7ffd2' : '#ffd2d2'}}>{socketConnected ? t('livestream.signalingConnected') : t('livestream.signalingDisconnected')}</div>
         <div style={{marginTop:6,fontSize:12,display:'flex',gap:8}}>

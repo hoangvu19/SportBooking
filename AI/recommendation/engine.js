@@ -13,7 +13,7 @@ class RecommendationEngine {
   constructor() {
     this.config = config.recommendation;
     this.MODULE_NAME = 'RecommendationEngine';
-    this.cache = new Map(); // Simple in-memory cache
+    this.cache = new Map(); 
     this.fieldRec = FieldRecommendations;
     this.trending = TrendingAnalyzer;
   }
@@ -38,17 +38,10 @@ class RecommendationEngine {
           return cached.data;
         }
       }
-
-      // Build user profile
       const userProfile = await this.buildUserProfile(userId, context);
-
-      // Generate candidates
       const candidates = await this.generateCandidates(userProfile, context);
-
-      // Score and rank candidates using content-based filtering
       const contentScored = this.scoreCandidates(candidates, userProfile);
 
-      // Apply collaborative filtering (hybrid approach)
       let finalScored = contentScored;
       if (context.allUsers && context.allUsers.length > 0 && 
           this.config.algorithm.type === 'hybrid') {
@@ -59,20 +52,14 @@ class RecommendationEngine {
         );
       }
 
-      // Apply diversity filter
       const diversified = this.applyDiversity(finalScored, userProfile);
 
-      // Take top N
       const recommendations = diversified.slice(0, limit);
-
-      // Cache results
       if (this.config.cache.enabled) {
         this.cache.set(cacheKey, {
           data: recommendations,
           timestamp: Date.now()
         });
-        
-        // Cleanup old cache
         if (this.cache.size > this.config.cache.maxItems) {
           const firstKey = this.cache.keys().next().value;
           this.cache.delete(firstKey);
@@ -88,9 +75,6 @@ class RecommendationEngine {
     }
   }
 
-  /**
-   * Gợi ý sân thể thao cho user
-   */
   async recommendFacilities(userId, context, limit = 20) {
     logger.info(this.MODULE_NAME, `Generating facility recommendations for user ${userId}`);
 
@@ -105,17 +89,12 @@ class RecommendationEngine {
 
       const userProfile = await this.buildUserProfile(userId, context);
       
-      // Hybrid approach: combine content-based + collaborative filtering
       let candidates = [];
       
       if (context.availableFacilities && context.availableFacilities.length > 0) {
         candidates = context.availableFacilities;
       }
-
-      // Content-based scoring
       const contentScored = this.scoreFacilities(candidates, userProfile);
-
-      // Collaborative filtering (nếu có allUsers)
       let finalScored = contentScored;
       if (context.allUsers && context.allUsers.length > 0 && 
           this.config.algorithm.type === 'hybrid') {

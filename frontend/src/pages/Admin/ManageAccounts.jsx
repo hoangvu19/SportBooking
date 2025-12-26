@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2, Edit3, Plus, Search, Users, Mail, MapPin, Shield, Eye, EyeOff } from 'lucide-react';
 import { authAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -177,6 +177,7 @@ export default function ManageAccounts() {
 			toast.error(t('admin.accounts.loadAreasError', 'Cannot load area list'));
 		}
 	}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	async function fetchRoles() {

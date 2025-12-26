@@ -241,11 +241,11 @@ const BookingModal = ({ san, onClose, initialDate = null, initialSelectedSlots =
     // If not logged in, require guest info (admin can fill customer details)
     if (!userData) {
       if (!guestName || guestName.trim() === '') {
-        toast.error('Vui lòng nhập tên khách hàng');
+        toast.error(t('booking.enterCustomerName'));
         return;
       }
       if (!guestPhone || guestPhone.trim() === '') {
-        toast.error('Vui lòng nhập số điện thoại khách hàng');
+        toast.error(t('booking.enterCustomerPhone'));
         return;
       }
     }

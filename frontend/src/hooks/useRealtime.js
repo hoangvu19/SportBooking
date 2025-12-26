@@ -49,6 +49,10 @@ export default function useRealtime() {
       s.on('reaction:created', forward('reaction:created'));
       s.on('booking:created', forward('booking:created'));
       s.on('booking:cancelled', forward('booking:cancelled'));
+      s.on('message:received', forward('message:received'));
+      s.on('message:read', forward('message:read'));
+      s.on('message:deleted', forward('message:deleted'));
+      s.on('message:updated', forward('message:updated'));
       s.on('report:created', forward('report:created'));
   try { if (!s.connected) s.connect(); } catch { /* ignore connect errors */ }
 
@@ -62,6 +66,10 @@ export default function useRealtime() {
           s.off('reaction:created');
           s.off('booking:created');
           s.off('booking:cancelled');
+          s.off('message:received');
+          s.off('message:read');
+          s.off('message:deleted');
+          s.off('message:updated');
           s.off('report:created');
   } catch { /* ignore */ }
       };

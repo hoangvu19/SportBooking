@@ -51,6 +51,8 @@ const VIOLENCE_TOKENS = [
   'hủy diệt'
 ];
 
+export { VIOLENCE_TOKENS };
+
 // PII simple regexes
 const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 const PHONE_RE = /(?:(?:\+?84|0)\s?\d{1,2}[\s.-]?\d{3}[\s.-]?\d{3,4})/; // VN-ish
@@ -115,6 +117,7 @@ export default {
   VIETNAMESE_BLACKLIST,
   containsHateSpeech,
   containsThreat,
+  VIOLENCE_TOKENS,
   containsPII,
   containsLink,
   isLikelySpam,

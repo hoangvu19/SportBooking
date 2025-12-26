@@ -308,6 +308,7 @@ class BookingPostDAL {
         .input('Offset', sql.Int, offset)
         .query(`
      SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+       b.Status as BookingStatus,
        sf.FieldID, sf.FieldName, f.FacilityID, f.FacilityName, sf.SportTypeID,
        a.AccountID as OwnerAccountID, a.Username as OwnerUsername, a.FullName as OwnerFullName, a.AvatarUrl as OwnerAvatar
           FROM Post p
@@ -338,6 +339,7 @@ class BookingPostDAL {
         .input('Offset', sql.Int, offset)
         .query(`
           SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+                 b.Status as BookingStatus,
                  sf.FieldName, f.FacilityName, sf.SportTypeID
           FROM Post p
           JOIN Booking b ON p.BookingID = b.BookingID
@@ -364,6 +366,7 @@ class BookingPostDAL {
         .input('PostID', sql.Int, postId)
         .query(`
           SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+                 b.Status as BookingStatus,
                  sf.FieldID, sf.FieldName, f.FacilityID, f.FacilityName, sf.SportTypeID,
                  a.AccountID as OwnerAccountID, a.Username as OwnerUsername, a.FullName as OwnerFullName, a.AvatarUrl as OwnerAvatar
           FROM Post p
@@ -388,6 +391,7 @@ class BookingPostDAL {
         .input('BookingID', sql.Int, bookingId)
         .query(`
           SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+                 b.Status as BookingStatus,
                  sf.FieldID, sf.FieldName, f.FacilityID, f.FacilityName, sf.SportTypeID
           FROM Post p
           JOIN Booking b ON p.BookingID = b.BookingID
@@ -429,6 +433,7 @@ class BookingPostDAL {
         .input('Offset', sql.Int, offset)
         .query(`
           SELECT p.*, b.BookingID, b.StartTime, b.EndTime, b.TotalAmount, b.Deposit as DepositPaid,
+                 b.Status as BookingStatus,
                  sf.FieldName, f.FacilityName, sf.SportTypeID
           FROM Post p
           JOIN Booking b ON p.BookingID = b.BookingID

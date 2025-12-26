@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { reportAPI } from '../../utils/reportAPI';
 import { postAPI, storyAPI } from '../../utils/api';
-import { isFlaggedContent } from '../../utils/moderationBlacklist';
+import { isFlaggedContent, VIETNAMESE_BLACKLIST, VIOLENCE_TOKENS } from '../../utils/moderationBlacklist';
 import PostCard from '../../components/Social/PostCard';
 import DEFAULT_AVATAR from '../../utils/defaults';
 import getBackendOrigin, { toAbsoluteUrl } from '../../utils/urlHelpers';
 import toast from 'react-hot-toast';
 import { useI18n } from '../../i18n/hooks';
 import apiClient, { getAuthInfo } from '../../utils/apiClient';
+import { notificationAPI } from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { normalizeUser } from '../../utils/normalize';
 
@@ -342,6 +343,20 @@ const Moderation = () => {
     load();
   }, [load]);
 
+  // Listen for post updates (e.g., after an admin marks safe) and reload list
+  useEffect(() => {
+    const onPostUpdated = () => {
+      try {
+        // refresh moderation list to reflect status changes
+        load();
+      } catch (err) {
+        console.debug('post:updated handler error', err);
+      }
+    };
+    window.addEventListener('post:updated', onPostUpdated);
+    return () => window.removeEventListener('post:updated', onPostUpdated);
+  }, [load]);
+
   const getReportId = (r) => r?.ReportID ?? r?.ReportId ?? r?._id ?? r?.id ?? r?.Id ?? null;
 
   const normalizeToArray = (v) => {
@@ -510,21 +525,33 @@ const Moderation = () => {
     if (note === null) return; // cancelled
     setProcessing(true);
     try {
-      // Best-effort: attempt to call moderation endpoint; backend may not implement it
+      // Preferred: use notificationAPI.send (admin endpoint we added) to send a notification to the user
       try {
-        await apiClient.post(`/moderation/warn`, { userId, note });
-        toast.success(t('moderation.warnSent') || 'Cảnh cáo đã được gửi');
+        const content = t('moderation.warnNotificationContent', 'You have received a moderation warning: {note}').replace('{note}', note || '');
+        const res = await notificationAPI.send({ recipientId: Number(userId), type: 'moderation_warning', content });
+        if (res && res.success) {
+          toast.success(t('moderation.warnSent') || 'Cảnh cáo đã được gửi');
+        } else {
+          toast.error(res?.message || t('moderation.warnFailed') || 'Không thể gửi cảnh cáo');
+        }
       } catch (innerErr) {
-          console.warn('Warn endpoint missing or failed', innerErr);
-          if (innerErr && innerErr.status === 401) {
-            console.warn('[Moderation] Unauthorized while calling warn endpoint', getAuthInfo());
-            toast.error(t('moderation.unauthorized') || 'Không được phép — vui lòng đăng nhập bằng tài khoản admin');
-          } else {
+        console.warn('notificationAPI.send failed', innerErr);
+        if (innerErr && innerErr.status === 401) {
+          console.warn('[Moderation] Unauthorized while sending notification', getAuthInfo());
+          toast.error(t('moderation.unauthorized') || 'Không được phép — vui lòng đăng nhập bằng tài khoản admin');
+        } else {
+          // fallback: try legacy moderation endpoint if present
+          try {
+            await apiClient.post(`/moderation/warn`, { userId, note });
+            toast.success(t('moderation.warnSent') || 'Cảnh cáo đã được gửi');
+          } catch (legacyErr) {
+            console.warn('legacy warn endpoint missing or failed', legacyErr);
             // fallback: add admin note and mark report reviewed
             const rid = getReportId(report);
             if (rid) await reportAPI.update(rid, 'reviewed', `Warned user: ${note}`, false);
-            toast('Warn queued (backend not available)', { icon: '⚠️' });
+            toast(t('moderation.warnQueuedFallback') || 'Cảnh cáo đã được ghi nhận (đang chờ xử lý)', { icon: '⚠️' });
           }
+        }
       }
       load();
     } catch (err) {
@@ -535,6 +562,81 @@ const Moderation = () => {
         } else {
           toast.error(t('report.actionError') || 'Có lỗi xảy ra');
         }
+    } finally { setProcessing(false); }
+  };
+
+  const sanitizeContent = (text) => {
+    if (!text) return text;
+    let out = text;
+    try {
+      const combined = [...(VIETNAMESE_BLACKLIST || []), ...(VIOLENCE_TOKENS || [])];
+      for (const token of combined) {
+        if (!token) continue;
+        const esc = token.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+        out = out.replace(new RegExp(esc, 'gi'), '');
+      }
+      // collapse extra spaces and trim
+      out = out.replace(/\s{2,}/g, ' ').trim();
+    } catch (e) {
+      console.warn('Sanitize error', e);
+    }
+    return out;
+  };
+
+  const handleSafe = async (report) => {
+    // 'An toàn' action: remove red/blacklisted phrases from post content
+    const mapped = mapReportedToPost(report);
+    const postId = mapped?._id || mapped?.PostID || mapped?.id || null;
+    if (!postId) return toast.error(t('report.invalidId') || 'ID bài viết không hợp lệ');
+    const original = (mapped && (mapped.content || mapped.Content || '')) || '';
+    if (!original || String(original).trim() === '') return toast.error(t('moderation.noContent') || 'Không có nội dung để chỉnh sửa');
+
+    const cleaned = sanitizeContent(String(original));
+    let willEditContent = true;
+    if (cleaned === String(original)) {
+      // If nothing to remove, offer to mark safe without editing content
+      const proceedKeep = window.confirm(t('moderation.noRedFoundKeepConfirm') || 'Không tìm thấy phần cần xóa — bạn có muốn đánh dấu bài an toàn mà không xóa nội dung?');
+      if (!proceedKeep) {
+        toast(t('moderation.noRedFound') || 'Không tìm thấy phần cần xóa');
+        return;
+      }
+      willEditContent = false;
+    }
+
+    if (!window.confirm(t('moderation.confirmSafe') || 'Bạn có muốn xóa phần bị gạch đỏ và đánh dấu bài là an toàn?')) return;
+
+    setProcessing(true);
+    try {
+      // update content and ensure post status is cleared from pending moderation
+      const updatePayload = { Status: 'Active', status: 'Active' };
+      if (willEditContent) updatePayload.content = cleaned;
+      const resp = await postAPI.update(postId, updatePayload);
+      if (resp && resp.success) {
+        // Also mark related report as dismissed/resolved so the UI no longer shows "pending"
+        try {
+          const rid = getReportId(report);
+          if (rid) await reportAPI.update(rid, 'dismissed', t('moderation.safeAdminNote') || 'Marked safe by admin', false);
+        } catch (reportErr) {
+          console.warn('Could not update report status after safe action', reportErr);
+        }
+        toast.success(t('moderation.safeSuccess') || 'Đã xóa phần không an toàn và cập nhật bài viết');
+        // Notify other parts of the app about the updated post so UI updates immediately
+        try {
+          const updatedPost = Object.assign({}, mapped || {}, { content: (willEditContent ? cleaned : original), Status: 'Active', status: 'Active', __moderation_cleared: true });
+          try { window.dispatchEvent(new CustomEvent('post:updated', { detail: { post: updatedPost } })); } catch(e) { console.debug('Could not dispatch post:updated', e); }
+        } catch(e) { console.debug('post update notify error', e); }
+        load();
+      } else {
+        toast.error(resp?.message || t('report.actionError') || 'Có lỗi xảy ra');
+      }
+    } catch (err) {
+      console.error('Safe action error', err);
+      if (err && err.status === 401) {
+        console.warn('[Moderation] Unauthorized while performing safe action', getAuthInfo());
+        toast.error(t('moderation.unauthorized') || 'Không được phép — vui lòng đăng nhập bằng tài khoản admin');
+      } else {
+        toast.error(t('report.actionError') || 'Có lỗi xảy ra');
+      }
     } finally { setProcessing(false); }
   };
 
@@ -620,6 +722,7 @@ const Moderation = () => {
                     <div className="w-44 flex flex-col gap-2">
                       <button disabled={processing || !isAdminAuth} onClick={() => handleDelete(r)} className="px-3 py-2 bg-red-600 text-white rounded" title={!isAdminAuth ? (t('moderation.loginAsAdmin') || 'Sign in as admin to perform this action') : ''}>{t('moderation.delete') || 'Delete'}</button>
                       <button disabled={processing || !isAdminAuth} onClick={() => handleWarn(r)} className="px-3 py-2 bg-blue-600 text-white rounded" title={!isAdminAuth ? (t('moderation.loginAsAdmin') || 'Sign in as admin to perform this action') : ''}>{t('moderation.warn') || 'Warn User'}</button>
+                      <button disabled={processing || !isAdminAuth} onClick={() => handleSafe(r)} className="px-3 py-2 bg-green-600 text-white rounded" title={!isAdminAuth ? (t('moderation.loginAsAdmin') || 'Sign in as admin to perform this action') : ''}>{t('moderation.safe') || 'An toàn'}</button>
                     </div>
                   </div>
                 </div>

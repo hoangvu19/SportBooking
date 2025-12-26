@@ -440,10 +440,6 @@ export const TopCustomersTable = ({ data }) => {
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div className="text-xs space-y-1">
                     <div className="flex items-center gap-1">
-                      <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span className="text-green-700">{t('owner.charts.topCustomers.completed')}: {customer.CompletedBookings || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
                       <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
                       <span className="text-blue-700">{t('owner.charts.topCustomers.confirmed')}: {customer.ConfirmedBookings || 0}</span>
                     </div>

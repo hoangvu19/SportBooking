@@ -494,7 +494,7 @@ const StoryViewer = ({ viewStory, setViewStory, stories = [], currentIndex = 0, 
 
       {/* Viewers List Modal */}
       {showViewers && (
-        <div className='absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[60vh] overflow-y-auto'>
+        <div className='absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 max-h-[60vh] overflow-y-auto' style={{ zIndex: 30000, pointerEvents: 'auto' }}>
           <div className='flex justify-between items-center mb-4'>
             <h3 className='text-xl font-bold'>{t('story.viewersTitle', 'Viewers')} ({viewers.length})</h3>
             <button 

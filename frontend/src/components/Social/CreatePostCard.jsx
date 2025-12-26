@@ -22,8 +22,36 @@ const CreatePostCard = ({ onPosted }) => {
   const handleSubmit = async () => {
     try {
       setLoading(true);
+      let shouldPending = false;
       if (!content && images.length === 0) {
         throw new Error(t('composer.emptyError', 'Please enter content or choose an image or video'));
+      }
+
+      // 1) Call AI sentiment endpoint before posting
+      try {
+        const aiRes = await fetch('http://localhost:8000/sentiment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: content || '' })
+        });
+        if (aiRes.ok) {
+          const aiData = await aiRes.json();
+          if (aiData.action === 'delete') {
+            const blockedMsg = t('composer.aiBlocked');
+            try { toast.error(blockedMsg); } catch {''}
+            const err = new Error(blockedMsg);
+            err.code = 'AI_BLOCKED';
+            return Promise.reject(err);
+          }
+          if (aiData.action === 'review') {
+            shouldPending = true;
+            toast(t('composer.aiPending', 'Your post will be submitted for review'));
+          }
+        }
+      } catch (err) {
+        const warnMsg = t('composer.aiFailed', 'AI check failed, allowing post but marking pending');
+        console.warn(warnMsg, err);
+        shouldPending = true;
       }
 
       let response;
@@ -32,6 +60,7 @@ const CreatePostCard = ({ onPosted }) => {
       if (hasFiles) {
         const form = new FormData();
         form.append('content', content || '');
+        if (typeof shouldPending !== 'undefined' && shouldPending) form.append('status','PENDING');
         // append each file as 'media' (backend accepts 'media' or 'images')
         Array.from(images).forEach((f) => form.append('media', f));
         response = await postAPI.create(form);
@@ -39,7 +68,9 @@ const CreatePostCard = ({ onPosted }) => {
         const imageUrls = await Promise.all(
           Array.from(images).map(img => imageToBase64(img))
         );
-        response = await postAPI.create({ content, imageUrls });
+        const payload = { content, imageUrls };
+        if (typeof shouldPending !== 'undefined' && shouldPending) payload.status = 'PENDING';
+        response = await postAPI.create(payload);
       }
       if (response.success) {
         setContent('');
@@ -50,7 +81,7 @@ const CreatePostCard = ({ onPosted }) => {
         // Notify feed listeners to refresh only for visible posts (not pending review)
         const isPending = !!(created && (created.Status === 'PendingReview' || created.status === 'PendingReview' || created.__moderation));
         if (!isPending) {
-          try { window.dispatchEvent(new CustomEvent('feed:refresh')); } catch (e) { console.debug('Could not dispatch feed:refresh', e); }
+          try { window.dispatchEvent(new CustomEvent('feed:refresh')); } catch { console.debug('Could not dispatch feed:refresh'); }
         }
         try { emitEvent('post:created', created || response); } catch { /* ignore */ }
         return response.data;
@@ -72,10 +103,13 @@ const CreatePostCard = ({ onPosted }) => {
             if (res && (res.Status === 'PendingReview' || res.__moderation)) {
               return t('composer.pendingReview', 'Your post was submitted and is pending review');
             }
-          } catch (e) { /* ignore */ }
+          } catch { /* ignore */ }
           return t('composer.posted', 'Posted');
         },
-        error: (err) => (err && err.message) ? err.message : t('composer.error', 'Error')
+        error: (err) => {
+          if (err && err.code === 'AI_BLOCKED') return null;
+          return (err && err.message) ? err.message : t('composer.error', 'Error');
+        }
       }
     );
   };

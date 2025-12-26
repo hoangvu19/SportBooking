@@ -399,47 +399,11 @@ const Login = () => {
                 className="absolute inset-0 login-container"
                 style={{ backgroundImage: `url(${assets.bgImage})` }}
             >
-                {/* Colorful floating orbs */}
-                <div className="absolute inset-0">
-                    {/* Main floating elements */}
-                    <div className="absolute top-16 left-12 w-20 h-20 bg-purple-400/30 rounded-full blur-lg animate-pulse shadow-lg shadow-purple-400/50"></div>
-                    <div className="absolute bottom-24 right-16 w-24 h-24 bg-pink-400/25 rounded-full blur-xl animate-pulse shadow-xl shadow-pink-400/30" style={{animationDelay: '2s'}}></div>
-                    <div className="absolute top-1/3 right-1/4 w-16 h-16 bg-yellow-400/30 rounded-full blur-md animate-pulse shadow-md shadow-yellow-400/40" style={{animationDelay: '4s'}}></div>
-                    
-                    {/* Additional colorful accents */}
-                    <div className="absolute top-1/4 left-1/3 w-8 h-8 bg-blue-400/35 rounded-full blur-sm animate-pulse" style={{animationDelay: '1s'}}></div>
-                    <div className="absolute bottom-1/3 left-1/4 w-12 h-12 bg-green-400/25 rounded-full blur-md animate-pulse" style={{animationDelay: '3s'}}></div>
-                </div>
             </div>
             
             
             
             <div className="flex-1 flex items-center justify-center p-6 md:p-10 z-10 relative">
-                {/* Sports 3D Scene */}
-                <div className="sports-scene">
-                    {/* Stadium Field Lines */}
-                    <div className="field-line field-line-1"></div>
-                    <div className="field-line field-line-2"></div>
-                    
-                    {/* Running Player */}
-                    
-                    
-                    {/* Penalty Scene */}
-                    <div className="penalty-kicker">⚽</div>
-                    
-
-                    <div className="flying-ball ball-2">🏀</div>
-                    <div className="flying-ball ball-3">🏈</div>
-                    
-                    
-                   
-                </div>
-
-                {/* Enhanced floating orbs */}
-                <div className="floating-orb"></div>
-                <div className="floating-orb"></div>
-                <div className="floating-orb"></div>
-                <div className="floating-orb"></div>
                 
                 <div className="w-full max-w-md login-form rounded-3xl p-8 shadow-2xl ring-2 ring-white/30 relative">
                     {/* OTP preview (shown inline next to OTP input) */}
@@ -616,7 +580,7 @@ const Login = () => {
                                         name="otpCode"
                                         value={formData.otpCode}
                                         onChange={handleInputChange}
-                                        placeholder={t('auth.otpPlaceholder', 'Mã xác nhận (6 chữ số)')}
+                                        placeholder={t('auth.otpPlaceholder', 'Verification code (6 digits)')}
                                         className="w-full pl-4 pr-4 py-3 bg-white/10 border-2 border-purple-400/30 rounded-xl text-white placeholder-white/70"
                                         required
                                     />
@@ -631,14 +595,14 @@ const Login = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full mx-auto block py-3 login-btn text-white rounded-xl transition-all duration-100 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.05] ring-2 ring-white/20"
+                                    className="w-full mx-auto block py-3 login-btn text-white rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed ring-2 ring-white/20"
                                 >
                                     {isLoading ? t('auth.verifying', 'Verifying...') : t('auth.verify', 'Verify')}
                                 </button>
 
                                 <div className="text-center space-y-2">
-                                    <button type="button" className="text-sm text-white/80 hover:underline" onClick={() => { setCurrentForm('login'); setOtpSessionId(null); }}>{t('auth.backToLogin', 'Quay lại đăng nhập')}</button>
-                                    <button type="button" className="text-sm text-blue-200 hover:underline" onClick={handleResendOtp} disabled={isLoading}>{isLoading ? t('auth.resendingCode', '...') : t('auth.resendCode', 'Gửi lại mã')}</button>
+                                    <button type="button" className="text-sm text-white/80 hover:underline" onClick={() => { setCurrentForm('login'); setOtpSessionId(null); }}>{t('auth.backToLogin', 'Back to login')}</button>
+                                    <button type="button" className="text-sm text-blue-200 hover:underline" onClick={handleResendOtp} disabled={isLoading}>{isLoading ? t('auth.resendingCode', '...') : t('auth.resendCode', 'Resend code')}</button>
                                 </div>
                             </form>
                         </>
@@ -741,7 +705,7 @@ const Login = () => {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 text-white rounded-lg hover:from-pink-600 hover:via-purple-600 hover:to-yellow-600 transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] ring-2 ring-white/20"
+                                    className="w-full py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ring-2 ring-white/20"
                                 >
                                     {isLoading ? t('auth.registering', 'Registering...') : t('auth.registerButton', 'REGISTER')}
                                 </button>

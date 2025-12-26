@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import StoriesBar from "../../components/Social/StoriesBar";
 import CreatePostCard from "../../components/Social/CreatePostCard";
 import PostCard from "../../components/Social/PostCard";
@@ -27,12 +27,11 @@ const Feed = () => {
       if (isLoadMore) setLoadingMore(true);
       else setLoading(true);
 
-      console.log(`📥 Fetching page ${pageNum}, isLoadMore: ${isLoadMore}, bypassCache: ${bypassCache}`);
       const response = await postAPI.getFeed(pageNum, 10, bypassCache);
 
       if (response.success) {
         const postsArray = response.data.posts || response.data || [];
-        console.log(`✅ Received ${postsArray.length} posts for page ${pageNum}`);
+        
         
         const backendBase = getBackendOrigin();
         const transformedPosts = postsArray.map(post => {
@@ -115,16 +114,13 @@ const Feed = () => {
         if (isLoadMore) {
           // Append new posts to existing ones
           setFeeds(prev => {
-            console.log(`📝 Appending ${transformedPosts.length} posts to ${prev.length} existing posts`);
             return [...prev, ...transformedPosts];
           });
         } else {
           // Replace feeds for initial load
           setFeeds(transformedPosts);
         }
-
         const hasMorePosts = response.data.pagination?.hasMore || false;
-        console.log(`📊 hasMore: ${hasMorePosts}`);
         setHasMore(hasMorePosts);
       } else {
         setError(response.message || 'Unable to load posts');
@@ -143,7 +139,6 @@ const Feed = () => {
 
   // Initial load - ALWAYS bypass cache to get fresh data
   useEffect(() => {
-    console.log('🚀 Initial load - bypassing cache to ensure fresh data');
     fetchFeeds(1, false, true); // bypassCache = true
   }, [fetchFeeds]);
 
@@ -187,7 +182,6 @@ const Feed = () => {
   // Listen for global feed refresh events (dispatched after create/share actions)
   useEffect(() => {
     const onFeedRefresh = () => {
-      console.log('🔔 Received feed:refresh event — reloading feed');
       setPage(1);
       fetchFeeds(1, false, true);
     };
@@ -251,6 +245,25 @@ const Feed = () => {
       } catch (err) { console.debug('onPostDeleted error', err); }
     };
 
+    const onPostUpdated = (e) => {
+      try {
+        const payload = e && e.detail ? e.detail : e;
+        const post = payload && payload.post ? payload.post : null;
+        if (!post || !post._id) return;
+        const normalized = { ...post, createdAt: parseServerDatetime(post.createdAt || post.CreatedDate) || new Date() };
+        setFeeds(prev => {
+          const found = prev.findIndex(p => String(p._id) === String(normalized._id));
+          if (found === -1) {
+            // not present, prepend
+            return [normalized, ...prev];
+          }
+          const copy = prev.slice();
+          copy[found] = { ...copy[found], ...normalized };
+          return copy;
+        });
+      } catch (err) { console.debug('onPostUpdated error', err); }
+    };
+
     const onBookingPostCreated = (e) => {
       try {
         const payload = e && e.detail ? e.detail : e;
@@ -303,6 +316,7 @@ const Feed = () => {
     window.addEventListener('post:shared', onPostShared);
     window.addEventListener('comment:created', onCommentCreated);
     window.addEventListener('post:deleted', onPostDeleted);
+    window.addEventListener('post:updated', onPostUpdated);
     window.addEventListener('bookingpost:created', onBookingPostCreated);
 
     return () => {
@@ -310,6 +324,7 @@ const Feed = () => {
       window.removeEventListener('post:shared', onPostShared);
       window.removeEventListener('comment:created', onCommentCreated);
       window.removeEventListener('post:deleted', onPostDeleted);
+      window.removeEventListener('post:updated', onPostUpdated);
       window.removeEventListener('bookingpost:created', onBookingPostCreated);
     };
   }, []);
@@ -317,11 +332,7 @@ const Feed = () => {
   const { t } = useI18n();
 
   // Refresh feed (for new posts) - bypass cache to show new content immediately
-  const refreshFeed = () => {
-    console.log('🔄 Refreshing feed...');
-    setPage(1);
-    fetchFeeds(1, false, true);
-  };
+  // (handled by feed:refresh event listener elsewhere)
 
   // Handle load more button
   const handleLoadMore = () => {
@@ -329,6 +340,16 @@ const Feed = () => {
     setPage(nextPage);
     fetchFeeds(nextPage, true);
   };
+
+  const renderedFeedItems = useMemo(() => (
+    feeds.map((post) => (
+      post.booking ? (
+        <BookingStatusCard key={post._id} post={post} />
+      ) : (
+        <PostCard key={post._id} post={post} showModerationFlags={false} />
+      )
+    ))
+  ), [feeds]);
 
 
   // If we're on the initial load and still loading, show the global loader.
@@ -354,13 +375,7 @@ const Feed = () => {
                 {t('feed.noPosts', 'No posts yet')}
               </div>
             ) : (
-              feeds.map((post) => (
-                post.booking ? (
-                  <BookingStatusCard key={post._id} post={post} />
-                ) : (
-                  <PostCard key={post._id} post={post} />
-                )
-              ))
+                renderedFeedItems
             )}
           </div>
           

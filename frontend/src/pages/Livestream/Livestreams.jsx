@@ -60,6 +60,24 @@ export default function Livestreams() {
           { id: 1, name: 'Viewer 1', avatar: DEFAULT_AVATAR },
           { id: 2, name: 'Viewer 2', avatar: DEFAULT_AVATAR }
         ]);
+      
+      // Load comments from database
+      try {
+        const commentsResult = await livestreamApi.getComments(id);
+        const commentsData = commentsResult.success ? commentsResult.data : commentsResult;
+        if (Array.isArray(commentsData)) {
+          const formattedComments = commentsData.map(c => ({
+            id: c.CommentID || c.id,
+            author: (c.Author && (c.Author.FullName || c.Author.Username)) || c.FullName || c.Username || 'Anonymous',
+            avatar: (c.Author && c.Author.AvatarUrl) || c.AvatarUrl || DEFAULT_AVATAR,
+            content: c.Content || c.content,
+            time: c.CreatedDate ? new Date(c.CreatedDate).toLocaleTimeString() : (c.CreatedAt ? new Date(c.CreatedAt).toLocaleTimeString() : new Date().toLocaleTimeString())
+          }));
+          setComments(formattedComments);
+        }
+      } catch (commErr) {
+        console.error('Load comments error:', commErr);
+      }
     } catch (err) {
       console.error('Load stream error:', err);
     }
@@ -72,11 +90,35 @@ export default function Livestreams() {
     }
 
     try {
-      // Get user media
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
-      });
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error(t('livestream.errors.browserNotSupported'));
+        return;
+      }
+
+      let mediaStream = null;
+      
+      // Try with basic constraints first (more compatible)
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          video: true,
+          audio: true
+        });
+      } catch (firstError) {
+        console.log('Basic constraints failed, trying video only:', firstError);
+        
+        // If basic fails, try video only (maybe audio device issue)
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({ 
+            video: true,
+            audio: false
+          });
+          toast.warning(t('livestream.errors.microphoneOnlyCamera'));
+        } catch {
+          // Re-throw to be caught by outer catch
+          throw firstError;
+        }
+      }
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -94,9 +136,27 @@ export default function Livestreams() {
       setStream(created);
       setIsStreaming(true);
       setViewers([]);
+      setComments([]); // Clear comments for new stream
     } catch (err) {
       console.error('Start stream error:', err);
-      toast.error(t('livestream.startError').replace('{msg}', err?.message || 'Please allow camera/microphone access'));
+      
+      let errorMessage = t('livestream.errors.cannotStart');
+      
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMessage = t('livestream.errors.permissionDenied');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorMessage = t('livestream.errors.devicesNotFound');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        errorMessage = t('livestream.errors.deviceInUse');
+      } else if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
+        errorMessage = t('livestream.errors.deviceNotSupported');
+      } else if (err.name === 'TypeError') {
+        errorMessage = t('livestream.errors.configError');
+      } else if (err.name === 'AbortError') {
+        errorMessage = t('livestream.errors.requestCancelled');
+      }
+      
+      toast.error(errorMessage, { duration: 6000 });
     }
   }
 
@@ -125,17 +185,30 @@ export default function Livestreams() {
 
   async function handleSendComment() {
     if (!newComment.trim()) return;
+    if (!stream || !stream.LivestreamID) {
+      toast.error(t('livestream.errors.invalidStream'));
+      return;
+    }
     
-    const comment = {
-      id: Date.now(),
-      author: user?.FullName || user?.Username || 'Anonymous',
-      avatar: user?.AvatarUrl || DEFAULT_AVATAR,
-      content: newComment,
-      time: new Date().toLocaleTimeString()
-    };
-    
-    setComments(prev => [...prev, comment]);
-    setNewComment('');
+    try {
+      // Save to database
+      await livestreamApi.addComment(stream.LivestreamID, newComment.trim());
+      
+      // Add to local state for immediate display
+      const comment = {
+        id: Date.now(),
+        author: user?.fullName || user?.username || user?.FullName || user?.Username || 'Anonymous',
+        avatar: user?.avatarUrl || user?.AvatarUrl || DEFAULT_AVATAR,
+        content: newComment,
+        time: new Date().toLocaleTimeString()
+      };
+      
+      setComments(prev => [...prev, comment]);
+      setNewComment('');
+    } catch (err) {
+      console.error('Send comment error:', err);
+      toast.error(t('livestream.errors.commentFailed'));
+    }
   }
 
   if (loading) {
@@ -184,7 +257,12 @@ export default function Livestreams() {
           ) : (
             comments.map(comment => (
               <div key={comment.id} className='comment-item'>
-                <img src={comment.avatar} alt={comment.author} className='comment-avatar' />
+                <img 
+                  src={comment.avatar || DEFAULT_AVATAR} 
+                  alt={comment.author} 
+                  className='comment-avatar'
+                  onError={(e) => { e.target.src = DEFAULT_AVATAR; }}
+                />
                 <div className='flex-1'>
                   <div className='comment-author'>{comment.author}</div>
                   <div className='comment-bubble'>{comment.content}</div>

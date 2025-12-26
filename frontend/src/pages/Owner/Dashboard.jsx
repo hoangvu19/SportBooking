@@ -50,7 +50,7 @@ const OwnerDashboard = () => {
         try {
           const token = localStorage.getItem('authToken');
           if (!token) {
-            throw new Error('Vui lòng đăng nhập lại');
+            throw new Error(t('settings.pleaseLoginAgain'));
           }
 
           const headers = { 

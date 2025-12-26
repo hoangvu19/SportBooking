@@ -14,7 +14,6 @@ const server = http.createServer({
 }, app);
 const path = require('path');
 const fs = require('fs');
-// VN timezone helper for server-side logs
 let toVnIso = null;
 try { toVnIso = require('./utils/vnTime').toVnIso; } catch (e) { console.debug('vnTime helper not available:', e && e.message); }
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -180,16 +179,12 @@ app.use('/api/sport-fields', require('./routes/sport/sportFieldRoutes'));
 app.use('/api/sport-types', require('./routes/sport/sportTypeRoutes'));
 app.use('/api/bookings', require('./routes/sport/bookingRoutes'));
 app.use('/api/customers', require('./routes/sport/customerRoutes'));
-
-// 🤖 AI Routes (NEW)
 app.use('/api/ai', require('./routes/ai/aiRoutes'));
 app.use('/api/feedback', require('./routes/sport/feedbackRoutes')); 
 app.use('/api/ratings', require('./routes/sport/ratingRoutes'));
 app.use('/api/reports', require('./routes/report/reportRoutes'));
 app.use('/api/roles', require('./routes/auth/roleRoutes'));
 app.use('/api/livestreams', require('./routes/livestream/livestreamRoutes'));
-
-// 👑 Admin Routes (NEW)
 app.use('/api/admin/dashboard', require('./routes/admin/dashboardRoutes'));
 app.use('/api/admin/bookings', require('./routes/admin/bookingAdminRoutes'));
 app.use('/api/admin/accounts', require('./routes/admin/accountAdminRoutes'));
@@ -216,7 +211,6 @@ app.get('/api/internal/file-exists', (req, res) => {
   }
 });
 
-// Dev-only: scan Owner frontend pages for hard-coded strings and missing t(...) keys
 app.post('/api/internal/scan-i18n', async (req, res) => {
   try {
     // only allow from localhost in dev

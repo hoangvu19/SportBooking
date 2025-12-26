@@ -351,6 +351,23 @@ const deleteSentNotification = async (req, res) => {
   }
 };
 
+// Admin: send a notification to a single user (helper for moderation warn)
+const sendNotification = async (req, res) => {
+  try {
+    const senderId = req.user && req.user.AccountID ? req.user.AccountID : null;
+    const { recipientId, type = 'moderation_action', contentId = null, content = '' } = req.body || {};
+
+    if (!recipientId) return res.status(400).json({ success: false, message: 'recipientId is required' });
+    if (!content || String(content).trim() === '') return res.status(400).json({ success: false, message: 'content is required' });
+
+    const notification = await createNotification({ recipientId: Number(recipientId), senderId, type, contentId, content });
+    res.json({ success: true, data: notification });
+  } catch (error) {
+    console.error('Send notification error:', error);
+    res.status(500).json({ success: false, message: 'Error sending notification' });
+  }
+};
+
 // Admin: broadcast notification to all active users
 const broadcastNotification = async (req, res) => {
   try {
@@ -417,8 +434,8 @@ module.exports = {
   markAllAsRead,
   deleteNotification,
   createNotification,
-  broadcastNotification
-  ,
+  broadcastNotification,
+  sendNotification,
   getSentNotifications,
   deleteSentNotification,
   deleteSentNotificationGroup

@@ -1,0 +1,75 @@
+/* StoriesBar.css
+   Stabilize horizontal story strip: fixed item width, scroll snapping,
+   avoid transform-induced layout shifts while scrolling.
+*/
+
+.storiesbar-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.storiesbar-list {
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 1.25rem; /* same as pb-5 from markup */
+}
+
+.story-card {
+  flex: 0 0 auto; /* prevent shrinking/growing */
+  width: 120px; /* stable width */
+  aspect-ratio: 3 / 4; /* keep same shape as aspect-[3/4] */
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+  scroll-snap-align: start;
+  will-change: transform, opacity;
+}
+
+.story-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 350ms ease, opacity 250ms ease;
+  transform-origin: center center;
+}
+
+/* Disable heavy scale on hover to avoid layout jitter during scroll */
+.story-card:hover .story-media,
+.story-card:active .story-media {
+  transform: scale(1.03);
+  opacity: 0.95;
+}
+
+.story-avatar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.9);
+}
+
+.story-content {
+  position: absolute;
+  top: 60px;
+  left: 8px;
+  right: 8px;
+  color: #fff;
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Hide scrollbars but keep scrolling functional */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

@@ -1,1 +1,15 @@
-node_modules
+﻿node_modules
+
+# Python virtualenv
+AI/.venv/
+
+# Uploaded media and large generated files
+backend/uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build / temp
+dist/
+build/

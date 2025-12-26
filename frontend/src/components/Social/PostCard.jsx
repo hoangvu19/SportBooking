@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import DEFAULT_AVATAR from "../../utils/defaults";
 import toast from 'react-hot-toast';
 import { BadgeCheck, Heart, MessageCircle, Share2, MoreHorizontal, Flag } from 'lucide-react';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { reactionAPI, commentAPI, shareAPI, postAPI, facilityAPI } from "../../utils/api";
 import useAuth from "../../hooks/useAuth";
 import { normalizeUser } from '../../utils/normalize';
@@ -54,7 +54,7 @@ function extractUrl(candidate) {
 }
 
 
-const PostCard = ({post, disableUserNavigation = false}) => {
+const PostCard = ({post, disableUserNavigation = false, showModerationFlags = true}) => {
     const { t } = useI18n();
 
     const rawContent = post?.content || '';
@@ -73,6 +73,24 @@ const PostCard = ({post, disableUserNavigation = false}) => {
     // normalize likes: use number for count and boolean for whether current user liked
     // canonical postId to support both booking-origin posts and normal posts
     const postId = post?._id || post?.PostID || post?.PostId || post?.id;
+
+    // root ref for viewport detection; defer heavy per-post network calls until visible
+    const rootRef = useRef(null);
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        if (!rootRef.current) return;
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    setIsVisible(true);
+                    io.disconnect();
+                }
+            });
+        }, { root: null, rootMargin: '200px', threshold: 0.1 });
+        io.observe(rootRef.current);
+        return () => io.disconnect();
+    }, []);
 
     // Helper to check whether an id is a positive integer (backend expects numeric postId)
     const isNumericId = (id) => {
@@ -169,13 +187,12 @@ const PostCard = ({post, disableUserNavigation = false}) => {
     }, []);
 
     useEffect(() => {
+        if (!isVisible) return;
         let mounted = true;
         const loadReactionState = async () => {
             try {
                 if (!postId) return;
                 if (!isNumericId(postId)) {
-                    // Skip server calls for non-numeric/fallback post ids (local-only posts)
-                    console.debug('[PostCard] Skipping reaction init for non-numeric postId', postId);
                     return;
                 }
                 const [countsRes, userRes] = await Promise.all([
@@ -193,24 +210,22 @@ const PostCard = ({post, disableUserNavigation = false}) => {
                 if (userRes && userRes.success) {
                     setLiked(!!userRes.data);
                 }
-            } catch (_err) {
-                console.debug('Reaction init error', _err?.message || _err);
+            } catch {
+                // ignore
             }
         };
         loadReactionState();
         return () => { mounted = false; };
-    }, [postId, post.comments_count]);
+    }, [postId, post.comments_count, isVisible]);
 
     // Load a small comment preview and comments count so the inline preview renders
     useEffect(() => {
+        if (!isVisible) return;
         let mounted = true;
         const loadCommentPreview = async () => {
             try {
                 if (!postId) return;
-                if (!isNumericId(postId)) {
-                    console.debug('[PostCard] Skipping comment preview for non-numeric postId', postId);
-                    return;
-                }
+                if (!isNumericId(postId)) return;
                 const res = await commentAPI.getByPostId(postId).catch(() => null);
                 if (!mounted) return;
                 const commentsArr = (res && res.data && Array.isArray(res.data.comments)) ? res.data.comments : (Array.isArray(res && res.data) ? res.data : []);
@@ -228,7 +243,7 @@ const PostCard = ({post, disableUserNavigation = false}) => {
         };
         loadCommentPreview();
         return () => { mounted = false; };
-    }, [postId]);
+    }, [postId, isVisible]);
 
     // Listen for realtime comment events so counts/preview update without reload
     useEffect(() => {
@@ -284,15 +299,29 @@ const PostCard = ({post, disableUserNavigation = false}) => {
     // see violating posts immediately. This is a temporary UX enhancement.
     const clientFlagged = isFlaggedContent(post?.content || post?.Content || '');
 
-    const isPendingModeration = backendPending || clientFlagged;
+    // If the backend has already marked this post `Active` (admin cleared),
+    // prefer the server's status and ignore client heuristic flags so UI does
+    // not keep showing the red "Pending review" badge after an admin action.
+    const postStatus = (post && (post.Status || post.status || '') || '').toString().toLowerCase();
+    const clientFlaggedEffective = clientFlagged && postStatus !== 'active' && !post.__moderation_cleared;
 
-    // Detect if current user is admin to show quick review action
+    const isPendingModeration = backendPending || clientFlaggedEffective;
+
+    // Detect if current user is admin
     const currentRoles = Array.isArray(currentUser && currentUser.roles) ? currentUser.roles : [];
     const currentRoleNames = currentRoles.map(r => (r.roleName || r.RoleName || '').toString().toLowerCase());
     const currentIsAdmin = currentRoleNames.some(rn => rn.includes('admin'));
+    // Determine if we are on the admin moderation page (only show moderation flags there)
+    const location = useLocation();
+    const onAdminModerationPage = location && typeof location.pathname === 'string' && location.pathname.includes('/admin/moderation');
+
+    // final decision: show moderation UI only if current user is admin, the post is pending,
+    // and either we're on admin moderation page or the caller explicitly asked to show moderation flags
+    const shouldShowModeration = currentIsAdmin && isPendingModeration && (onAdminModerationPage || !!showModerationFlags);
 
     // on mount, check if current user has shared
     useEffect(() => {
+        if (!isVisible) return;
         let mounted = true;
         const checkShared = async () => {
             try {
@@ -334,7 +363,7 @@ const PostCard = ({post, disableUserNavigation = false}) => {
         };
         checkShared();
         return () => { mounted = false; };
-    }, [postId, post]);
+    }, [postId, post, isVisible]);
 
     // If the post is a share, attempt to render the embedded original.
     // For re-shares (A <- B <- C) we try to find the booking-origin post by traversing
@@ -407,19 +436,19 @@ const PostCard = ({post, disableUserNavigation = false}) => {
             setEmbeddedPost(sp);
         };
 
-        attemptFetchBookingPost();
-    }, [post.shared_post, post.shared_post?.booking, postId]);
+        if (isVisible) {
+            attemptFetchBookingPost();
+        } else {
+            // defer fetching embedded post data until visible
+            setEmbeddedPost(null);
+        }
+    }, [post.shared_post, post.shared_post?.booking, postId, isVisible]);
 
-    // Compute total media items for layout decisions
+
     const totalMediaCount = ((post.image_urls && post.image_urls.length) || 0) + ((post.media_urls && post.media_urls.length) || 0);
 
-    // Facility image state (used for booking preview). We try to compute a facility image
-    // from the payload first; if nothing is present we fetch facility details as a fallback.
     const [facilityImgResolved, setFacilityImgResolved] = useState(null);
 
-    // Use the top-level `extractUrl` helper defined above (avoids redefining the function here)
-
-    // Compute initial candidate without network call
     useEffect(() => {
         let mounted = true;
         const booking = post.booking || post.Booking || post;
@@ -512,6 +541,7 @@ const PostCard = ({post, disableUserNavigation = false}) => {
                 ) : (
                     <img
                         src={src}
+                        loading="lazy"
                         onClick={() => setModalOpen(true)}
                         className={className}
                         alt=""
@@ -532,12 +562,13 @@ const PostCard = ({post, disableUserNavigation = false}) => {
     const avatarSrc = toAbsoluteUrl(backendBase, post.user?.profile_picture || post.user?.AvatarUrl || post.user?.ProfilePictureURL || post.user?.avatarUrl, 'avatars') || DEFAULT_AVATAR;
 
     return (
-                <div className={`relative bg-white rounded-lg shadow-md p-4 space-y-2 w-full max-w-3xl ${isPendingModeration ? 'border-l-4 border-red-500' : ''}`}>
+                <div className={`relative bg-white rounded-lg shadow-md p-4 space-y-2 w-full max-w-3xl ${shouldShowModeration ? 'border-l-4 border-red-500' : ''}`}>
       {/* User into */}
             <div onClick={(e) => { e.stopPropagation(); if (!disableUserNavigation) navigate(`/profile/${post.user._id}`); }} className={`inline-flex items-center gap-3 ${!disableUserNavigation ? 'cursor-pointer' : ''}`}>
         {/* User profile picture */}
         <img
             src={avatarSrc}
+            loading="lazy"
             onError={(e)=>{ e.target.onerror = null; e.target.src = DEFAULT_AVATAR }}
             alt=""
             className="w-10 h-10 rounded-full shadow"
@@ -548,7 +579,7 @@ const PostCard = ({post, disableUserNavigation = false}) => {
                 <span>{post.user?.full_name || t('post.unknownUser')}</span>
                 {/* Badge/Checkmark icon */}
                 <BadgeCheck className="w-4 h-4 text-blue-500" />
-                {isPendingModeration && (
+                {shouldShowModeration && (
                     <span className="ml-2 inline-flex items-center gap-1 text-red-600 text-xs font-semibold">
                         <Flag className="w-4 h-4" />
                         {t('post.pendingReview', 'Pending review')}
@@ -593,7 +624,7 @@ const PostCard = ({post, disableUserNavigation = false}) => {
             </div>
         )}
         {/* Admin quick-review action */}
-        {currentIsAdmin && isPendingModeration && (
+        {shouldShowModeration && (
             <div className="absolute right-16 top-3">
                 <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/moderation?postId=${postId}`); }} className="px-2 py-1 text-xs rounded bg-red-600 text-white">{t('post.review', 'Review')}</button>
             </div>
@@ -706,7 +737,7 @@ const PostCard = ({post, disableUserNavigation = false}) => {
                                 )}
 
                                 {sharedImages && sharedImages.length > 0 && (
-                                    <img src={sharedImages[0]} className="w-full h-48 object-cover rounded" alt="" />
+                                    <img loading="lazy" src={sharedImages[0]} className="w-full h-48 object-cover rounded" alt="" />
                                 )}
                             </div>
                         );
@@ -749,8 +780,7 @@ const PostCard = ({post, disableUserNavigation = false}) => {
                                                                 const start = booking.StartTime || booking.startTime || booking.Start || null;
                                                                 const end = booking.EndTime || booking.endTime || booking.End || null;
                                                                 const price = booking.TotalAmount || booking.RentalPrice || booking.rentalPrice || booking.Total || null;
-                                                                const currentPlayers = booking.CurrentPlayers || booking.currentPlayers || 0;
-                                                                const maxPlayers = booking.MaxPlayers || booking.maxPlayers || booking.Max || 0;
+                                                               
 
                                                                 // Try several possible keys for facility image(s)
                                                                 const possibleImgs = [];
@@ -788,7 +818,7 @@ const PostCard = ({post, disableUserNavigation = false}) => {
 
                                                                         <div className="facility-image-wrapper">
                                                                             {facilityImg ? (
-                                                                                <img src={facilityImg} alt="facility" className="facility-image" onError={(e)=>{ e.target.onerror = null; e.target.src = DEFAULT_AVATAR }} />
+                                                                                <img loading="lazy" src={facilityImg} alt="facility" className="facility-image" onError={(e)=>{ e.target.onerror = null; e.target.src = DEFAULT_AVATAR }} />
                                                                             ) : (
                                                                                 <div className="facility-image" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280'}}>{t('post.noImage')}</div>
                                                                             )}
@@ -925,4 +955,8 @@ const PostCard = ({post, disableUserNavigation = false}) => {
   );
 };
 
-export default PostCard;
+export default React.memo(PostCard, (prevProps, nextProps) => {
+    // shallow compare important props to avoid unnecessary rerenders
+    if (prevProps.post === nextProps.post && prevProps.showModerationFlags === nextProps.showModerationFlags && prevProps.disableUserNavigation === nextProps.disableUserNavigation) return true;
+    return false;
+});

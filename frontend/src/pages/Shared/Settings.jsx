@@ -148,11 +148,11 @@ const Settings = () => {
       // apply language change via i18n hook
       setLang(newLang);
       // show toast in chosen language
-      try { toast.success(TRANSLATIONS[newLang]?.settings?.languageChanged || 'Language updated'); } catch { toast.success('Language updated'); }
+      try { toast.success(TRANSLATIONS[newLang]?.settings?.languageChanged || t('settings.languageChanged')); } catch { toast.success(t('settings.languageChanged')); }
       // no notification modal for language change (toast only)
     } catch (err) {
       console.error('Change language failed', err);
-      toast.error('Unable to change language');
+      toast.error(t('settings.languageChangeFailed', 'Unable to change language'));
     }
   };
 

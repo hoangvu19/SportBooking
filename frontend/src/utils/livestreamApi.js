@@ -87,7 +87,7 @@ export const livestreamAPI = {
   addComment: async (livestreamId, text) => {
     return apiCall(`/livestreams/${livestreamId}/comments`, {
       method: 'POST',
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ content: text }),
     });
   },
 

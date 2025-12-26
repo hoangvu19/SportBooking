@@ -13,6 +13,7 @@ const {
 } = require('../../controllers/Notification/notificationController');
 
 const { broadcastNotification } = require('../../controllers/Notification/notificationController');
+const { sendNotification } = require('../../controllers/Notification/notificationController');
 
 // Get notifications for current user (with pagination)
 router.get('/', authenticateToken, getNotifications);
@@ -31,6 +32,9 @@ router.delete('/:notificationId', authenticateToken, deleteNotification);
 
 // Admin: broadcast a notification to all users
 router.post('/broadcast', authenticateToken, requireAdmin, broadcastNotification);
+
+// Admin: send a notification to a single user
+router.post('/send', authenticateToken, requireAdmin, sendNotification);
 
 // Admin: list notifications sent by current admin
 router.get('/sent', authenticateToken, requireAdmin, getSentNotifications);
