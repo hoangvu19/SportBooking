@@ -161,6 +161,17 @@ warm up
 cool down
 stretching
 
+# Contextual training/doc examples to avoid false positives
+tài liệu
+ví dụ
+đào tạo
+tài liệu đào tạo
+ví dụ phân tích
+phân tích
+phân tích hệ thống
+hệ thống phát hiện spam
+tài liệu nội bộ
+tài liệu đào tạo nội bộ
 # ===== THUẬT NGỮ THỂ THAO =====
 đội
 đội bóng
